@@ -64,9 +64,10 @@ import {
 } from 'lucide-react';
 
 // ==========================================
-// CLOUD DATABASE INITIALIZATION
+// CLOUD DATABASE INITIALIZATION (CRASH-SAFE)
 // ==========================================
-const getSavedCustomFirebaseConfig = { 
+// Optional: Paste your Firebase Config object inside PASTE_YOUR_FIREBASE_CONFIG_HERE if you want it hardcoded
+const PASTE_YOUR_FIREBASE_CONFIG_HERE = { 
   apiKey: "AIzaSyCJr5EtomUlvIQiqyOXw7jG7K9W4bUulgk",
   authDomain: "paedtrach-oncall.firebaseapp.com",
   projectId: "paedtrach-oncall",
@@ -75,14 +76,46 @@ const getSavedCustomFirebaseConfig = {
   appId: "1:928358075073:web:82b4cc602d749a32406240"
 };
 
-const firebaseConfig =
-  getSavedCustomFirebaseConfig() ||
-  (typeof __firebase_config !== 'undefined' && __firebase_config
-    ? JSON.parse(__firebase_config)
-    : null);
-const app = firebaseConfig ? initializeApp(firebaseConfig) : null;
-const auth = app ? getAuth(app) : null;
-const db = app ? getFirestore(app) : null;
+const resolveSafeFirebaseConfig = () => {
+  try {
+    if (
+      PASTE_YOUR_FIREBASE_CONFIG_HERE &&
+      typeof PASTE_YOUR_FIREBASE_CONFIG_HERE === 'object' &&
+      PASTE_YOUR_FIREBASE_CONFIG_HERE.apiKey
+    ) {
+      return PASTE_YOUR_FIREBASE_CONFIG_HERE;
+    }
+    const rawLocal = localStorage.getItem('paedtrach_custom_firebase_config');
+    if (rawLocal) {
+      const parsed = JSON.parse(rawLocal);
+      if (parsed && parsed.apiKey) return parsed;
+    }
+    if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+      return typeof __firebase_config === 'string'
+        ? JSON.parse(__firebase_config)
+        : __firebase_config;
+    }
+  } catch (e) {
+    console.warn('Firebase config fallback:', e);
+  }
+  return null;
+};
+
+const firebaseConfig = resolveSafeFirebaseConfig();
+let app = null;
+let auth = null;
+let db = null;
+
+try {
+  if (firebaseConfig && firebaseConfig.apiKey) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  }
+} catch (e) {
+  console.warn('Running in offline fallback mode:', e);
+}
+
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'paedtrach-oncall-pwa';
 
 // ==========================================
