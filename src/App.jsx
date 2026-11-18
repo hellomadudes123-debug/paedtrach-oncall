@@ -119,6 +119,52 @@ try {
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'paedtrach-oncall-pwa';
 
 // ==========================================
+// CUSTOM PAEDTRACHES VECTOR LOGO EMBLEM
+// ==========================================
+const PaedTrachesLogo = ({ className = 'w-9 h-9' }) => (
+  <div
+    className={`${className} rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white shadow-xs group-hover:from-emerald-600 group-hover:to-teal-800 transition shrink-0`}
+  >
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      className="w-5 h-5"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Tracheostomy Neck Flange */}
+      <rect
+        x="5"
+        y="9"
+        width="22"
+        height="5"
+        rx="2.5"
+        stroke="currentColor"
+        strokeWidth="2.2"
+      />
+      {/* 15mm Hub Connector */}
+      <path
+        d="M12.5 5H19.5V9H12.5V5Z"
+        fill="currentColor"
+        fillOpacity="0.3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {/* Curved Paediatric Cannula Tube */}
+      <path
+        d="M13.5 14V18.5C13.5 22.5 16 25.5 20.5 26.5M18.5 14V17.5C18.5 19.8 19.8 21.5 22.5 22.2"
+        stroke="currentColor"
+        strokeWidth="2.3"
+        strokeLinecap="round"
+      />
+      {/* Stoma Airflow Pulse Dot */}
+      <circle cx="9" cy="11.5" r="1" fill="currentColor" />
+      <circle cx="23" cy="11.5" r="1" fill="currentColor" />
+    </svg>
+  </div>
+);
+
+// ==========================================
 // INITIAL CLINICAL DATA (CLEAN TITLES + GUIDELINE LINKS)
 // ==========================================
 const INITIAL_ADMIN_USERS = [
@@ -1405,7 +1451,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'paedtrach-cloud-backup.json';
+    a.download = 'paedtraches-cloud-backup.json';
     a.click();
     URL.revokeObjectURL(url);
     notifyCms('Downloaded full cloud backup JSON');
@@ -1483,8 +1529,8 @@ export default function App() {
   <meta name="theme-color" content="#059669" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="PaedTrach" />
-  <title>PaedTrach OnCall — Paediatric Tracheostomy Guide</title>
+  <meta name="apple-mobile-web-app-title" content="PaedTraches" />
+  <title>PaedTraches — Paediatric Tracheostomy Guide</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#F8FAFC] text-[#0F172A] font-sans antialiased">
@@ -1497,7 +1543,7 @@ export default function App() {
         <div class="flex items-center justify-between border-b border-slate-100 pb-4">
           <div>
             <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Standalone Export Bundle</span>
-            <h1 class="text-2xl font-bold text-slate-900 mt-2">PaedTrach OnCall Clinical Bundle</h1>
+            <h1 class="text-2xl font-bold text-slate-900 mt-2">PaedTraches Clinical Bundle</h1>
             <p class="text-sm text-slate-500">Exported \${new Date(BUNDLE.exportedAt).toLocaleString('en-GB')} • \${BUNDLE.pathways.length} Pathways & \${BUNDLE.learningModules.length} Learning Modules included.</p>
           </div>
         </div>
@@ -2128,88 +2174,88 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900 pb-20 sm:pb-0">
       {/* ==========================================
-          RESPONSIVE FULL-WIDTH NAVIGATION BAR
+          SPACIOUS, UNCLUTTERED NAVIGATION BAR
+          (Desktop has center pill switcher; Mobile uses clean bottom bar)
           ========================================== */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-          {/* Brand Logo */}
+          {/* Brand Logo: PaedTraches */}
           <button
             onClick={() => {
               setAppMode('oncall');
               setActivePathwayId(null);
               setOnCallSubView('main');
             }}
-            className="flex items-center gap-2.5 text-left group"
+            className="flex items-center gap-2.5 text-left group min-w-0"
           >
-            <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm group-hover:bg-emerald-700 transition">
-              <HeartPulse className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-base tracking-tight text-slate-900 block leading-none">
-                  PaedTrach
+            <PaedTrachesLogo className="w-9 h-9 sm:w-10 sm:h-10" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 block leading-none truncate">
+                  PaedTraches
                 </span>
                 <span
-                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
                     cloudStatus === 'synced'
-                      ? 'bg-emerald-50 text-emerald-700'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
                       : 'bg-slate-100 text-slate-500'
                   }`}
+                  title={cloudStatus === 'synced' ? 'Cloud Live Sync Active' : 'Offline Ready'}
                 >
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${
                       cloudStatus === 'synced' ? 'bg-emerald-500' : 'bg-amber-500'
                     }`}
                   />
-                  <span className="hidden sm:inline">
+                  <span className="hidden md:inline">
                     {cloudStatus === 'synced' ? 'Cloud Live' : 'Offline Ready'}
                   </span>
                 </span>
               </div>
-              <span className="text-[11px] font-medium text-slate-500 block mt-0.5">
+              <span className="text-[11px] font-medium text-slate-500 hidden sm:block mt-0.5 truncate">
                 Paediatric Tracheostomy Reference
               </span>
             </div>
           </button>
 
-          {/* Center Segmented Control */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/70">
+          {/* Center Segmented Control (Desktop & Tablet Only — moved to bottom bar on phones so header never cramps) */}
+          <div className="hidden sm:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/70">
             <button
               onClick={() => setAppMode('oncall')}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                 appMode === 'oncall'
-                  ? 'bg-white text-slate-900 shadow-sm'
+                  ? 'bg-white text-slate-900 shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <span role="img" aria-label="On-Call">🚨</span>
-              <span>On-Call</span>
+              <Activity className="w-4 h-4 text-emerald-600" />
+              <span>On-Call Pathways</span>
             </button>
 
             <button
               onClick={() => setAppMode('learning')}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                 appMode === 'learning'
-                  ? 'bg-white text-slate-900 shadow-sm'
+                  ? 'bg-white text-slate-900 shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <span role="img" aria-label="Learn">📚</span>
-              <span>Learn</span>
+              <BookOpen className="w-4 h-4 text-sky-600" />
+              <span>Learning Modules</span>
             </button>
           </div>
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-2">
+          {/* Right Actions (Compact & Clean on Mobile) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={() => setShowPwaModal(true)}
-              className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition flex items-center gap-1.5 text-xs font-medium"
-              title="Save to Home Screen"
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition flex items-center gap-1.5 text-xs font-medium"
+              title="Save App to Home Screen"
             >
               <Smartphone className="w-4 h-4" />
-              <span className="hidden md:inline">Save App</span>
+              <span className="hidden lg:inline">Save App</span>
             </button>
             <button
               onClick={() => {
@@ -2217,10 +2263,10 @@ export default function App() {
                 resetAdminForm();
                 resetSectionForm();
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition ${
                 appMode === 'admin'
                   ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               }`}
             >
               {isAdminAuthenticated ? (
@@ -2228,13 +2274,63 @@ export default function App() {
               ) : (
                 <Lock className="w-3.5 h-3.5" />
               )}
-              <span className="hidden sm:inline">
+              <span>
                 {isAdminAuthenticated ? currentAdminUser.name.split(' ')[0] : 'Admin'}
               </span>
             </button>
           </div>
         </div>
       </header>
+
+      {/* ==========================================
+          MOBILE BOTTOM NAVIGATION BAR (PHONES ONLY)
+          Prevents top header cramping & makes thumb switching effortless
+          ========================================== */}
+      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3 py-2 flex items-center justify-around shadow-lg">
+        <button
+          onClick={() => {
+            setAppMode('oncall');
+            setActivePathwayId(null);
+            setOnCallSubView('main');
+          }}
+          className={`flex-1 py-1.5 rounded-xl flex flex-col items-center gap-0.5 text-[11px] font-bold transition ${
+            appMode === 'oncall'
+              ? 'text-emerald-700 bg-emerald-50/80'
+              : 'text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <Activity className="w-4 h-4" />
+          <span>On-Call</span>
+        </button>
+
+        <button
+          onClick={() => setAppMode('learning')}
+          className={`flex-1 py-1.5 rounded-xl flex flex-col items-center gap-0.5 text-[11px] font-bold transition ${
+            appMode === 'learning'
+              ? 'text-sky-700 bg-sky-50/80'
+              : 'text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <BookOpen className="w-4 h-4" />
+          <span>Learn</span>
+        </button>
+
+        <button
+          onClick={() => setActiveToolModal('calculator')}
+          className="flex-1 py-1.5 rounded-xl flex flex-col items-center gap-0.5 text-[11px] font-bold text-slate-500 hover:text-slate-900 transition"
+        >
+          <Calculator className="w-4 h-4" />
+          <span>Tube Sizer</span>
+        </button>
+
+        <button
+          onClick={() => setActiveToolModal('checklist')}
+          className="flex-1 py-1.5 rounded-xl flex flex-col items-center gap-0.5 text-[11px] font-bold text-slate-500 hover:text-slate-900 transition"
+        >
+          <ClipboardCheck className="w-4 h-4" />
+          <span>Go-Bag</span>
+        </button>
+      </nav>
 
       {/* ==========================================
           MAIN CONTENT AREA (WIDER MAX-W-7XL ON DESKTOP, COMPACT ON MOBILE)
@@ -2249,13 +2345,13 @@ export default function App() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200/80 pb-5">
               <div className="space-y-1.5">
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
-                  Paediatric Tracheostomy Guide
+                  PaedTraches Clinical Guide
                 </h1>
                 <p className="text-sm sm:text-base text-slate-500">
                   Select an emergency clinical pathway or open a roadside sizing tool.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2">
                 <button
                   onClick={() => setActiveToolModal('calculator')}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold transition"
@@ -2487,15 +2583,15 @@ export default function App() {
                   }`}
                 >
                   <Timer className="w-3.5 h-3.5" />
-                  <span>{timerRunning ? formatTime(timerSeconds) : '2m CPR Timer'}</span>
+                  <span>{timerRunning ? formatTime(timerSeconds) : '2m CPR'}</span>
                 </button>
 
                 <button
                   onClick={() => setActiveToolModal('calculator')}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition"
                 >
                   <Calculator className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="hidden sm:inline">Sizer</span>
+                  <span>Sizer</span>
                 </button>
 
                 <div className="inline-flex bg-slate-200/70 p-1 rounded-xl">
@@ -3206,7 +3302,7 @@ export default function App() {
                                   className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-1.5"
                                 >
                                   <ChevronLeft className="w-4 h-4" />
-                                  <span>Previous Section</span>
+                                  <span>Previous</span>
                                 </button>
 
                                 {activeSectionIndex < activeModule.sections.length - 1 ? (
@@ -3230,7 +3326,7 @@ export default function App() {
                                     className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-2"
                                   >
                                     <Sparkles className="w-4 h-4" />
-                                    <span>Finished Reading — Unlock Knowledge Quiz</span>
+                                    <span>Unlock Knowledge Quiz</span>
                                   </button>
                                 )}
                               </div>
@@ -5006,7 +5102,7 @@ export default function App() {
       <footer className="border-t border-slate-200/80 bg-white py-4 px-4 sm:px-6 lg:px-8 mt-12">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
           <span>
-            Clinical reference aid for paramedics ({INITIAL_GOVERNANCE_META.version}) — follow local Ambulance Trust & JRCALC guidelines.
+            PaedTraches clinical reference aid ({INITIAL_GOVERNANCE_META.version}) — follow local Ambulance Trust & JRCALC guidelines.
           </span>
           <div className="flex items-center gap-3 shrink-0">
             <button
@@ -5260,7 +5356,7 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-emerald-600" />
                 <h3 className="text-base font-bold text-slate-900">
-                  Save to Phone Home Screen
+                  Save PaedTraches to Phone
                 </h3>
               </div>
               <button
@@ -5273,7 +5369,7 @@ export default function App() {
 
             <div className="space-y-3 text-xs sm:text-sm text-slate-600 leading-relaxed">
               <p>
-                Add <strong>PaedTrach OnCall</strong> to your phone’s home screen for one-tap access and offline availability of all emergency pathways.
+                Add <strong>PaedTraches</strong> to your phone’s home screen for one-tap access and offline availability of all emergency pathways.
               </p>
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                 <div className="font-semibold text-slate-900">iOS (Safari):</div>
@@ -5377,7 +5473,7 @@ export default function App() {
                     </div>
                   </div>
                   <p>
-                    <strong>1. Scope & Intended Audience:</strong> PaedTrach OnCall is an open-access educational and rapid visual reference tool designed specifically for UK registered paramedics (HCPC), pre-hospital clinicians, and emergency care responders.
+                    <strong>1. Scope & Intended Audience:</strong> PaedTraches is an open-access educational and rapid visual reference tool designed specifically for UK registered paramedics (HCPC), pre-hospital clinicians, and emergency care responders.
                   </p>
                   <p>
                     <strong>2. Primacy of Local Trust & JRCALC Guidelines:</strong> This platform reproduces established national principles from the National Tracheostomy Safety Project (NTSP) and Resuscitation Council UK. It does <strong>not</strong> replace clinical judgement, individualised patient Bedhead Signs, or your employing NHS Ambulance Trust and JRCALC Clinical Practice Guidelines.
@@ -5413,7 +5509,7 @@ export default function App() {
               {legalModalTab === 'terms' && (
                 <div className="space-y-3">
                   <p>
-                    <strong>1. Acceptance of Terms:</strong> By accessing or saving PaedTrach OnCall, you acknowledge that the platform is provided free of charge on an &ldquo;as-is&rdquo; educational basis.
+                    <strong>1. Acceptance of Terms:</strong> By accessing or saving PaedTraches, you acknowledge that the platform is provided free of charge on an &ldquo;as-is&rdquo; educational basis.
                   </p>
                   <p>
                     <strong>2. Limitation of Liability:</strong> To the fullest extent permitted by UK law, the authors, clinical editors, and contributors accept no liability for any clinical outcome, loss, or damage arising from reliance on the information contained within this application.
