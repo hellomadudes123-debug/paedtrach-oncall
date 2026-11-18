@@ -10,8 +10,7 @@ import {
   getFirestore,
   doc,
   setDoc,
-  onSnapshot,
-  collection
+  onSnapshot
 } from 'firebase/firestore';
 import {
   Activity,
@@ -67,23 +66,20 @@ import {
 // ==========================================
 // CLOUD DATABASE INITIALIZATION
 // ==========================================
-const getSavedCustomFirebaseConfig = () => {
-  try {
-    const raw = localStorage.getItem('paedtrach_custom_firebase_config');
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) {
-    return null;
-  }
+const getSavedCustomFirebaseConfig = { 
+  apiKey: "AIzaSyCJr5EtomUlvIQiqyOXw7jG7K9W4bUulgk",
+  authDomain: "paedtrach-oncall.firebaseapp.com",
+  projectId: "paedtrach-oncall",
+  storageBucket: "paedtrach-oncall.firebasestorage.app",
+  messagingSenderId: "928358075073",
+  appId: "1:928358075073:web:82b4cc602d749a32406240"
 };
 
-const firebaseConfig = { 
-    apiKey: "AIzaSyCJr5EtomUlvIQiqyOXw7jG7K9W4bUulgk",
-    authDomain: "paedtrach-oncall.firebaseapp.com",
-    projectId: "paedtrach-oncall",
-    storageBucket: "paedtrach-oncall.firebasestorage.app",
-    messagingSenderId: "928358075073",
-    appId: "1:928358075073:web:82b4cc602d749a32406240"
-  };
+const firebaseConfig =
+  getSavedCustomFirebaseConfig() ||
+  (typeof __firebase_config !== 'undefined' && __firebase_config
+    ? JSON.parse(__firebase_config)
+    : null);
 const app = firebaseConfig ? initializeApp(firebaseConfig) : null;
 const auth = app ? getAuth(app) : null;
 const db = app ? getFirestore(app) : null;
@@ -939,7 +935,6 @@ const EMERGENCY_BAG_CHECKLIST = [
   { id: 'eq-9', label: 'Sterile gauze swabs (to occlude stoma for oral ventilation)' }
 ];
 
-// Helper to strip any accidental legacy "0.", "1A.", "2B." prefixes from user-saved localStorage
 const cleanStepTitle = (rawTitle = '') => {
   return rawTitle.replace(/^[0-9]+[A-Za-z]?\.\s*/, '').trim();
 };
@@ -953,24 +948,19 @@ const formatTime = (totalSec) => {
 export default function App() {
   // Navigation State: 'oncall' | 'learning' | 'admin'
   const [appMode, setAppMode] = useState('oncall');
-  // Sub-view on On-Call Home: 'main' (3 core emergency pathways) | 'extra' (routine & extra pathways)
   const [onCallSubView, setOnCallSubView] = useState('main');
 
   // ==========================================
   // FIREBASE REAL-TIME CLOUD SYNC STATE
   // ==========================================
   const [fbUser, setFbUser] = useState(null);
-  const [cloudStatus, setCloudStatus] = useState('connecting'); // 'connecting' | 'synced' | 'offline'
+  const [cloudStatus, setCloudStatus] = useState('connecting');
   const [lastCloudSyncAt, setLastCloudSyncAt] = useState(null);
   const [lastUpdatedBy, setLastUpdatedBy] = useState('Clinical Lead');
 
-  // Pathways State
   const [pathways, setPathways] = useState(INITIAL_PATHWAYS);
-  // Learning Modules State
   const [learningModules, setLearningModules] = useState(INITIAL_LEARNING_MODULES);
-  // Multi-Admin Users State
   const [adminUsers, setAdminUsers] = useState(INITIAL_ADMIN_USERS);
-  // Audit Log State
   const [auditLogs, setAuditLogs] = useState([
     {
       id: 'log-init',
@@ -980,7 +970,6 @@ export default function App() {
     }
   ]);
 
-  // 1. Authenticate with Firebase (Rule 3)
   useEffect(() => {
     if (!auth) {
       setCloudStatus('offline');
@@ -1004,7 +993,6 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Real-time Firestore Listener for Public App Content + Admin Roster (Rule 1 & 3)
   useEffect(() => {
     if (!fbUser || !db) return;
 
@@ -1024,30 +1012,17 @@ export default function App() {
         if (snapshot.exists()) {
           const data = snapshot.data();
           try {
-            if (data.pathwaysJson) {
-              setPathways(JSON.parse(data.pathwaysJson));
-            }
-            if (data.modulesJson) {
-              setLearningModules(JSON.parse(data.modulesJson));
-            }
-            if (data.adminUsersJson) {
-              setAdminUsers(JSON.parse(data.adminUsersJson));
-            }
-            if (data.auditLogsJson) {
-              setAuditLogs(JSON.parse(data.auditLogsJson));
-            }
-            if (data.updatedAt) {
-              setLastCloudSyncAt(data.updatedAt);
-            }
-            if (data.updatedBy) {
-              setLastUpdatedBy(data.updatedBy);
-            }
+            if (data.pathwaysJson) setPathways(JSON.parse(data.pathwaysJson));
+            if (data.modulesJson) setLearningModules(JSON.parse(data.modulesJson));
+            if (data.adminUsersJson) setAdminUsers(JSON.parse(data.adminUsersJson));
+            if (data.auditLogsJson) setAuditLogs(JSON.parse(data.auditLogsJson));
+            if (data.updatedAt) setLastCloudSyncAt(data.updatedAt);
+            if (data.updatedBy) setLastUpdatedBy(data.updatedBy);
             setCloudStatus('synced');
           } catch (parseErr) {
             setCloudStatus('synced');
           }
         } else {
-          // Seed initial cloud bundle so all devices stay in sync
           const seedPayload = {
             pathwaysJson: JSON.stringify(INITIAL_PATHWAYS),
             modulesJson: JSON.stringify(INITIAL_LEARNING_MODULES),
@@ -1078,7 +1053,6 @@ export default function App() {
     return () => unsubscribe();
   }, [fbUser]);
 
-  // 3. Private per-device Learning Progress synced to user's anonymous UID in Firestore
   const [completedModules, setCompletedModules] = useState([]);
 
   useEffect(() => {
@@ -1123,7 +1097,6 @@ export default function App() {
     }
   };
 
-  // Helper to push any Admin CMS change immediately to Cloud Firestore
   const publishCloudUpdate = async ({
     nextPathways = pathways,
     nextModules = learningModules,
@@ -1176,24 +1149,18 @@ export default function App() {
     }
   };
 
-  // On-Call Mode State: null = calm Home screen; string = inside a selected pathway
   const [activePathwayId, setActivePathwayId] = useState(null);
-  // 'interactive' | 'overview'
   const [pathwayViewMode, setPathwayViewMode] = useState('interactive');
   const [currentNodeId, setCurrentNodeId] = useState('gov-check');
   const [nodeHistory, setNodeHistory] = useState(['gov-check']);
   const [checkedItems, setCheckedItems] = useState({});
-  // Slide-over / Modal when tapping a node in Full Flowchart view
   const [flowchartInspectNode, setFlowchartInspectNode] = useState(null);
-  // Minimalist collapsible NICE / Guideline References drawer at bottom of pathway
   const [showPathwayRefs, setShowPathwayRefs] = useState(false);
 
-  // Roadside Tools Modal State: null | 'calculator' | 'checklist'
   const [activeToolModal, setActiveToolModal] = useState(null);
   const [selectedTubeIdSize, setSelectedTubeIdSize] = useState('4.0');
   const [bagChecked, setBagChecked] = useState({});
 
-  // 2-Minute CPR Cycle Timer
   const [showCprTimer, setShowCprTimer] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -1210,32 +1177,27 @@ export default function App() {
     return () => clearInterval(interval);
   }, [timerRunning]);
 
-  // Learning Mode State (Multi-section navigation + Hidden quiz until final section finished)
   const [activeModuleId, setActiveModuleId] = useState(null);
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
   const [quizUnlocked, setQuizUnlocked] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
-  const [playingVideoId, setPlayingVideoId] = useState(null);
 
-  // Modals for PWA install & Comprehensive Legal/Regulatory Hub
   const [showPwaModal, setShowPwaModal] = useState(false);
   const [showGovernanceModal, setShowGovernanceModal] = useState(false);
-  const [legalModalTab, setLegalModalTab] = useState('disclaimer'); // 'disclaimer' | 'terms' | 'privacy' | 'mhra'
+  const [legalModalTab, setLegalModalTab] = useState('disclaimer');
 
   // ==========================================
-  // ADMIN CMS STATE (MULTI-USER + PATHWAYS + MODULES + TEAM)
+  // ADMIN CMS STATE
   // ==========================================
-  const [adminTab, setAdminTab] = useState('pathways'); // 'pathways' | 'modules' | 'team' | 'publish'
+  const [adminTab, setAdminTab] = useState('pathways');
   const [cmsNotification, setCmsNotification] = useState(null);
 
-  // Multi-User Admin Authentication State
   const [currentAdminUser, setCurrentAdminUser] = useState(null);
-  const [loginEmailInput, setLoginEmailInput] = useState('lead@paedtrach.org.uk');
+  const [loginEmailInput, setLoginEmailInput] = useState('');
   const [loginPasswordInput, setLoginPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // Add New Admin Team Member Form
   const [newAdminForm, setNewAdminForm] = useState({
     name: '',
     email: '',
@@ -1251,7 +1213,6 @@ export default function App() {
     }
   });
 
-  // 1. Admin Pathway Builder State
   const [adminPathwayId, setAdminPathwayId] = useState('ntsp-green');
   const [showNewPathwayModal, setShowNewPathwayModal] = useState(false);
   const [newPathwayForm, setNewPathwayForm] = useState({
@@ -1275,14 +1236,12 @@ export default function App() {
     noId: '',
     nextId: ''
   });
-  // New Guideline Reference Draft for Pathway
   const [newRefDraft, setNewRefDraft] = useState({
     title: '',
     source: 'NICE / NTSP Guidance',
     url: ''
   });
 
-  // 2. Admin Learning Module Builder State
   const [adminModuleId, setAdminModuleId] = useState(() => INITIAL_LEARNING_MODULES[0].id);
   const [showNewModuleModal, setShowNewModuleModal] = useState(false);
   const [newModuleForm, setNewModuleForm] = useState({
@@ -1336,7 +1295,7 @@ export default function App() {
       setLoginPasswordInput('');
       setLoginError('');
     } else {
-      setLoginError('Invalid email or passcode. Select one of the registered admin accounts below.');
+      setLoginError('Invalid email or passcode. Please check your credentials and try again.');
     }
   };
 
@@ -1496,7 +1455,7 @@ export default function App() {
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#F8FAFC] text-[#0F172A] font-sans antialiased">
-  <div id="app" class="max-w-3xl mx-auto px-4 py-8"></div>
+  <div id="app" class="max-w-7xl mx-auto px-4 py-8"></div>
   <script>
     const BUNDLE = ${JSON.stringify(currentDataBundle, null, 2)};
     const root = document.getElementById('app');
@@ -1509,8 +1468,7 @@ export default function App() {
             <p class="text-sm text-slate-500">Exported \${new Date(BUNDLE.exportedAt).toLocaleString('en-GB')} • \${BUNDLE.pathways.length} Pathways & \${BUNDLE.learningModules.length} Learning Modules included.</p>
           </div>
         </div>
-        <div class="space-y-3">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Included Clinical Pathways</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           \${BUNDLE.pathways.map(p => \`
             <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
               <div class="text-xs font-semibold text-emerald-700">\${p.badge}</div>
@@ -1535,7 +1493,6 @@ export default function App() {
     notifyCms('Downloaded index.html with your current pathways & modules!');
   };
 
-  // Filtered Core vs Extra Pathways
   const coreEmergencyPathways = useMemo(
     () => pathways.filter((p) => p.category !== 'extra'),
     [pathways]
@@ -1545,7 +1502,6 @@ export default function App() {
     [pathways]
   );
 
-  // Derived active pathway & node
   const activePathway = useMemo(
     () => pathways.find((p) => p.id === activePathwayId) || pathways[0],
     [pathways, activePathwayId]
@@ -1558,7 +1514,6 @@ export default function App() {
     [activePathway, currentNodeId]
   );
 
-  // Open a pathway from the Home or Extra Pathways screen
   const handleOpenPathway = (pathwayId) => {
     const target = pathways.find((p) => p.id === pathwayId);
     if (!target) return;
@@ -1598,7 +1553,6 @@ export default function App() {
     setCheckedItems((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Clean daylight clinical theme styles (supports green, red, blue, amber, slate)
   const getThemeStyles = (theme) => {
     if (theme === 'green') {
       return {
@@ -1646,7 +1600,7 @@ export default function App() {
   };
 
   // ==========================================
-  // ADMIN CMS: PATHWAY, NODE & GUIDELINE REFERENCE HANDLERS
+  // ADMIN CMS HANDLERS
   // ==========================================
   const adminPathway = useMemo(
     () => pathways.find((p) => p.id === adminPathwayId) || pathways[0],
@@ -1880,9 +1834,6 @@ export default function App() {
     if (editingNodeId === nodeId) resetAdminForm();
   };
 
-  // ==========================================
-  // ADMIN CMS: LEARNING MODULE & SECTION HANDLERS
-  // ==========================================
   const adminModule = useMemo(
     () => learningModules.find((m) => m.id === adminModuleId) || learningModules[0],
     [learningModules, adminModuleId]
@@ -2146,11 +2097,11 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900">
       {/* ==========================================
-          CLEAN, MINIMAL TOP NAVIGATION BAR
+          RESPONSIVE FULL-WIDTH NAVIGATION BAR
           ========================================== */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-          {/* Brand Logo (Clicking returns to On-Call Home) */}
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+          {/* Brand Logo */}
           <button
             onClick={() => {
               setAppMode('oncall');
@@ -2173,11 +2124,6 @@ export default function App() {
                       ? 'bg-emerald-50 text-emerald-700'
                       : 'bg-slate-100 text-slate-500'
                   }`}
-                  title={
-                    cloudStatus === 'synced'
-                      ? 'Live Cloud Sync Active across all devices'
-                      : 'Offline Ready Mode'
-                  }
                 >
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${
@@ -2190,18 +2136,16 @@ export default function App() {
                 </span>
               </div>
               <span className="text-[11px] font-medium text-slate-500 block mt-0.5">
-                On-Call Guide
+                Paediatric Tracheostomy Reference
               </span>
             </div>
           </button>
 
-          {/* Center Segmented Control: [ 🚨 On-Call ] | [ 📚 Learn ] */}
+          {/* Center Segmented Control */}
           <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/70">
             <button
-              onClick={() => {
-                setAppMode('oncall');
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+              onClick={() => setAppMode('oncall')}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                 appMode === 'oncall'
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
@@ -2212,10 +2156,8 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => {
-                setAppMode('learning');
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+              onClick={() => setAppMode('learning')}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                 appMode === 'learning'
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
@@ -2226,14 +2168,15 @@ export default function App() {
             </button>
           </div>
 
-          {/* Subtle Right Actions: Save App & Admin */}
-          <div className="flex items-center gap-1.5">
+          {/* Right Actions */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setShowPwaModal(true)}
-              className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition"
+              className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition flex items-center gap-1.5 text-xs font-medium"
               title="Save to Home Screen"
             >
               <Smartphone className="w-4 h-4" />
+              <span className="hidden md:inline">Save App</span>
             </button>
             <button
               onClick={() => {
@@ -2241,12 +2184,11 @@ export default function App() {
                 resetAdminForm();
                 resetSectionForm();
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                 appMode === 'admin'
                   ? 'bg-slate-900 text-white border-slate-900'
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
-              title="Multi-User Admin Login & Content Manager"
             >
               {isAdminAuthenticated ? (
                 <Unlock className="w-3.5 h-3.5 text-emerald-500" />
@@ -2262,46 +2204,67 @@ export default function App() {
       </header>
 
       {/* ==========================================
-          MAIN CONTENT AREA
+          MAIN CONTENT AREA (WIDER MAX-W-7XL ON DESKTOP, COMPACT ON MOBILE)
           ========================================== */}
-      <main className="max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 flex-1">
+      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1">
         {/* ==========================================
-            1A. ON-CALL HOME VIEW (CALM, UNCLUTTERED)
+            1A. ON-CALL HOME VIEW (3-COLUMN GRID ON DESKTOP, STACKED ON MOBILE)
             ========================================== */}
         {appMode === 'oncall' && !activePathwayId && onCallSubView === 'main' && (
-          <div className="space-y-10">
+          <div className="space-y-8 sm:space-y-10">
             {/* Calm Header */}
-            <div className="space-y-1.5">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-                Paediatric Tracheostomy Guide
-              </h1>
-              <p className="text-sm sm:text-base text-slate-500">
-                Select an emergency clinical pathway or open a quick roadside sizing tool.
-              </p>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200/80 pb-5">
+              <div className="space-y-1.5">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
+                  Paediatric Tracheostomy Guide
+                </h1>
+                <p className="text-sm sm:text-base text-slate-500">
+                  Select an emergency clinical pathway or open a roadside sizing tool.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveToolModal('calculator')}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold transition"
+                >
+                  <Calculator className="w-4 h-4 text-emerald-600" />
+                  <span>Quick Tube Sizer</span>
+                </button>
+                <button
+                  onClick={() => setActiveToolModal('checklist')}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-semibold transition"
+                >
+                  <ClipboardCheck className="w-4 h-4 text-sky-600" />
+                  <span>Go-Bag Checklist</span>
+                </button>
+              </div>
             </div>
 
-            {/* Core Emergency Pathway Cards */}
+            {/* Core Emergency Pathway Cards (1 col on phone, 3 cols on desktop) */}
             <div className="space-y-4">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Core Emergency Pathways
               </h2>
 
-              <div className="space-y-3.5">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
                 {coreEmergencyPathways.map((pathway) => {
                   const style = getThemeStyles(pathway.theme);
                   return (
                     <button
                       key={pathway.id}
                       onClick={() => handleOpenPathway(pathway.id)}
-                      className={`w-full text-left bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 group ${style.topBar} ${style.cardHover}`}
+                      className={`w-full text-left bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-5 group ${style.topBar} ${style.cardHover}`}
                     >
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between gap-2">
                           <span
                             className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${style.pill}`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
                             {pathway.badge}
+                          </span>
+                          <span className="text-[11px] font-medium text-slate-400">
+                            {pathway.nodes.length} steps
                           </span>
                         </div>
                         <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-slate-950">
@@ -2312,25 +2275,33 @@ export default function App() {
                         </p>
                       </div>
 
-                      <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-700 shrink-0 transition">
-                        <ChevronRight className="w-5 h-5" />
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between w-full text-xs font-semibold text-slate-600 group-hover:text-slate-900">
+                        <span>Open Interactive Pathway</span>
+                        <div className="w-8 h-8 rounded-full bg-slate-50 group-hover:bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-700 transition">
+                          <ChevronRight className="w-4 h-4" />
+                        </div>
                       </div>
                     </button>
                   );
                 })}
               </div>
+            </div>
 
-              {/* Clean Button/Card Leading to Extra Pathways & Routine Care */}
-              <div className="pt-2">
+            {/* Bottom Row on Desktop: Extra Pathways + Roadside Tools Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pt-2">
+              <div className="lg:col-span-5 space-y-3">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Secondary & Routine Care
+                </h2>
                 <button
                   onClick={() => {
                     setOnCallSubView('extra');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="w-full text-left bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all flex items-center justify-between gap-4 group"
+                  className="w-full h-[calc(100%-1.75rem)] text-left bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all flex items-center justify-between gap-4 group"
                 >
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-600 flex items-center justify-center shrink-0">
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
                       <Layers className="w-5 h-5" />
                     </div>
                     <div>
@@ -2342,8 +2313,8 @@ export default function App() {
                           {extraRoutinePathways.length} available
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                        Routine suctioning, humidification, post-decannulation & custom pathways
+                      <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
+                        Routine suctioning, humidification, post-decannulation monitoring & custom pathways
                       </p>
                     </div>
                   </div>
@@ -2352,54 +2323,52 @@ export default function App() {
                   </div>
                 </button>
               </div>
-            </div>
 
-            {/* Clean "Quick Roadside Tools" Section */}
-            <div className="space-y-3.5">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Quick Roadside Tools
-              </h2>
+              <div className="lg:col-span-7 space-y-3">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Quick Roadside Tools
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-[calc(100%-1.75rem)]">
+                  <button
+                    onClick={() => setActiveToolModal('calculator')}
+                    className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex items-center justify-between text-left group"
+                  >
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200/60 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                        <Calculator className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900 text-base">
+                          Suction & Tube Sizer
+                        </div>
+                        <div className="text-xs sm:text-sm text-slate-500 mt-1">
+                          Catheter Fr, safe depth (cm) & 0.5mm downsize tube
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-700 shrink-0" />
+                  </button>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <button
-                  onClick={() => setActiveToolModal('calculator')}
-                  className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex items-center justify-between text-left group"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                      <Calculator className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-900 text-sm sm:text-base">
-                        Suction & Tube Sizer
+                  <button
+                    onClick={() => setActiveToolModal('checklist')}
+                    className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex items-center justify-between text-left group"
+                  >
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-11 h-11 rounded-xl bg-sky-50 border border-sky-200/60 text-sky-600 flex items-center justify-center shrink-0 mt-0.5">
+                        <ClipboardCheck className="w-5 h-5" />
                       </div>
-                      <div className="text-xs text-slate-500 mt-0.5">
-                        Catheter Fr, safe depth & downsize
-                      </div>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700" />
-                </button>
-
-                <button
-                  onClick={() => setActiveToolModal('checklist')}
-                  className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex items-center justify-between text-left group"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-                      <ClipboardCheck className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-900 text-sm sm:text-base">
-                        Go-Bag Checklist
-                      </div>
-                      <div className="text-xs text-slate-500 mt-0.5">
-                        Verify essential bedside equipment
+                      <div>
+                        <div className="font-bold text-slate-900 text-base">
+                          Go-Bag Checklist
+                        </div>
+                        <div className="text-xs sm:text-sm text-slate-500 mt-1">
+                          Verify essential bedside equipment before transport
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700" />
-                </button>
+                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-700 shrink-0" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -2421,15 +2390,15 @@ export default function App() {
             </div>
 
             <div className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
                 Extra Pathways & Routine Care
               </h1>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm sm:text-base text-slate-500">
                 Secondary clinical pathways for routine suctioning, humidification, and post-decannulation transport.
               </p>
             </div>
 
-            <div className="space-y-3.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
               {extraRoutinePathways.map((pathway) => {
                 const style = getThemeStyles(pathway.theme);
                 return (
@@ -2461,11 +2430,11 @@ export default function App() {
         )}
 
         {/* ==========================================
-            1C. ACTIVE PATHWAY VIEW (INTERACTIVE STEP-BY-STEP OR FULL FLOWCHART + MINIMAL NICE REFERENCES)
+            1C. ACTIVE PATHWAY VIEW (SIDE-BY-SIDE TOOLS & OUTLINE ON DESKTOP, SINGLE CARD ON MOBILE)
             ========================================== */}
         {appMode === 'oncall' && activePathwayId && (
           <div className="space-y-5">
-            {/* Top Bar: Back Button + View Toggle + Optional CPR Timer */}
+            {/* Top Bar */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <button
                 onClick={() => setActivePathwayId(null)}
@@ -2563,7 +2532,7 @@ export default function App() {
                 >
                   {activePathway.badge}
                 </span>
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 mt-1">
                   {activePathway.title}
                 </h1>
               </div>
@@ -2588,214 +2557,299 @@ export default function App() {
               )}
             </div>
 
-            {/* VIEW 1: INTERACTIVE STEP-BY-STEP CARD */}
+            {/* DESKTOP 2-COLUMN LAYOUT FOR INTERACTIVE STEP-BY-STEP */}
             {pathwayViewMode === 'interactive' && currentNode && (
-              <div
-                className={`bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6 ${
-                  getThemeStyles(activePathway.theme).topBar
-                }`}
-              >
-                <div className="space-y-2">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Step {nodeHistory.length}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Main Interactive Decision Card (8 cols on desktop, full width on mobile) */}
+                <div
+                  className={`lg:col-span-8 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6 ${
+                    getThemeStyles(activePathway.theme).topBar
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Step {nodeHistory.length}
+                    </div>
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 leading-snug">
+                      {cleanStepTitle(currentNode.title)}
+                    </h2>
+                    {currentNode.subtitle && (
+                      <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+                        {currentNode.subtitle}
+                      </p>
+                    )}
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">
-                    {cleanStepTitle(currentNode.title)}
-                  </h2>
-                  {currentNode.subtitle && (
-                    <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-                      {currentNode.subtitle}
-                    </p>
+
+                  {currentNode.criticalNote && (
+                    <div className="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 flex items-start gap-3">
+                      <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <p className="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium">
+                        {currentNode.criticalNote}
+                      </p>
+                    </div>
                   )}
+
+                  {currentNode.checklist && currentNode.checklist.length > 0 && (
+                    <div className="space-y-2.5">
+                      <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        Action Checklist (Tap to tick)
+                      </div>
+                      <div className="space-y-2">
+                        {currentNode.checklist.map((item, idx) => {
+                          const isChecked = !!checkedItems[`${currentNode.id}-${idx}`];
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => toggleChecklistItem(currentNode.id, idx)}
+                              className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition flex items-start gap-3.5 ${
+                                isChecked
+                                  ? 'bg-emerald-50/50 border-emerald-200 text-slate-400'
+                                  : 'bg-[#F8FAFC] border-slate-200/90 hover:border-slate-300 text-slate-800'
+                              }`}
+                            >
+                              <div
+                                className={`w-5 h-5 rounded-md flex items-center justify-center mt-0.5 shrink-0 border transition ${
+                                  isChecked
+                                    ? 'bg-emerald-600 border-emerald-600 text-white'
+                                    : 'bg-white border-slate-300'
+                                }`}
+                              >
+                                {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                              </div>
+                              <span
+                                className={`text-sm sm:text-base leading-snug ${
+                                  isChecked ? 'line-through' : 'font-medium'
+                                }`}
+                              >
+                                {item}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-slate-100 space-y-4">
+                    {currentNode.question && (
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                        {currentNode.question}
+                      </h3>
+                    )}
+
+                    {currentNode.yesId && currentNode.noId && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button
+                          onClick={() => handleSelectDecision(currentNode.yesId)}
+                          className="w-full py-4 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm sm:text-base shadow-sm transition flex items-center justify-between"
+                        >
+                          <span>{currentNode.yesLabel || 'Yes'}</span>
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+
+                        <button
+                          onClick={() => handleSelectDecision(currentNode.noId)}
+                          className="w-full py-4 px-5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm sm:text-base shadow-sm transition flex items-center justify-between"
+                        >
+                          <span>{currentNode.noLabel || 'No'}</span>
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
+
+                    {currentNode.nextId && !currentNode.yesId && (
+                      <button
+                        onClick={() => handleSelectDecision(currentNode.nextId)}
+                        className={`w-full py-4 px-6 rounded-2xl font-semibold text-sm sm:text-base shadow-sm transition flex items-center justify-center gap-2 ${
+                          getThemeStyles(activePathway.theme).primaryBtn
+                        }`}
+                      >
+                        <span>Continue to Next Step</span>
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    )}
+
+                    {!currentNode.yesId && !currentNode.noId && !currentNode.nextId && (
+                      <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 text-emerald-900 text-sm font-semibold">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                          <span>End of clinical pathway reached.</span>
+                        </div>
+                        <button
+                          onClick={handleRestartPathway}
+                          className="px-4 py-2 rounded-xl bg-white border border-emerald-300 text-emerald-800 text-xs font-semibold hover:bg-emerald-100"
+                        >
+                          Restart Pathway
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {currentNode.criticalNote && (
-                  <div className="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 flex items-start gap-3">
-                    <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium">
-                      {currentNode.criticalNote}
-                    </p>
-                  </div>
-                )}
-
-                {currentNode.checklist && currentNode.checklist.length > 0 && (
-                  <div className="space-y-2.5">
-                    <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      Action Checklist (Tap to tick)
+                {/* Desktop Right Sidebar (Hidden on mobile so phones stay clean, visible on lg+ screens) */}
+                <div className="hidden lg:block lg:col-span-4 space-y-5 sticky top-24">
+                  {/* Live Pathway Map Outline */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Pathway Progress Map
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-500">
+                        {activePathway.nodes.length} steps
+                      </span>
                     </div>
-                    <div className="space-y-2">
-                      {currentNode.checklist.map((item, idx) => {
-                        const isChecked = !!checkedItems[`${currentNode.id}-${idx}`];
+                    <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                      {activePathway.nodes.map((n) => {
+                        const isCurrent = n.id === currentNodeId;
+                        const wasVisited = nodeHistory.includes(n.id);
                         return (
                           <button
-                            key={idx}
-                            onClick={() => toggleChecklistItem(currentNode.id, idx)}
-                            className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition flex items-start gap-3.5 ${
-                              isChecked
-                                ? 'bg-emerald-50/50 border-emerald-200 text-slate-400'
-                                : 'bg-[#F8FAFC] border-slate-200/90 hover:border-slate-300 text-slate-800'
+                            key={n.id}
+                            onClick={() => {
+                              setCurrentNodeId(n.id);
+                              setNodeHistory((prev) => [...prev, n.id]);
+                            }}
+                            className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition flex items-center justify-between gap-2 ${
+                              isCurrent
+                                ? 'bg-emerald-600 text-white font-semibold shadow-2xs'
+                                : wasVisited
+                                ? 'bg-emerald-50/70 text-emerald-900 hover:bg-emerald-100/70'
+                                : 'text-slate-600 hover:bg-slate-100'
                             }`}
                           >
-                            <div
-                              className={`w-5 h-5 rounded-md flex items-center justify-center mt-0.5 shrink-0 border transition ${
-                                isChecked
-                                  ? 'bg-emerald-600 border-emerald-600 text-white'
-                                  : 'bg-white border-slate-300'
-                              }`}
-                            >
-                              {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                            </div>
-                            <span
-                              className={`text-sm sm:text-base leading-snug ${
-                                isChecked ? 'line-through' : 'font-medium'
-                              }`}
-                            >
-                              {item}
-                            </span>
+                            <span className="truncate">{cleanStepTitle(n.title)}</span>
+                            {isCurrent && <ChevronRight className="w-3.5 h-3.5 shrink-0" />}
                           </button>
                         );
                       })}
                     </div>
                   </div>
-                )}
 
-                <div className="pt-4 border-t border-slate-100 space-y-4">
-                  {currentNode.question && (
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                      {currentNode.question}
-                    </h3>
-                  )}
-
-                  {currentNode.yesId && currentNode.noId && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <button
-                        onClick={() => handleSelectDecision(currentNode.yesId)}
-                        className="w-full py-4 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm sm:text-base shadow-sm transition flex items-center justify-between"
-                      >
-                        <span>{currentNode.yesLabel || 'Yes'}</span>
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
-
-                      <button
-                        onClick={() => handleSelectDecision(currentNode.noId)}
-                        className="w-full py-4 px-5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm sm:text-base shadow-sm transition flex items-center justify-between"
-                      >
-                        <span>{currentNode.noLabel || 'No'}</span>
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
-                    </div>
-                  )}
-
-                  {currentNode.nextId && !currentNode.yesId && (
-                    <button
-                      onClick={() => handleSelectDecision(currentNode.nextId)}
-                      className={`w-full py-4 px-6 rounded-2xl font-semibold text-sm sm:text-base shadow-sm transition flex items-center justify-center gap-2 ${
-                        getThemeStyles(activePathway.theme).primaryBtn
-                      }`}
-                    >
-                      <span>Continue to Next Step</span>
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  )}
-
-                  {!currentNode.yesId && !currentNode.noId && !currentNode.nextId && (
-                    <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5 text-emerald-900 text-sm font-semibold">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                        <span>End of clinical pathway reached.</span>
+                  {/* Quick Desktop Inline Suction & Tube Sizer Widget */}
+                  <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3.5">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <Calculator className="w-4 h-4 text-emerald-600" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                          Quick Tube Sizer
+                        </span>
                       </div>
-                      <button
-                        onClick={handleRestartPathway}
-                        className="px-4 py-2 rounded-xl bg-white border border-emerald-300 text-emerald-800 text-xs font-semibold hover:bg-emerald-100"
-                      >
-                        Restart Pathway
-                      </button>
+                      <span className="text-[11px] text-slate-400">ID × 2 = Fr</span>
                     </div>
-                  )}
+
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {SUCTION_SIZING_TABLE.map((row) => (
+                        <button
+                          key={row.id}
+                          onClick={() => setSelectedTubeIdSize(row.id)}
+                          className={`py-1.5 px-1 rounded-lg text-[11px] font-bold border transition ${
+                            selectedTubeIdSize === row.id
+                              ? 'bg-emerald-600 text-white border-emerald-600'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {row.id}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200">
+                        <div className="text-[10px] font-semibold text-emerald-800">Catheter</div>
+                        <div className="text-sm font-bold text-emerald-950 mt-0.5">
+                          {currentSizingRow.catFr}
+                        </div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-sky-50/80 border border-sky-200">
+                        <div className="text-[10px] font-semibold text-sky-800">Safe Depth</div>
+                        <div className="text-xs font-bold text-sky-950 mt-0.5">
+                          {currentSizingRow.depthCm}
+                        </div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200">
+                        <div className="text-[10px] font-semibold text-amber-800">Downsize</div>
+                        <div className="text-sm font-bold text-amber-950 mt-0.5">
+                          {currentSizingRow.downsize}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* VIEW 2: FULL FLOWCHART OVERVIEW */}
+            {/* VIEW 2: FULL FLOWCHART OVERVIEW (2-Column Grid on Desktop, Vertical Timeline on Mobile) */}
             {pathwayViewMode === 'overview' && (
               <div className="space-y-3">
                 <p className="text-xs text-slate-500 px-1">
                   Tap any step card below to inspect its full checklist or jump directly to that step.
                 </p>
 
-                <div className="relative space-y-3 before:absolute before:left-6 before:top-4 before:bottom-4 before:w-0.5 before:bg-slate-200">
-                  {activePathway.nodes.map((node) => {
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {activePathway.nodes.map((node, index) => {
                     const isCurrent = node.id === currentNodeId;
                     const yesTarget = activePathway.nodes.find((n) => n.id === node.yesId);
                     const noTarget = activePathway.nodes.find((n) => n.id === node.noId);
                     const nextTarget = activePathway.nodes.find((n) => n.id === node.nextId);
 
                     return (
-                      <div key={node.id} className="relative pl-12">
-                        <div
-                          className={`absolute left-[19px] top-6 w-3 h-3 rounded-full border-2 ${
-                            isCurrent
-                              ? 'bg-emerald-600 border-emerald-200 ring-4 ring-emerald-100'
-                              : 'bg-white border-slate-400'
-                          }`}
-                        />
-
-                        <button
-                          onClick={() => setFlowchartInspectNode(node)}
-                          className={`w-full text-left bg-white rounded-2xl p-4 sm:p-5 border transition shadow-2xs hover:shadow-md ${
-                            isCurrent
-                              ? 'border-emerald-500 ring-1 ring-emerald-500/30'
-                              : 'border-slate-200/90 hover:border-slate-300'
-                          }`}
-                        >
+                      <button
+                        key={node.id}
+                        onClick={() => setFlowchartInspectNode(node)}
+                        className={`w-full text-left bg-white rounded-2xl p-5 border transition shadow-2xs hover:shadow-md flex flex-col justify-between ${
+                          isCurrent
+                            ? 'border-emerald-500 ring-2 ring-emerald-500/20'
+                            : 'border-slate-200/90 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="space-y-1.5">
                           <div className="flex items-start justify-between gap-3">
-                            <div className="space-y-1">
-                              <h3 className="text-base font-bold text-slate-900">
-                                {cleanStepTitle(node.title)}
-                              </h3>
-                              {node.subtitle && (
-                                <p className="text-xs sm:text-sm text-slate-500">
-                                  {node.subtitle}
-                                </p>
-                              )}
-                            </div>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                              Step {index + 1}
+                            </span>
                             {isCurrent && (
                               <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                                Current
+                                Current Step
                               </span>
                             )}
                           </div>
-
-                          {(yesTarget || noTarget || nextTarget) && (
-                            <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap gap-2 text-xs">
-                              {yesTarget && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-medium">
-                                  Yes → {cleanStepTitle(yesTarget.title)}
-                                </span>
-                              )}
-                              {noTarget && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-800 font-medium">
-                                  No → {cleanStepTitle(noTarget.title)}
-                                </span>
-                              )}
-                              {nextTarget && !yesTarget && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-medium">
-                                  Next → {cleanStepTitle(nextTarget.title)}
-                                </span>
-                              )}
-                            </div>
+                          <h3 className="text-base font-bold text-slate-900">
+                            {cleanStepTitle(node.title)}
+                          </h3>
+                          {node.subtitle && (
+                            <p className="text-xs sm:text-sm text-slate-500">
+                              {node.subtitle}
+                            </p>
                           )}
-                        </button>
-                      </div>
+                        </div>
+
+                        {(yesTarget || noTarget || nextTarget) && (
+                          <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-2 text-xs">
+                            {yesTarget && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-medium">
+                                Yes → {cleanStepTitle(yesTarget.title)}
+                              </span>
+                            )}
+                            {noTarget && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-800 font-medium">
+                                No → {cleanStepTitle(noTarget.title)}
+                              </span>
+                            )}
+                            {nextTarget && !yesTarget && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-medium">
+                                Next → {cleanStepTitle(nextTarget.title)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </button>
                     );
                   })}
                 </div>
               </div>
             )}
 
-            {/* ==========================================
-                MINIMALIST COLLAPSIBLE NICE / NTSP / JRCALC GUIDELINE DRAWER AT BOTTOM OF PATHWAY
-                ========================================== */}
+            {/* Minimalist Collapsible NICE / NTSP Guideline Drawer at Bottom */}
             <div className="pt-2">
               <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden">
                 <button
@@ -2819,7 +2873,7 @@ export default function App() {
                 </button>
 
                 {showPathwayRefs && (
-                  <div className="px-4 pb-3.5 pt-1 border-t border-slate-100 space-y-2 bg-slate-50/50">
+                  <div className="px-4 pb-3.5 pt-2 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-2 bg-slate-50/50">
                     {(activePathway.references || []).length === 0 ? (
                       <p className="text-xs text-slate-400 py-1">
                         No external guideline links attached to this pathway yet.
@@ -2853,27 +2907,27 @@ export default function App() {
         )}
 
         {/* ==========================================
-            2. LEARNING MODULES MODE (MULTI-SECTION + LOCKED QUIZ UNTIL COMPLETED)
+            2. LEARNING MODULES MODE (3-COL GRID ON DESKTOP + SIDEBAR TOC WHEN READING)
             ========================================== */}
         {appMode === 'learning' && (
           <div className="space-y-6">
             {!activeModule ? (
               <>
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200/80 pb-5">
                   <div className="space-y-1">
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
                       Learning Modules
                     </h1>
                     <p className="text-sm sm:text-base text-slate-500">
                       Multi-section clinical guides with diagrams, videos, and end-of-module self-assessment.
                     </p>
                   </div>
-                  <div className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 shrink-0">
-                    {completedModules.length} / {learningModules.length} Completed
+                  <div className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 shrink-0 self-start sm:self-auto">
+                    {completedModules.length} / {learningModules.length} Modules Completed
                   </div>
                 </div>
 
-                <div className="space-y-3.5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {learningModules.map((mod) => {
                     const isDone = completedModules.includes(mod.id);
                     return (
@@ -2885,18 +2939,14 @@ export default function App() {
                           setQuizUnlocked(false);
                           setQuizAnswers({});
                           setQuizSubmitted(false);
-                          setPlayingVideoId(null);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className="w-full text-left bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition flex items-center justify-between gap-4 group"
+                        className="w-full text-left bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between gap-5 group"
                       >
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2 flex-wrap">
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
                             <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                               {mod.category}
-                            </span>
-                            <span className="text-xs text-slate-400 font-medium">
-                              {mod.duration} • {(mod.sections || []).length} sections
                             </span>
                             {isDone && (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
@@ -2904,21 +2954,27 @@ export default function App() {
                               </span>
                             )}
                           </div>
-                          <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition">
+                          <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition">
                             {mod.title}
                           </h3>
                           <p className="text-sm text-slate-500 leading-relaxed">
                             {mod.summary}
                           </p>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-700 shrink-0" />
+
+                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between w-full text-xs text-slate-500 font-medium">
+                          <span>
+                            {mod.duration} • {(mod.sections || []).length} sections
+                          </span>
+                          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700" />
+                        </div>
                       </button>
                     );
                   })}
                 </div>
               </>
             ) : (
-              /* Active Multi-Section Learning Module View */
+              /* Active Multi-Section Learning Module View with Desktop Sidebar */
               <div className="space-y-6">
                 <div className="flex items-center justify-between gap-2">
                   <button
@@ -2934,7 +2990,7 @@ export default function App() {
                   </span>
                 </div>
 
-                {/* Progress Bar across sections */}
+                {/* Progress Bar */}
                 <div className="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden">
                   <div
                     className="bg-emerald-600 h-full transition-all duration-300"
@@ -2958,251 +3014,299 @@ export default function App() {
                   </h1>
                 </div>
 
-                {/* Current Section Card (When not in Quiz view) */}
-                {!quizUnlocked && activeModule.sections[activeSectionIndex] && (
-                  <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
-                    {(() => {
-                      const sec = activeModule.sections[activeSectionIndex];
-                      return (
-                        <>
-                          <div className="space-y-3">
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
-                              Section {activeSectionIndex + 1}
-                            </div>
-                            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-                              {sec.heading}
-                            </h2>
-                            <p className="text-sm sm:text-base text-slate-600 leading-relaxed whitespace-pre-line">
-                              {sec.body}
-                            </p>
-                          </div>
-
-                          {sec.pearl && (
-                            <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs sm:text-sm text-emerald-950 font-medium">
-                              <strong>Clinical Takeaway:</strong> {sec.pearl}
-                            </div>
-                          )}
-
-                          {/* Section Photos & Diagrams */}
-                          {sec.images && sec.images.length > 0 && (
-                            <div className="space-y-3 pt-2">
-                              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                Clinical Diagrams & Photos
-                              </h3>
-                              <div className="grid grid-cols-1 gap-4">
-                                {sec.images.map((img) => (
-                                  <div
-                                    key={img.id}
-                                    className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50"
-                                  >
-                                    <img
-                                      src={img.url}
-                                      alt={img.title}
-                                      className="w-full h-52 sm:h-64 object-cover"
-                                    />
-                                    <div className="p-3.5">
-                                      <div className="font-bold text-xs sm:text-sm text-slate-900">
-                                        {img.title}
-                                      </div>
-                                      {img.caption && (
-                                        <p className="text-xs text-slate-500 mt-0.5">
-                                          {img.caption}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Section Videos */}
-                          {sec.videos && sec.videos.length > 0 && (
-                            <div className="space-y-3 pt-2">
-                              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                Clinical Video Walkthroughs
-                              </h3>
-                              <div className="space-y-3">
-                                {sec.videos.map((vid) => (
-                                  <div
-                                    key={vid.id}
-                                    className="p-4 rounded-2xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
-                                  >
-                                    <div className="space-y-1">
-                                      <div className="flex items-center gap-2">
-                                        <Video className="w-4 h-4 text-emerald-600 shrink-0" />
-                                        <span className="font-bold text-sm text-slate-900">
-                                          {vid.title}
-                                        </span>
-                                        <span className="text-xs px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600">
-                                          {vid.duration}
-                                        </span>
-                                      </div>
-                                      {vid.description && (
-                                        <p className="text-xs text-slate-500">
-                                          {vid.description}
-                                        </p>
-                                      )}
-                                    </div>
-                                    <a
-                                      href={vid.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shrink-0"
-                                    >
-                                      <Play className="w-3.5 h-3.5" />
-                                      <span>Watch Video</span>
-                                    </a>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Section Navigation Controls + Unlock Quiz on Final Section */}
-                          <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-                            <button
-                              disabled={activeSectionIndex === 0}
-                              onClick={() => {
-                                setActiveSectionIndex((i) => Math.max(0, i - 1));
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                              }}
-                              className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-1.5"
-                            >
-                              <ChevronLeft className="w-4 h-4" />
-                              <span>Previous Section</span>
-                            </button>
-
-                            {activeSectionIndex < activeModule.sections.length - 1 ? (
-                              <button
-                                onClick={() => {
-                                  setActiveSectionIndex((i) => i + 1);
-                                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }}
-                                className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5"
-                              >
-                                <span>Next Section</span>
-                                <ChevronRight className="w-4 h-4" />
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setQuizUnlocked(true);
-                                  markModuleCompletedInCloud(activeModule.id);
-                                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }}
-                                className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-2"
-                              >
-                                <Sparkles className="w-4 h-4" />
-                                <span>Finished Reading — Unlock Knowledge Quiz</span>
-                              </button>
-                            )}
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                )}
-
-                {/* Unlocked Self-Assessment Quiz View */}
-                {quizUnlocked && (
-                  <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                      <div>
-                        <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
-                          Self-Assessment Unlocked
-                        </span>
-                        <h2 className="text-xl font-bold text-slate-900 mt-0.5">
-                          Knowledge Check: {activeModule.title}
-                        </h2>
-                      </div>
-                      <button
-                        onClick={() => setQuizUnlocked(false)}
-                        className="text-xs font-semibold text-slate-500 hover:text-slate-900"
-                      >
-                        Review Sections
-                      </button>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* Desktop Left Table of Contents Sidebar */}
+                  <div className="hidden lg:block lg:col-span-4 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3 sticky top-24">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2.5">
+                      Module Sections
                     </div>
-
-                    {activeModule.quiz.length === 0 ? (
-                      <p className="text-sm text-slate-500">
-                        Module marked as completed! No quiz questions are attached to this module.
-                      </p>
-                    ) : (
-                      <div className="space-y-6">
-                        {activeModule.quiz.map((qItem, qIdx) => (
-                          <div key={qIdx} className="space-y-3">
-                            <div className="font-bold text-sm sm:text-base text-slate-900">
-                              {qIdx + 1}. {qItem.q}
-                            </div>
-                            <div className="space-y-2">
-                              {qItem.options.map((opt, optIdx) => {
-                                const selected = quizAnswers[qIdx] === optIdx;
-                                const isCorrect = qItem.correct === optIdx;
-                                let btnStyle =
-                                  'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100';
-                                if (selected) {
-                                  btnStyle =
-                                    'bg-slate-900 border-slate-900 text-white font-semibold';
-                                }
-                                if (quizSubmitted) {
-                                  if (isCorrect) {
-                                    btnStyle =
-                                      'bg-emerald-50 border-emerald-400 text-emerald-950 font-semibold';
-                                  } else if (selected && !isCorrect) {
-                                    btnStyle =
-                                      'bg-rose-50 border-rose-300 text-rose-900';
-                                  }
-                                }
-                                return (
-                                  <button
-                                    key={optIdx}
-                                    disabled={quizSubmitted}
-                                    onClick={() =>
-                                      setQuizAnswers((prev) => ({ ...prev, [qIdx]: optIdx }))
-                                    }
-                                    className={`w-full text-left p-3.5 rounded-xl border text-xs sm:text-sm transition flex items-center justify-between ${btnStyle}`}
-                                  >
-                                    <span>{opt}</span>
-                                    {quizSubmitted && isCorrect && (
-                                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                            {quizSubmitted && qItem.explanation && (
-                              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
-                                <strong>Explanation:</strong> {qItem.explanation}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-
-                        <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                          {quizSubmitted ? (
-                            <button
-                              onClick={() => {
-                                setQuizSubmitted(false);
-                                setQuizAnswers({});
-                              }}
-                              className="px-4 py-2.5 rounded-xl bg-slate-100 text-xs sm:text-sm font-semibold text-slate-700"
-                            >
-                              Retry Quiz
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => setQuizSubmitted(true)}
-                              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold"
-                            >
-                              Check Answers
-                            </button>
+                    <div className="space-y-1.5">
+                      {activeModule.sections.map((s, idx) => (
+                        <button
+                          key={s.id || idx}
+                          onClick={() => {
+                            setQuizUnlocked(false);
+                            setActiveSectionIndex(idx);
+                          }}
+                          className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-between gap-2 ${
+                            !quizUnlocked && activeSectionIndex === idx
+                              ? 'bg-slate-900 text-white font-semibold'
+                              : 'text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span className="truncate">
+                            {idx + 1}. {s.heading}
+                          </span>
+                          {!quizUnlocked && activeSectionIndex === idx && (
+                            <ChevronRight className="w-3.5 h-3.5 shrink-0" />
                           )}
+                        </button>
+                      ))}
+
+                      <div className="pt-2 border-t border-slate-100">
+                        <button
+                          disabled={!quizUnlocked && activeSectionIndex < activeModule.sections.length - 1}
+                          onClick={() => {
+                            setQuizUnlocked(true);
+                            markModuleCompletedInCloud(activeModule.id);
+                          }}
+                          className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold transition flex items-center justify-between ${
+                            quizUnlocked
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-slate-50 text-slate-400 disabled:opacity-60'
+                          }`}
+                        >
+                          <span>Knowledge Check Quiz</span>
+                          <Sparkles className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Main Reader / Quiz Area (8 cols on desktop) */}
+                  <div className="lg:col-span-8">
+                    {!quizUnlocked && activeModule.sections[activeSectionIndex] && (
+                      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
+                        {(() => {
+                          const sec = activeModule.sections[activeSectionIndex];
+                          return (
+                            <>
+                              <div className="space-y-3">
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+                                  Section {activeSectionIndex + 1}
+                                </div>
+                                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                                  {sec.heading}
+                                </h2>
+                                <p className="text-sm sm:text-base text-slate-600 leading-relaxed whitespace-pre-line">
+                                  {sec.body}
+                                </p>
+                              </div>
+
+                              {sec.pearl && (
+                                <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs sm:text-sm text-emerald-950 font-medium">
+                                  <strong>Clinical Takeaway:</strong> {sec.pearl}
+                                </div>
+                              )}
+
+                              {sec.images && sec.images.length > 0 && (
+                                <div className="space-y-3 pt-2">
+                                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                    Clinical Diagrams & Photos
+                                  </h3>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {sec.images.map((img) => (
+                                      <div
+                                        key={img.id}
+                                        className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50"
+                                      >
+                                        <img
+                                          src={img.url}
+                                          alt={img.title}
+                                          className="w-full h-56 object-cover"
+                                        />
+                                        <div className="p-3.5">
+                                          <div className="font-bold text-xs sm:text-sm text-slate-900">
+                                            {img.title}
+                                          </div>
+                                          {img.caption && (
+                                            <p className="text-xs text-slate-500 mt-0.5">
+                                              {img.caption}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {sec.videos && sec.videos.length > 0 && (
+                                <div className="space-y-3 pt-2">
+                                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                    Clinical Video Walkthroughs
+                                  </h3>
+                                  <div className="space-y-3">
+                                    {sec.videos.map((vid) => (
+                                      <div
+                                        key={vid.id}
+                                        className="p-4 rounded-2xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                                      >
+                                        <div className="space-y-1">
+                                          <div className="flex items-center gap-2">
+                                            <Video className="w-4 h-4 text-emerald-600 shrink-0" />
+                                            <span className="font-bold text-sm text-slate-900">
+                                              {vid.title}
+                                            </span>
+                                            <span className="text-xs px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600">
+                                              {vid.duration}
+                                            </span>
+                                          </div>
+                                          {vid.description && (
+                                            <p className="text-xs text-slate-500">
+                                              {vid.description}
+                                            </p>
+                                          )}
+                                        </div>
+                                        <a
+                                          href={vid.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shrink-0"
+                                        >
+                                          <Play className="w-3.5 h-3.5" />
+                                          <span>Watch Video</span>
+                                        </a>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                                <button
+                                  disabled={activeSectionIndex === 0}
+                                  onClick={() => {
+                                    setActiveSectionIndex((i) => Math.max(0, i - 1));
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-1.5"
+                                >
+                                  <ChevronLeft className="w-4 h-4" />
+                                  <span>Previous Section</span>
+                                </button>
+
+                                {activeSectionIndex < activeModule.sections.length - 1 ? (
+                                  <button
+                                    onClick={() => {
+                                      setActiveSectionIndex((i) => i + 1);
+                                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }}
+                                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5"
+                                  >
+                                    <span>Next Section</span>
+                                    <ChevronRight className="w-4 h-4" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setQuizUnlocked(true);
+                                      markModuleCompletedInCloud(activeModule.id);
+                                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }}
+                                    className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-2"
+                                  >
+                                    <Sparkles className="w-4 h-4" />
+                                    <span>Finished Reading — Unlock Knowledge Quiz</span>
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {quizUnlocked && (
+                      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                          <div>
+                            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
+                              Self-Assessment Unlocked
+                            </span>
+                            <h2 className="text-xl font-bold text-slate-900 mt-0.5">
+                              Knowledge Check: {activeModule.title}
+                            </h2>
+                          </div>
+                          <button
+                            onClick={() => setQuizUnlocked(false)}
+                            className="text-xs font-semibold text-slate-500 hover:text-slate-900"
+                          >
+                            Review Sections
+                          </button>
                         </div>
+
+                        {activeModule.quiz.length === 0 ? (
+                          <p className="text-sm text-slate-500">
+                            Module marked as completed! No quiz questions are attached to this module.
+                          </p>
+                        ) : (
+                          <div className="space-y-6">
+                            {activeModule.quiz.map((qItem, qIdx) => (
+                              <div key={qIdx} className="space-y-3">
+                                <div className="font-bold text-sm sm:text-base text-slate-900">
+                                  {qIdx + 1}. {qItem.q}
+                                </div>
+                                <div className="space-y-2">
+                                  {qItem.options.map((opt, optIdx) => {
+                                    const selected = quizAnswers[qIdx] === optIdx;
+                                    const isCorrect = qItem.correct === optIdx;
+                                    let btnStyle =
+                                      'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100';
+                                    if (selected) {
+                                      btnStyle =
+                                        'bg-slate-900 border-slate-900 text-white font-semibold';
+                                    }
+                                    if (quizSubmitted) {
+                                      if (isCorrect) {
+                                        btnStyle =
+                                          'bg-emerald-50 border-emerald-400 text-emerald-950 font-semibold';
+                                      } else if (selected && !isCorrect) {
+                                        btnStyle =
+                                          'bg-rose-50 border-rose-300 text-rose-900';
+                                      }
+                                    }
+                                    return (
+                                      <button
+                                        key={optIdx}
+                                        disabled={quizSubmitted}
+                                        onClick={() =>
+                                          setQuizAnswers((prev) => ({ ...prev, [qIdx]: optIdx }))
+                                        }
+                                        className={`w-full text-left p-3.5 rounded-xl border text-xs sm:text-sm transition flex items-center justify-between ${btnStyle}`}
+                                      >
+                                        <span>{opt}</span>
+                                        {quizSubmitted && isCorrect && (
+                                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                {quizSubmitted && qItem.explanation && (
+                                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
+                                    <strong>Explanation:</strong> {qItem.explanation}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+
+                            <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                              {quizSubmitted ? (
+                                <button
+                                  onClick={() => {
+                                    setQuizSubmitted(false);
+                                    setQuizAnswers({});
+                                  }}
+                                  className="px-4 py-2.5 rounded-xl bg-slate-100 text-xs sm:text-sm font-semibold text-slate-700"
+                                >
+                                  Retry Quiz
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => setQuizSubmitted(true)}
+                                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold"
+                                >
+                                  Check Answers
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
+                </div>
               </div>
             )}
           </div>
@@ -3216,14 +3320,14 @@ export default function App() {
             <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-slate-900 text-white flex items-center justify-center shrink-0">
-                  <Users className="w-5 h-5" />
+                  <Lock className="w-5 h-5" />
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">
-                    Multi-User Admin Login
+                    Clinical Admin Sign In
                   </h1>
                   <p className="text-xs sm:text-sm text-slate-500">
-                    Sign in with your clinical editor account to publish live cloud updates.
+                    Authorised clinical editors only.
                   </p>
                 </div>
               </div>
@@ -3231,35 +3335,35 @@ export default function App() {
               <form onSubmit={handleAdminLoginSubmit} className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Admin Email or Name
+                    Work Email Address
                   </label>
                   <input
-                    type="text"
+                    type="email"
                     required
+                    autoFocus
                     value={loginEmailInput}
                     onChange={(e) => {
                       setLoginEmailInput(e.target.value);
                       setLoginError('');
                     }}
-                    placeholder="e.g., lead@paedtrach.org.uk"
+                    placeholder="name@nhs.net"
                     className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-500"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Personal Passcode
+                    Passcode
                   </label>
                   <input
                     type="password"
                     required
-                    autoFocus
                     value={loginPasswordInput}
                     onChange={(e) => {
                       setLoginPasswordInput(e.target.value);
                       setLoginError('');
                     }}
-                    placeholder="Enter passcode..."
+                    placeholder="••••••••"
                     className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-500"
                   />
                   {loginError && (
@@ -3269,37 +3373,7 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Quick Demo Account Selector */}
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Registered Admin Accounts (Tap to autofill email):
-                  </div>
-                  <div className="space-y-1.5">
-                    {adminUsers.map((u) => (
-                      <button
-                        type="button"
-                        key={u.id}
-                        onClick={() => {
-                          setLoginEmailInput(u.email);
-                          setLoginError('');
-                        }}
-                        className="w-full text-left px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 text-xs flex items-center justify-between"
-                      >
-                        <span>
-                          <strong>{u.name}</strong> ({u.email})
-                        </span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
-                          {u.role}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-[11px] text-slate-500 pt-1">
-                    Demo passcodes: <code className="font-mono font-bold">trach999</code> (Lead) or <code className="font-mono font-bold">paeds123</code> (Educator).
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-1">
+                <div className="flex items-center justify-end gap-2 pt-2">
                   <button
                     type="button"
                     onClick={() => setAppMode('oncall')}
@@ -3311,7 +3385,7 @@ export default function App() {
                     type="submit"
                     className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-2xs"
                   >
-                    Sign In to Admin CMS
+                    Sign In
                   </button>
                 </div>
               </form>
@@ -3321,7 +3395,6 @@ export default function App() {
 
         {appMode === 'admin' && isAdminAuthenticated && (
           <div className="space-y-6">
-            {/* Top Admin Header & Mode Switcher */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -3389,7 +3462,6 @@ export default function App() {
                 <button
                   onClick={handleAdminLogout}
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition"
-                  title="Sign Out of Admin Session"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
@@ -3406,12 +3478,8 @@ export default function App() {
               </div>
             )}
 
-            {/* ==========================================
-                ADMIN TAB: MULTI-USER TEAM MANAGEMENT & AUDIT LOG
-                ========================================== */}
             {adminTab === 'team' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Left Column: Current Admin Users Roster */}
                 <div className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <div>
@@ -3447,7 +3515,6 @@ export default function App() {
                           <button
                             onClick={() => handleRemoveAdminUser(u.id)}
                             className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200"
-                            title="Revoke Admin Access"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -3456,7 +3523,6 @@ export default function App() {
                     ))}
                   </div>
 
-                  {/* Audit Trail of Recent Cloud Edits */}
                   <div className="pt-4 border-t border-slate-100 space-y-2.5">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                       <History className="w-3.5 h-3.5" />
@@ -3480,7 +3546,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Right Column: Add New Admin User Form */}
                 <form
                   onSubmit={handleAddAdminTeamMember}
                   className="lg:col-span-5 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-4 self-start"
@@ -3567,12 +3632,8 @@ export default function App() {
               </div>
             )}
 
-            {/* ==========================================
-                ADMIN TAB: CLOUD SYNC, GOOGLE SITES & UK REGULATORY COMPLIANCE
-                ========================================== */}
             {adminTab === 'publish' && (
               <div className="space-y-6">
-                {/* Step-by-Step Launch Checklist Card */}
                 <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-5">
                   <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
                     <div className="flex items-start gap-3">
@@ -3591,7 +3652,6 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Step 1 */}
                     <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
                         Step 1 • Cloud Database
@@ -3604,7 +3664,6 @@ export default function App() {
                       </p>
                     </div>
 
-                    {/* Step 2 */}
                     <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800">
                         Step 2 • Free Web Hosting
@@ -3617,7 +3676,6 @@ export default function App() {
                       </p>
                     </div>
 
-                    {/* Step 3 */}
                     <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900">
                         Step 3 • Google Sites
@@ -3631,7 +3689,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Connect Your Own Firebase Cloud Database Form */}
                   <form
                     onSubmit={handleSaveCustomFirebaseConfig}
                     className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3"
@@ -3662,7 +3719,6 @@ export default function App() {
                     </div>
                   </form>
 
-                  {/* Export & Backup Actions */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
                     <div className="flex flex-wrap gap-2">
                       <button
@@ -3693,7 +3749,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Import JSON Card */}
                 <form
                   onSubmit={handleImportBackupJson}
                   className="bg-white rounded-2xl p-5 border border-slate-200 space-y-3"
@@ -3729,12 +3784,8 @@ export default function App() {
               </div>
             )}
 
-            {/* ==========================================
-                ADMIN TAB 1: MANAGE PATHWAYS (CORE & EXTRA)
-                ========================================== */}
             {adminTab === 'pathways' && (
               <div className="space-y-6">
-                {/* Pathway Selector Bar + "+ Create New Pathway" Button */}
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap gap-2">
                     {pathways.map((p) => (
@@ -3773,7 +3824,6 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Selected Pathway Metadata Bar */}
                 <div className="bg-white rounded-2xl p-4 border border-slate-200 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
@@ -3803,7 +3853,6 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  {/* Left Column: Clean Step List (Human-Readable Titles Only) */}
                   <div className="lg:col-span-5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 space-y-3 self-start">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                       <h2 className="text-sm font-bold text-slate-900">
@@ -3860,14 +3909,12 @@ export default function App() {
                               <button
                                 onClick={() => loadNodeIntoForm(node)}
                                 className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600"
-                                title="Edit Step"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => handleDeleteAdminNode(node.id)}
                                 className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-rose-50 hover:border-rose-200 text-slate-500 hover:text-rose-600"
-                                title="Delete Step"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -3878,7 +3925,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Right Column: Clean Step Editor Form */}
                   <form
                     onSubmit={handleSaveAdminNode}
                     className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-4"
@@ -3948,7 +3994,6 @@ export default function App() {
                       />
                     </div>
 
-                    {/* Linking Outcomes by Step Title */}
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
                       <div className="text-xs font-bold text-slate-800">
                         Decision Question & Next Step Links
@@ -4052,9 +4097,6 @@ export default function App() {
                   </form>
                 </div>
 
-                {/* ==========================================
-                    PATHWAY GUIDELINE & NICE REFERENCE LINKS MANAGER
-                    ========================================== */}
                 <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-4">
                   <div className="border-b border-slate-100 pb-3">
                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -4139,12 +4181,8 @@ export default function App() {
               </div>
             )}
 
-            {/* ==========================================
-                ADMIN TAB 2: MANAGE LEARNING MODULES (SECTIONS, PHOTOS, VIDEOS & QUIZ)
-                ========================================== */}
             {adminTab === 'modules' && adminModule && (
               <div className="space-y-6">
-                {/* Module Selector Tabs + "+ Create New Module" Button */}
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap gap-2">
                     {learningModules.map((m) => (
@@ -4174,7 +4212,6 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Module Metadata Editor Card */}
                 <div className="bg-white rounded-2xl p-5 border border-slate-200 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h2 className="text-sm font-bold text-slate-900">
@@ -4240,9 +4277,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Sections & Multi-Media Editor Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  {/* Left Column: Sections List + Reorder */}
                   <div className="lg:col-span-5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 space-y-3 self-start">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                       <h3 className="text-sm font-bold text-slate-900">
@@ -4287,7 +4322,6 @@ export default function App() {
                               onClick={() => handleMoveSection(idx, -1)}
                               disabled={idx === 0}
                               className="p-1 rounded-lg bg-white border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-30"
-                              title="Move Up"
                             >
                               <ArrowUp className="w-3 h-3" />
                             </button>
@@ -4296,7 +4330,6 @@ export default function App() {
                               onClick={() => handleMoveSection(idx, 1)}
                               disabled={idx === adminModule.sections.length - 1}
                               className="p-1 rounded-lg bg-white border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-30"
-                              title="Move Down"
                             >
                               <ArrowDown className="w-3 h-3" />
                             </button>
@@ -4304,7 +4337,6 @@ export default function App() {
                               type="button"
                               onClick={() => loadSectionIntoForm(sec)}
                               className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600"
-                              title="Edit Section"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
@@ -4312,7 +4344,6 @@ export default function App() {
                               type="button"
                               onClick={() => handleDeleteSection(sec.id)}
                               className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-rose-50 text-slate-500 hover:text-rose-600"
-                              title="Delete Section"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -4322,7 +4353,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Right Column: Rich Section Editor (Text + Multiple Photos + Multiple Videos) */}
                   <form
                     onSubmit={handleSaveSection}
                     className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-5"
@@ -4380,7 +4410,6 @@ export default function App() {
                       />
                     </div>
 
-                    {/* Add Multiple Photos / Diagrams to Section */}
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
                       <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                         <ImageIcon className="w-4 h-4 text-emerald-600" />
@@ -4457,7 +4486,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Add Multiple Videos to Section */}
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
                       <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                         <Video className="w-4 h-4 text-emerald-600" />
@@ -4565,7 +4593,6 @@ export default function App() {
                   </form>
                 </div>
 
-                {/* End-of-Module Quiz Builder Card */}
                 <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-5">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <div>
@@ -4581,7 +4608,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Existing Quiz Questions */}
                   {adminModule.quiz.length > 0 && (
                     <div className="space-y-2.5">
                       {adminModule.quiz.map((qItem, idx) => (
@@ -4608,7 +4634,6 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* Add New Quiz Question Form */}
                   <form
                     onSubmit={handleAddQuizQuestion}
                     className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3"
@@ -4712,7 +4737,7 @@ export default function App() {
       </main>
 
       {/* ==========================================
-          MODAL: CREATE NEW PATHWAY (CORE OR EXTRA)
+          MODAL: CREATE NEW PATHWAY
           ========================================== */}
       {showNewPathwayModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
@@ -4945,8 +4970,8 @@ export default function App() {
       {/* ==========================================
           QUIET SINGLE-LINE CLINICAL GOVERNANCE & LEGAL FOOTER
           ========================================== */}
-      <footer className="border-t border-slate-200/80 bg-white py-4 px-4 mt-12">
-        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <footer className="border-t border-slate-200/80 bg-white py-4 px-4 sm:px-6 lg:px-8 mt-12">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
           <span>
             Clinical reference aid for paramedics ({INITIAL_GOVERNANCE_META.version}) — follow local Ambulance Trust & JRCALC guidelines.
           </span>
@@ -4985,7 +5010,7 @@ export default function App() {
       </footer>
 
       {/* ==========================================
-          MODAL 1: ROADSIDE TOOLS (SUCTION SIZER OR GO-BAG CHECKLIST)
+          MODAL 1: ROADSIDE TOOLS
           ========================================== */}
       {activeToolModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -5039,7 +5064,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Three Clean, Airy Stat Boxes */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 text-center">
                     <div className="text-[11px] font-semibold text-emerald-800">
@@ -5132,7 +5156,7 @@ export default function App() {
       )}
 
       {/* ==========================================
-          MODAL 2: FLOWCHART STEP INSPECTOR SLIDE-OVER
+          MODAL 2: FLOWCHART STEP INSPECTOR
           ========================================== */}
       {flowchartInspectNode && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -5241,7 +5265,7 @@ export default function App() {
       )}
 
       {/* ==========================================
-          MODAL 4: UK CLINICAL GOVERNANCE, TERMS & CONDITIONS, PRIVACY & MHRA REGULATORY HUB
+          MODAL 4: UK CLINICAL GOVERNANCE, TERMS & PRIVACY HUB
           ========================================== */}
       {showGovernanceModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
@@ -5261,7 +5285,6 @@ export default function App() {
               </button>
             </div>
 
-            {/* Legal Sub-navigation Tabs */}
             <div className="flex flex-wrap gap-1.5 bg-slate-100 p-1 rounded-xl shrink-0">
               <button
                 onClick={() => setLegalModalTab('disclaimer')}
@@ -5305,7 +5328,6 @@ export default function App() {
               </button>
             </div>
 
-            {/* Tab Content Area */}
             <div className="overflow-y-auto space-y-3 text-xs sm:text-sm text-slate-600 leading-relaxed pr-1 flex-1">
               {legalModalTab === 'disclaimer' && (
                 <div className="space-y-3">
