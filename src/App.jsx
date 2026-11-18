@@ -1283,6 +1283,11 @@ export default function App() {
     role: 'Content Editor',
     passcode: ''
   });
+  const [ownProfileForm, setOwnProfileForm] = useState({
+    name: '',
+    email: '',
+    passcode: ''
+  });
   const [importJsonText, setImportJsonText] = useState('');
   const [customFirebaseJsonInput, setCustomFirebaseJsonInput] = useState(() => {
     try {
@@ -1354,6 +1359,86 @@ export default function App() {
   });
 
   const isAdminAuthenticated = !!currentAdminUser;
+  const isSuperAdmin = useMemo(() => {
+    if (!currentAdminUser) return false;
+    return (
+      currentAdminUser.role === 'Clinical Lead (Super Admin)' ||
+      currentAdminUser.role?.toLowerCase().includes('super admin')
+    );
+  }, [currentAdminUser]);
+
+  // Dynamically set browser tab title ("PaedTraches"), favicon, and iOS/Android Home Screen App Icon
+  useEffect(() => {
+    document.title = 'PaedTraches — Paediatric Tracheostomy Guide';
+
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 192;
+      canvas.height = 192;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Emerald-to-Teal rounded square background
+        const grad = ctx.createLinearGradient(0, 0, 192, 192);
+        grad.addColorStop(0, '#10b981');
+        grad.addColorStop(1, '#0f766e');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(0, 0, 192, 192, 42);
+        ctx.fill();
+
+        // White Tracheostomy Flange & Cannula Emblem
+        ctx.strokeStyle = '#ffffff';
+        ctx.fillStyle = '#ffffff';
+        ctx.lineWidth = 12;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Neck Flange
+        ctx.beginPath();
+        ctx.roundRect(32, 56, 128, 30, 15);
+        ctx.stroke();
+
+        // 15mm Hub Connector
+        ctx.beginPath();
+        ctx.roundRect(76, 30, 40, 26, 6);
+        ctx.stroke();
+
+        // Curved Paediatric Cannula Tube
+        ctx.beginPath();
+        ctx.moveTo(82, 86);
+        ctx.quadraticCurveTo(82, 148, 126, 158);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(110, 86);
+        ctx.quadraticCurveTo(110, 126, 138, 134);
+        ctx.stroke();
+
+        // Flange tie holes
+        ctx.beginPath();
+        ctx.arc(54, 71, 6, 0, Math.PI * 2);
+        ctx.arc(138, 71, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        const pngDataUrl = canvas.toDataURL('image/png');
+
+        const setLinkTag = (rel, href) => {
+          let link = document.querySelector(`link[rel="${rel}"]`);
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = rel;
+            document.head.appendChild(link);
+          }
+          link.href = href;
+        };
+
+        setLinkTag('icon', pngDataUrl);
+        setLinkTag('apple-touch-icon', pngDataUrl);
+      }
+    } catch (e) {
+      // Fallback if canvas roundRect unsupported
+    }
+  }, []);
 
   const notifyCms = (msg) => {
     setCmsNotification(msg);
@@ -1371,11 +1456,57 @@ export default function App() {
 
     if (matchedAdmin) {
       setCurrentAdminUser(matchedAdmin);
+      setOwnProfileForm({
+        name: matchedAdmin.name || '',
+        email: matchedAdmin.email || '',
+        passcode: matchedAdmin.passcode || ''
+      });
+      setAdminTab('pathways');
       setLoginPasswordInput('');
       setLoginError('');
     } else {
       setLoginError('Invalid email or passcode. Please check your credentials and try again.');
     }
+  };
+
+  const handleUpdateOwnProfile = (e) => {
+    e.preventDefault();
+    if (!currentAdminUser) return;
+    if (
+      !ownProfileForm.name.trim() ||
+      !ownProfileForm.email.trim() ||
+      ownProfileForm.passcode.trim().length < 4
+    ) {
+      notifyCms('Please provide your name, email, and a passcode of at least 4 characters.');
+      return;
+    }
+    const emailTakenByOther = adminUsers.some(
+      (u) =>
+        u.id !== currentAdminUser.id &&
+        u.email.toLowerCase() === ownProfileForm.email.trim().toLowerCase()
+    );
+    if (emailTakenByOther) {
+      notifyCms('That email address is already used by another team member.');
+      return;
+    }
+
+    const updatedSelf = {
+      ...currentAdminUser,
+      name: ownProfileForm.name.trim(),
+      email: ownProfileForm.email.trim().toLowerCase(),
+      passcode: ownProfileForm.passcode.trim()
+    };
+
+    const nextAdmins = adminUsers.map((u) =>
+      u.id === currentAdminUser.id ? updatedSelf : u
+    );
+
+    setCurrentAdminUser(updatedSelf);
+    publishCloudUpdate({
+      nextAdmins,
+      actionDescription: `${updatedSelf.name} updated their own profile details`
+    });
+    notifyCms('Your personal profile and passcode have been updated!');
   };
 
   const handleAdminLogout = () => {
@@ -2174,13 +2305,13 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900 pb-20 sm:pb-0">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900">
       {/* ==========================================
-          SPACIOUS, UNCLUTTERED NAVIGATION BAR
-          (Desktop has center pill switcher; Mobile uses clean bottom bar)
+          TOP NAVIGATION BAR + MOBILE SUB-ROW
+          (Everything lives at the top so bottom banners like Netlify never cover mobile controls)
           ========================================== */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between gap-3">
           {/* Brand Logo: PaedTraches */}
           <button
             onClick={() => {
@@ -2220,7 +2351,7 @@ export default function App() {
             </div>
           </button>
 
-          {/* Center Segmented Control (Desktop & Tablet Only — moved to bottom bar on phones so header never cramps) */}
+          {/* Center Segmented Control (Desktop & Tablet) */}
           <div className="hidden sm:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/70">
             <button
               onClick={() => setAppMode('oncall')}
@@ -2247,7 +2378,7 @@ export default function App() {
             </button>
           </div>
 
-          {/* Right Actions (Compact & Clean on Mobile) */}
+          {/* Right Actions */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={() => setShowPwaModal(true)}
@@ -2280,57 +2411,54 @@ export default function App() {
             </button>
           </div>
         </div>
+
+        {/* MOBILE SECOND ROW (Phones Only): Spacious 4-button strip at TOP so bottom banners never cover it */}
+        <div className="sm:hidden border-t border-slate-100 bg-slate-50/90 px-3 py-1.5 grid grid-cols-4 gap-1.5">
+          <button
+            onClick={() => {
+              setAppMode('oncall');
+              setActivePathwayId(null);
+              setOnCallSubView('main');
+            }}
+            className={`py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 text-xs font-bold transition ${
+              appMode === 'oncall'
+                ? 'bg-white text-emerald-700 shadow-2xs border border-slate-200/80'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5 shrink-0" />
+            <span>On-Call</span>
+          </button>
+
+          <button
+            onClick={() => setAppMode('learning')}
+            className={`py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 text-xs font-bold transition ${
+              appMode === 'learning'
+                ? 'bg-white text-sky-700 shadow-2xs border border-slate-200/80'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5 shrink-0" />
+            <span>Learn</span>
+          </button>
+
+          <button
+            onClick={() => setActiveToolModal('calculator')}
+            className="py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 text-xs font-semibold text-slate-600 hover:bg-white hover:text-slate-900 transition"
+          >
+            <Calculator className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span>Sizer</span>
+          </button>
+
+          <button
+            onClick={() => setActiveToolModal('checklist')}
+            className="py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 text-xs font-semibold text-slate-600 hover:bg-white hover:text-slate-900 transition"
+          >
+            <ClipboardCheck className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+            <span>Go-Bag</span>
+          </button>
+        </div>
       </header>
-
-      {/* ==========================================
-          MOBILE BOTTOM NAVIGATION BAR (PHONES ONLY)
-          Prevents top header cramping & makes thumb switching effortless
-          ========================================== */}
-      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3 py-2 flex items-center justify-around shadow-lg">
-        <button
-          onClick={() => {
-            setAppMode('oncall');
-            setActivePathwayId(null);
-            setOnCallSubView('main');
-          }}
-          className={`flex-1 py-1.5 rounded-xl flex flex-col items-center gap-0.5 text-[11px] font-bold transition ${
-            appMode === 'oncall'
-              ? 'text-emerald-700 bg-emerald-50/80'
-              : 'text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <Activity className="w-4 h-4" />
-          <span>On-Call</span>
-        </button>
-
-        <button
-          onClick={() => setAppMode('learning')}
-          className={`flex-1 py-1.5 rounded-xl flex flex-col items-center gap-0.5 text-[11px] font-bold transition ${
-            appMode === 'learning'
-              ? 'text-sky-700 bg-sky-50/80'
-              : 'text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <BookOpen className="w-4 h-4" />
-          <span>Learn</span>
-        </button>
-
-        <button
-          onClick={() => setActiveToolModal('calculator')}
-          className="flex-1 py-1.5 rounded-xl flex flex-col items-center gap-0.5 text-[11px] font-bold text-slate-500 hover:text-slate-900 transition"
-        >
-          <Calculator className="w-4 h-4" />
-          <span>Tube Sizer</span>
-        </button>
-
-        <button
-          onClick={() => setActiveToolModal('checklist')}
-          className="flex-1 py-1.5 rounded-xl flex flex-col items-center gap-0.5 text-[11px] font-bold text-slate-500 hover:text-slate-900 transition"
-        >
-          <ClipboardCheck className="w-4 h-4" />
-          <span>Go-Bag</span>
-        </button>
-      </nav>
 
       {/* ==========================================
           MAIN CONTENT AREA (WIDER MAX-W-7XL ON DESKTOP, COMPACT ON MOBILE)
@@ -3565,27 +3693,49 @@ export default function App() {
                     Modules
                   </button>
                   <button
-                    onClick={() => setAdminTab('team')}
+                    onClick={() => {
+                      setOwnProfileForm({
+                        name: currentAdminUser.name || '',
+                        email: currentAdminUser.email || '',
+                        passcode: currentAdminUser.passcode || ''
+                      });
+                      setAdminTab('profile');
+                    }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 ${
-                      adminTab === 'team'
+                      adminTab === 'profile'
                         ? 'bg-white text-slate-900 shadow-2xs'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    <Users className="w-3.5 h-3.5" />
-                    <span>Team ({adminUsers.length})</span>
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>My Profile</span>
                   </button>
-                  <button
-                    onClick={() => setAdminTab('publish')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 ${
-                      adminTab === 'publish'
-                        ? 'bg-white text-emerald-700 shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <Globe className="w-3.5 h-3.5" />
-                    <span>Cloud & Legal</span>
-                  </button>
+                  {isSuperAdmin && (
+                    <button
+                      onClick={() => setAdminTab('team')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 ${
+                        adminTab === 'team'
+                          ? 'bg-white text-slate-900 shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      <span>Team ({adminUsers.length})</span>
+                    </button>
+                  )}
+                  {isSuperAdmin && (
+                    <button
+                      onClick={() => setAdminTab('publish')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 ${
+                        adminTab === 'publish'
+                          ? 'bg-white text-emerald-700 shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Globe className="w-3.5 h-3.5" />
+                      <span>Cloud & Legal</span>
+                    </button>
+                  )}
                 </div>
 
                 <button
@@ -3607,7 +3757,94 @@ export default function App() {
               </div>
             )}
 
-            {adminTab === 'team' && (
+            {/* MY PROFILE TAB (Accessible to ALL signed-in Admins to edit their own details) */}
+            {adminTab === 'profile' && (
+              <div className="max-w-xl mx-auto">
+                <form
+                  onSubmit={handleUpdateOwnProfile}
+                  className="bg-white rounded-2xl p-6 border border-slate-200 space-y-4"
+                >
+                  <div className="border-b border-slate-100 pb-3">
+                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                      <KeyRound className="w-4 h-4 text-emerald-600" />
+                      <span>Edit My Admin Profile & Passcode</span>
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Update your personal display name, login email address, or passcode. Role permissions are managed by Super Admins.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      My Role (Read-Only)
+                    </label>
+                    <input
+                      type="text"
+                      disabled
+                      value={currentAdminUser.role}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Full Name & Clinical Title *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={ownProfileForm.name}
+                      onChange={(e) =>
+                        setOwnProfileForm({ ...ownProfileForm, name: e.target.value })
+                      }
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Login Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={ownProfileForm.email}
+                      onChange={(e) =>
+                        setOwnProfileForm({ ...ownProfileForm, email: e.target.value })
+                      }
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Personal Passcode (min 4 characters) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={ownProfileForm.passcode}
+                      onChange={(e) =>
+                        setOwnProfileForm({ ...ownProfileForm, passcode: e.target.value })
+                      }
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-2xs"
+                    >
+                      Save My Details & Sync to Cloud
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* TEAM MANAGEMENT TAB (Strictly Super Admin Only) */}
+            {adminTab === 'team' && isSuperAdmin && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">

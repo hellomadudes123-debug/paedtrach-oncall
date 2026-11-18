@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#059669" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="PaedTraches" />
+    <title>PaedTraches — Paediatric Tracheostomy Guide</title>
+    <!-- Custom Green PaedTraches SVG Favicon -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23059669'/%3E%3Crect x='10' y='18' width='44' height='10' rx='5' fill='none' stroke='white' stroke-width='4.5'/%3E%3Crect x='25' y='10' width='14' height='8' rx='2' fill='none' stroke='white' stroke-width='4'/%3E%3Cpath d='M27 28v9c0 8 5 14 14 16M37 28v7c0 4.5 2.5 8 8 9.5' fill='none' stroke='white' stroke-width='4.5' stroke-linecap='round'/%3E%3Ccircle cx='18' cy='23' r='2' fill='white'/%3E%3Ccircle cx='46' cy='23' r='2' fill='white'/%3E%3C/svg%3E"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
