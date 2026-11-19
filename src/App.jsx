@@ -1259,6 +1259,112 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
+  // Dynamically generate high-res PNG Apple Touch Icon, Favicon & Web App Manifest
+  // so iOS Safari and Android Chrome display the custom PaedTraches logo on the Home Screen
+  useEffect(() => {
+    document.title = 'PaedTraches — Paediatric Tracheostomy Guide';
+    try {
+      const iconCanvas = document.createElement('canvas');
+      iconCanvas.width = 512;
+      iconCanvas.height = 512;
+      const ctx = iconCanvas.getContext('2d');
+      if (!ctx) return;
+
+      // Emerald-to-Teal solid background (iOS requires opaque backgrounds for home screen icons)
+      const grad = ctx.createLinearGradient(0, 0, 512, 512);
+      grad.addColorStop(0, '#10b981');
+      grad.addColorStop(1, '#0f766e');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Draw PaedTraches Tracheostomy Flange & Curved Tube Emblem
+      ctx.strokeStyle = '#ffffff';
+      ctx.fillStyle = '#ffffff';
+      ctx.lineWidth = 28;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Neck flange plate
+      ctx.beginPath();
+      ctx.roundRect(84, 152, 344, 78, 39);
+      ctx.stroke();
+
+      // 15mm hub connector
+      ctx.beginPath();
+      ctx.roundRect(202, 88, 108, 64, 14);
+      ctx.stroke();
+
+      // Curved tracheostomy cannula
+      ctx.beginPath();
+      ctx.moveTo(216, 230);
+      ctx.quadraticCurveTo(216, 382, 326, 408);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(296, 230);
+      ctx.quadraticCurveTo(296, 336, 368, 354);
+      ctx.stroke();
+
+      // Flange tie eyelets
+      ctx.beginPath();
+      ctx.arc(144, 191, 14, 0, Math.PI * 2);
+      ctx.arc(368, 191, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      const pngDataUrl = iconCanvas.toDataURL('image/png');
+
+      // Set apple-touch-icon (iOS Home Screen)
+      let appleLink = document.querySelector("link[rel='apple-touch-icon']");
+      if (!appleLink) {
+        appleLink = document.createElement('link');
+        appleLink.rel = 'apple-touch-icon';
+        document.head.appendChild(appleLink);
+      }
+      appleLink.href = pngDataUrl;
+
+      // Set standard favicon
+      let favLink = document.querySelector("link[rel='icon']");
+      if (!favLink) {
+        favLink = document.createElement('link');
+        favLink.rel = 'icon';
+        document.head.appendChild(favLink);
+      }
+      favLink.type = 'image/png';
+      favLink.href = pngDataUrl;
+
+      // Inject dynamic Web App Manifest (Android Chrome Home Screen)
+      const manifestObj = {
+        name: 'PaedTraches — Paediatric Tracheostomy Guide',
+        short_name: 'PaedTraches',
+        start_url: '.',
+        display: 'standalone',
+        background_color: '#059669',
+        theme_color: '#059669',
+        icons: [
+          {
+            src: pngDataUrl,
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          }
+        ]
+      };
+      const manifestBlob = new Blob([JSON.stringify(manifestObj)], {
+        type: 'application/manifest+json'
+      });
+      const manifestUrl = URL.createObjectURL(manifestBlob);
+      let manifestLink = document.querySelector("link[rel='manifest']");
+      if (!manifestLink) {
+        manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        document.head.appendChild(manifestLink);
+      }
+      manifestLink.href = manifestUrl;
+    } catch (e) {
+      // Ignore if sandboxed
+    }
+  }, []);
+
   useEffect(() => {
     if (!auth) {
       setCloudStatus('offline');
@@ -1555,6 +1661,7 @@ export default function App() {
 
   const [activeModuleId, setActiveModuleId] = useState(null);
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+  const [maxReachedSectionIndex, setMaxReachedSectionIndex] = useState(0);
   const [quizUnlocked, setQuizUnlocked] = useState(false);
   const [quizAttemptSeed, setQuizAttemptSeed] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState({});
@@ -4184,6 +4291,7 @@ export default function App() {
                         onClick={() => {
                           setActiveModuleId(mod.id);
                           setActiveSectionIndex(0);
+                          setMaxReachedSectionIndex(0);
                           setQuizUnlocked(false);
                           setQuizAttemptSeed((s) => s + 1);
                           setQuizAnswers({});
@@ -4266,52 +4374,75 @@ export default function App() {
                       Module Sections
                     </div>
                     <div className="space-y-1.5">
-                      {activeModule.sections.map((s, idx) => (
-                        <button
-                          key={s.id || idx}
-                          onClick={() => {
-                            setQuizUnlocked(false);
-                            setActiveSectionIndex(idx);
-                          }}
-                          className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-between gap-2 ${
-                            !quizUnlocked && activeSectionIndex === idx
-                              ? 'bg-slate-900 text-white font-semibold'
-                              : 'text-slate-600 hover:bg-slate-100'
-                          }`}
-                        >
-                          <span className="truncate">
-                            {idx + 1}. {s.heading}
-                          </span>
-                          {!quizUnlocked && activeSectionIndex === idx && (
-                            <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-                          )}
-                        </button>
-                      ))}
+                      {activeModule.sections.map((s, idx) => {
+                        const isLocked = idx > maxReachedSectionIndex;
+                        return (
+                          <button
+                            key={s.id || idx}
+                            disabled={isLocked}
+                            onClick={() => {
+                              if (isLocked) return;
+                              setQuizUnlocked(false);
+                              setActiveSectionIndex(idx);
+                            }}
+                            className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-between gap-2 ${
+                              !quizUnlocked && activeSectionIndex === idx
+                                ? 'bg-slate-900 text-white font-semibold'
+                                : isLocked
+                                ? 'text-slate-400 bg-slate-50/70 cursor-not-allowed opacity-70'
+                                : 'text-slate-600 hover:bg-slate-100'
+                            }`}
+                          >
+                            <span className="truncate">
+                              {idx + 1}. {s.heading}
+                            </span>
+                            {isLocked ? (
+                              <Lock className="w-3 h-3 text-slate-400 shrink-0" />
+                            ) : (
+                              !quizUnlocked &&
+                              activeSectionIndex === idx && (
+                                <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+                              )
+                            )}
+                          </button>
+                        );
+                      })}
 
                       <div className="pt-2 border-t border-slate-100">
-                        <button
-                          disabled={
-                            !quizUnlocked &&
-                            activeSectionIndex < activeModule.sections.length - 1
-                          }
-                          onClick={() => {
-                            setQuizUnlocked(true);
-                            setQuizAttemptSeed((s) => s + 1);
-                            setQuizAnswers({});
-                            setQuizSubmitted(false);
-                            if (activeModule.quiz.length === 0) {
-                              markModuleCompletedInCloud(activeModule.id);
-                            }
-                          }}
-                          className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold transition flex items-center justify-between ${
-                            quizUnlocked
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-slate-50 text-slate-400 disabled:opacity-60'
-                          }`}
-                        >
-                          <span>Knowledge Check & CPD</span>
-                          <Sparkles className="w-3.5 h-3.5" />
-                        </button>
+                        {(() => {
+                          const canUnlockQuiz =
+                            quizUnlocked ||
+                            maxReachedSectionIndex >= activeModule.sections.length - 1;
+                          return (
+                            <button
+                              disabled={!canUnlockQuiz}
+                              onClick={() => {
+                                if (!canUnlockQuiz) return;
+                                setQuizUnlocked(true);
+                                setQuizAttemptSeed((s) => s + 1);
+                                setQuizAnswers({});
+                                setQuizSubmitted(false);
+                                if (activeModule.quiz.length === 0) {
+                                  markModuleCompletedInCloud(activeModule.id);
+                                }
+                              }}
+                              className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold transition flex items-center justify-between ${
+                                quizUnlocked
+                                  ? 'bg-emerald-600 text-white'
+                                  : canUnlockQuiz
+                                  ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                                  : 'bg-slate-50 text-slate-400 cursor-not-allowed opacity-60'
+                              }`}
+                            >
+                              <span>Knowledge Check & CPD</span>
+                              {canUnlockQuiz ? (
+                                <Sparkles className="w-3.5 h-3.5" />
+                              ) : (
+                                <Lock className="w-3 h-3" />
+                              )}
+                            </button>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -4348,7 +4479,11 @@ export default function App() {
                           {activeSectionIndex < activeModule.sections.length - 1 ? (
                             <button
                               onClick={() => {
-                                setActiveSectionIndex((i) => i + 1);
+                                const nextIdx = activeSectionIndex + 1;
+                                setActiveSectionIndex(nextIdx);
+                                setMaxReachedSectionIndex((prev) =>
+                                  Math.max(prev, nextIdx)
+                                );
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                               }}
                               className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5"
@@ -4359,6 +4494,9 @@ export default function App() {
                           ) : (
                             <button
                               onClick={() => {
+                                setMaxReachedSectionIndex(
+                                  activeModule.sections.length - 1
+                                );
                                 setQuizUnlocked(true);
                                 setQuizAttemptSeed((s) => s + 1);
                                 setQuizAnswers({});
@@ -6422,6 +6560,7 @@ export default function App() {
                             setAppMode('learning');
                             setActiveModuleId(m.id);
                             setActiveSectionIndex(0);
+                            setMaxReachedSectionIndex(0);
                             setQuizUnlocked(false);
                           }}
                           className="w-full text-left p-2.5 rounded-xl hover:bg-sky-50/70 transition flex items-center justify-between"
