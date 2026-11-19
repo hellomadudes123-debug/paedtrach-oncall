@@ -1197,6 +1197,38 @@ const formatTime = (totalSec) => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
+const formatWithUnit = (val, unit) => {
+  const trimmed = (val || '').trim();
+  if (!trimmed) return '';
+  if (trimmed.toLowerCase().endsWith(unit.toLowerCase())) return trimmed;
+  return unit.startsWith('/') ? `${trimmed}${unit}` : `${trimmed} ${unit}`;
+};
+
+const COMMON_INTERVENTIONS_OPTIONS = [
+  'Speaking valve / HME removed',
+  'Tracheal suctioning performed',
+  '5 rescue breaths delivered',
+  'Blocked / displaced tube removed',
+  'Same-size spare tube inserted',
+  '0.5 mm downsized tube inserted',
+  'BVM ventilation via tube / stoma',
+  'Oral BVM ventilation (stoma occluded)'
+];
+
+const TRAVELLING_WITH_OPTIONS = [
+  'Parent / Caregiver',
+  'Emergency Go-Bag',
+  'Spare Same & Downsize Tubes',
+  'HEMS / Critical Care Crew'
+];
+
+const ALS_DRUG_OPTIONS = [
+  { id: 'adrenaline', label: 'Adrenaline 10 mcg/kg (0.1 ml/kg of 1:10,000)' },
+  { id: 'amiodarone', label: 'Amiodarone 5 mg/kg' },
+  { id: 'saline', label: '0.9% Sodium Chloride 10 ml/kg bolus' },
+  { id: 'glucose', label: 'Glucose 10% 2 ml/kg' }
+];
+
 export default function App() {
   const [appMode, setAppMode] = useState('oncall');
   const [onCallSubView, setOnCallSubView] = useState('main');
@@ -1455,14 +1487,28 @@ export default function App() {
   const [bagChecked, setBagChecked] = useState({});
 
   // Hospital Pre-Alert / SBAR Handover Builder State
-  const [handoverForm, setHandoverForm] = useState({
+  const createEmptyHandoverForm = () => ({
     airwayType: 'Green (Patent Upper Airway)',
-    tubeId: '4.0 mm',
-    suctionDepth: '8.0 cm',
-    childAge: '18 months',
-    eventSummary: 'Suspected mucus plug — suctioned & tube changed to 4.0mm spare',
-    currentObs: 'SpO2 97% on 10L O2, RR 28, HR 132, EtCO2 4.8 kPa'
+    tubeId: '',
+    suctionDepth: '',
+    childAge: '',
+    airwayEvent: '',
+    selectedInterventions: [],
+    otherIntervention: '',
+    obsSpo2: '',
+    obsO2: '',
+    obsRr: '',
+    obsHr: '',
+    obsEtco2: '',
+    cprPerformed: false,
+    cprCycles: '',
+    alsDrugs: {},
+    travellingWith: [],
+    travellingOther: ''
   });
+
+  const [handoverForm, setHandoverForm] = useState(createEmptyHandoverForm);
+  const [showHandoverCpr, setShowHandoverCpr] = useState(false);
   const [handoverCopied, setHandoverCopied] = useState(false);
 
   // Global Instant Search Modal State
@@ -5525,7 +5571,7 @@ export default function App() {
                               onChange={(e) =>
                                 setSectionForm({ ...sectionForm, layout: e.target.value })
                               }
-                              className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800"
+                              className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900"
                             >
                               <option value="stacked">Stacked (Text Top, Media Below)</option>
                               <option value="media-right">Side-by-Side: Text Left / Media Right</option>
@@ -5534,120 +5580,81 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* RICH TEXT FORMATTING TOOLBAR & BODY */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between flex-wrap gap-2">
+                        {/* Formatting Toolbar + Body Text */}
+                        <div>
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                             <label className="block text-xs font-semibold text-slate-700">
-                              Formatted Content (Supports Bullet Lists, Numbered Steps, Subheadings & Bold) *
+                              Section Content (Supports Bullet Points, Numbered Lists & Bold)
                             </label>
-                            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                            <div className="flex items-center gap-1">
                               <button
                                 type="button"
                                 onClick={() => insertFormattingToken('bullet')}
-                                className="px-2 py-1 rounded hover:bg-white text-[11px] font-semibold text-slate-700 flex items-center gap-1"
-                                title="Insert Bullet List (- item)"
+                                className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold inline-flex items-center gap-1"
+                                title="Insert Bullet Point"
                               >
-                                <List className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>Bullets</span>
+                                <List className="w-3 h-3" />
+                                <span>Bullet</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => insertFormattingToken('numbered')}
-                                className="px-2 py-1 rounded hover:bg-white text-[11px] font-semibold text-slate-700 flex items-center gap-1"
-                                title="Insert Numbered List (1. item)"
+                                className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold inline-flex items-center gap-1"
+                                title="Insert Numbered Step"
                               >
-                                <ListOrdered className="w-3.5 h-3.5 text-emerald-600" />
+                                <ListOrdered className="w-3 h-3" />
                                 <span>Numbered</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => insertFormattingToken('heading')}
-                                className="px-2 py-1 rounded hover:bg-white text-[11px] font-semibold text-slate-700 flex items-center gap-1"
-                                title="Insert Subheading (## Heading)"
+                                className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold inline-flex items-center gap-1"
+                                title="Insert Subheading"
                               >
-                                <Heading2 className="w-3.5 h-3.5 text-emerald-600" />
+                                <Heading2 className="w-3 h-3" />
                                 <span>Subheading</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => insertFormattingToken('bold')}
-                                className="px-2 py-1 rounded hover:bg-white text-[11px] font-semibold text-slate-700 flex items-center gap-1"
-                                title="Insert Bold Text (**text**)"
+                                className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold inline-flex items-center gap-1"
+                                title="Insert Bold Text"
                               >
-                                <Bold className="w-3.5 h-3.5 text-emerald-600" />
+                                <Bold className="w-3 h-3" />
                                 <span>Bold</span>
                               </button>
                             </div>
                           </div>
-
                           <textarea
-                            rows={5}
-                            required
+                            rows={6}
                             value={sectionForm.body}
                             onChange={(e) =>
                               setSectionForm({ ...sectionForm, body: e.target.value })
                             }
-                            placeholder={`Write paragraphs or use formatting:\n- Start lines with "- " for bullet points\n1. Start lines with "1. " for numbered steps\n## Use "## " for section subheadings\nWrap important words in **double asterisks** for bold`}
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 font-sans"
+                            placeholder={`Write your teaching points here...\n- Use "- " at the start of a line for bullet points\n1. Use "1. " for numbered steps\n## Use "## " for subheadings\nWrap **key clinical terms** in double asterisks for bold.`}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 leading-relaxed"
                           />
                         </div>
 
-                        {/* CALLOUT BANNER BUILDER */}
-                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                          <div className="sm:col-span-4">
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              Callout Box Style
-                            </label>
-                            <select
-                              value={sectionForm.calloutType}
-                              onChange={(e) =>
-                                setSectionForm({
-                                  ...sectionForm,
-                                  calloutType: e.target.value
-                                })
-                              }
-                              className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold"
-                            >
-                              <option value="pearl">Green — Clinical Takeaway</option>
-                              <option value="warning">Amber — Safety Caution</option>
-                              <option value="info">Blue — Reference Note</option>
-                            </select>
-                          </div>
-                          <div className="sm:col-span-8">
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              Callout Box Text (Optional)
-                            </label>
-                            <input
-                              type="text"
-                              value={sectionForm.pearl}
-                              onChange={(e) =>
-                                setSectionForm({ ...sectionForm, pearl: e.target.value })
-                              }
-                              placeholder="e.g., Always remove speaking valves before assessing breathing"
-                              className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs sm:text-sm text-slate-900"
-                            />
-                          </div>
-                        </div>
-
-                        {/* KEY-VALUE QUICK REFERENCE TABLE BUILDER */}
-                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
-                          <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                            <Table className="w-4 h-4 text-emerald-600" />
+                        {/* Quick Reference Comparison Table Builder */}
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                            <Table className="w-3.5 h-3.5 text-emerald-600" />
                             <span>
-                              Quick Reference Table Rows ({(sectionForm.comparisonTable || []).length})
+                              Quick-Reference Comparison Rows ({(sectionForm.comparisonTable || []).length})
                             </span>
                           </div>
 
                           {(sectionForm.comparisonTable || []).length > 0 && (
                             <div className="space-y-1.5">
-                              {sectionForm.comparisonTable.map((r, rIdx) => (
+                              {sectionForm.comparisonTable.map((row, rIdx) => (
                                 <div
                                   key={rIdx}
-                                  className="px-3 py-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2 text-xs"
+                                  className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs"
                                 >
-                                  <div>
-                                    <strong className="text-slate-900">{r.label}:</strong>{' '}
-                                    <span className="text-slate-600">{r.value}</span>
+                                  <div className="truncate">
+                                    <strong className="text-slate-900">{row.label}:</strong>{' '}
+                                    <span className="text-slate-600">{row.value}</span>
                                   </div>
                                   <button
                                     type="button"
@@ -5655,13 +5662,13 @@ export default function App() {
                                       setSectionForm((prev) => ({
                                         ...prev,
                                         comparisonTable: prev.comparisonTable.filter(
-                                          (_, i) => i !== rIdx
+                                          (_, idx) => idx !== rIdx
                                         )
                                       }))
                                     }
-                                    className="text-rose-600 hover:underline shrink-0"
+                                    className="text-slate-400 hover:text-rose-600 shrink-0"
                                   >
-                                    Remove
+                                    <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
                               ))}
@@ -5678,7 +5685,7 @@ export default function App() {
                                   label: e.target.value
                                 })
                               }
-                              placeholder="Row Label (e.g., Cuff Inflation)"
+                              placeholder="Row Label (e.g., Cuff Type)"
                               className="sm:col-span-4 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
                             />
                             <input
@@ -5696,27 +5703,64 @@ export default function App() {
                             <button
                               type="button"
                               onClick={handleAddTableRowToSection}
-                              className="sm:col-span-2 px-3 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-semibold"
+                              className="sm:col-span-2 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold"
                             >
-                              + Add Row
+                              + Row
                             </button>
                           </div>
                         </div>
 
-                        {/* PHOTOS & DIAGRAMS */}
+                        {/* Callout Banner */}
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                          <div className="sm:col-span-4">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Callout Banner Style
+                            </label>
+                            <select
+                              value={sectionForm.calloutType}
+                              onChange={(e) =>
+                                setSectionForm({
+                                  ...sectionForm,
+                                  calloutType: e.target.value
+                                })
+                              }
+                              className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900"
+                            >
+                              <option value="pearl">Green Clinical Takeaway</option>
+                              <option value="warning">Amber Safety Caution</option>
+                              <option value="info">Blue Reference Note</option>
+                            </select>
+                          </div>
+                          <div className="sm:col-span-8">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Callout Box Text (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={sectionForm.pearl}
+                              onChange={(e) =>
+                                setSectionForm({ ...sectionForm, pearl: e.target.value })
+                              }
+                              placeholder="e.g., Always check the NTSP Bedhead Sign on arrival."
+                              className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Photos Manager */}
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                          <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center justify-between">
                             <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                              <ImageIcon className="w-4 h-4 text-emerald-600" />
+                              <ImageIcon className="w-3.5 h-3.5 text-emerald-600" />
                               <span>Photos & Diagrams ({sectionForm.images.length})</span>
                             </div>
 
-                            <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 text-xs font-semibold text-slate-700 cursor-pointer shadow-2xs">
-                              <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                            <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer">
+                              <Upload className="w-3 h-3" />
                               <span>
                                 {uploadingMediaType === 'image'
                                   ? `Uploading ${uploadProgressPct}%...`
-                                  : 'Upload Photo from Device'}
+                                  : 'Upload Photo File'}
                               </span>
                               <input
                                 type="file"
@@ -5734,98 +5778,86 @@ export default function App() {
                           </div>
 
                           {sectionForm.images.length > 0 && (
-                            <div className="space-y-2">
-                              {sectionForm.images.map((img, i) => (
+                            <div className="space-y-1.5">
+                              {sectionForm.images.map((img) => (
                                 <div
-                                  key={img.id || i}
-                                  className="p-2.5 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2 text-xs"
+                                  key={img.id}
+                                  className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs"
                                 >
-                                  <div className="flex items-center gap-2 truncate">
-                                    <img
-                                      src={img.url}
-                                      alt=""
-                                      className="w-8 h-8 rounded object-cover shrink-0 border border-slate-200"
-                                    />
-                                    <div className="truncate">
-                                      <span className="font-semibold text-slate-800">
-                                        {img.title}
-                                      </span>
-                                      {img.caption && (
-                                        <span className="text-slate-500"> — {img.caption}</span>
-                                      )}
-                                    </div>
-                                  </div>
+                                  <span className="font-semibold text-slate-800 truncate">
+                                    {img.title}
+                                  </span>
                                   <button
                                     type="button"
                                     onClick={() =>
                                       setSectionForm((prev) => ({
                                         ...prev,
-                                        images: prev.images.filter((_, idx) => idx !== i)
+                                        images: prev.images.filter((i) => i.id !== img.id)
                                       }))
                                     }
-                                    className="text-rose-600 hover:underline shrink-0"
+                                    className="text-slate-400 hover:text-rose-600"
                                   >
-                                    Remove
+                                    <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
                               ))}
                             </div>
                           )}
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <input
                               type="text"
                               value={newImageDraft.title}
                               onChange={(e) =>
                                 setNewImageDraft({ ...newImageDraft, title: e.target.value })
                               }
-                              placeholder="Photo / Diagram title"
+                              placeholder="Photo title"
                               className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
                             />
-                            <input
-                              type="text"
-                              value={newImageDraft.url}
-                              onChange={(e) =>
-                                setNewImageDraft({ ...newImageDraft, url: e.target.value })
-                              }
-                              placeholder="Or paste Image URL (https://...)"
-                              className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
-                            />
-                          </div>
-                          <div className="flex gap-2">
                             <input
                               type="text"
                               value={newImageDraft.caption}
                               onChange={(e) =>
                                 setNewImageDraft({ ...newImageDraft, caption: e.target.value })
                               }
-                              placeholder="Caption explaining the photo or diagram"
-                              className="flex-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                              placeholder="Caption"
+                              className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
                             />
-                            <button
-                              type="button"
-                              onClick={handleAddImageToSectionForm}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shrink-0"
-                            >
-                              + Add URL
-                            </button>
+                            <div className="flex gap-1.5">
+                              <input
+                                type="text"
+                                value={newImageDraft.url}
+                                onChange={(e) =>
+                                  setNewImageDraft({ ...newImageDraft, url: e.target.value })
+                                }
+                                placeholder="Or paste Image URL"
+                                className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleAddImageToSectionForm}
+                                className="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold shrink-0"
+                              >
+                                Add
+                              </button>
+                            </div>
                           </div>
                         </div>
 
-                        {/* VIDEOS */}
+                        {/* Videos Manager */}
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                          <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center justify-between">
                             <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                              <Video className="w-4 h-4 text-emerald-600" />
-                              <span>Videos ({sectionForm.videos.length})</span>
+                              <Video className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Training Videos ({sectionForm.videos.length})</span>
                             </div>
 
-                            <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 text-xs font-semibold text-slate-700 cursor-pointer shadow-2xs">
-                              <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                            <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer">
+                              <Upload className="w-3 h-3" />
                               <span>
                                 {uploadingMediaType === 'video'
-                                  ? `Uploading Video ${uploadProgressPct}%...`
-                                  : 'Upload Video File (MP4/MOV)'}
+                                  ? `Uploading ${uploadProgressPct}%...`
+                                  : 'Upload Video (MP4/MOV)'}
                               </span>
                               <input
                                 type="file"
@@ -5843,33 +5875,26 @@ export default function App() {
                           </div>
 
                           {sectionForm.videos.length > 0 && (
-                            <div className="space-y-2">
-                              {sectionForm.videos.map((vid, i) => (
+                            <div className="space-y-1.5">
+                              {sectionForm.videos.map((vid) => (
                                 <div
-                                  key={vid.id || i}
-                                  className="p-2.5 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2 text-xs"
+                                  key={vid.id}
+                                  className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs"
                                 >
-                                  <div className="truncate">
-                                    <span className="font-semibold text-slate-800">
-                                      {vid.title} ({vid.duration})
-                                    </span>
-                                    {vid.url.includes('firebasestorage') && (
-                                      <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold">
-                                        Uploaded File
-                                      </span>
-                                    )}
-                                  </div>
+                                  <span className="font-semibold text-slate-800 truncate">
+                                    {vid.title} ({vid.duration})
+                                  </span>
                                   <button
                                     type="button"
                                     onClick={() =>
                                       setSectionForm((prev) => ({
                                         ...prev,
-                                        videos: prev.videos.filter((_, idx) => idx !== i)
+                                        videos: prev.videos.filter((v) => v.id !== vid.id)
                                       }))
                                     }
-                                    className="text-rose-600 hover:underline shrink-0"
+                                    className="text-slate-400 hover:text-rose-600"
                                   >
-                                    Remove
+                                    <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
                               ))}
@@ -5884,7 +5909,7 @@ export default function App() {
                                 setNewVideoDraft({ ...newVideoDraft, title: e.target.value })
                               }
                               placeholder="Video title"
-                              className="sm:col-span-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                              className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
                             />
                             <input
                               type="text"
@@ -5892,39 +5917,27 @@ export default function App() {
                               onChange={(e) =>
                                 setNewVideoDraft({ ...newVideoDraft, duration: e.target.value })
                               }
-                              placeholder="Duration (03:30)"
+                              placeholder="Duration (e.g., 04:15)"
                               className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
                             />
-                          </div>
-                          <input
-                            type="text"
-                            value={newVideoDraft.url}
-                            onChange={(e) =>
-                              setNewVideoDraft({ ...newVideoDraft, url: e.target.value })
-                            }
-                            placeholder="Or paste YouTube / Vimeo embed link (https://...)"
-                            className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
-                          />
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={newVideoDraft.description}
-                              onChange={(e) =>
-                                setNewVideoDraft({
-                                  ...newVideoDraft,
-                                  description: e.target.value
-                                })
-                              }
-                              placeholder="Short description of what the video demonstrates"
-                              className="flex-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
-                            />
-                            <button
-                              type="button"
-                              onClick={handleAddVideoToSectionForm}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shrink-0"
-                            >
-                              + Add Link
-                            </button>
+                            <div className="flex gap-1.5">
+                              <input
+                                type="text"
+                                value={newVideoDraft.url}
+                                onChange={(e) =>
+                                  setNewVideoDraft({ ...newVideoDraft, url: e.target.value })
+                                }
+                                placeholder="Or paste YouTube / Vimeo URL"
+                                className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleAddVideoToSectionForm}
+                                className="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold shrink-0"
+                              >
+                                Add
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </>
@@ -5944,46 +5957,41 @@ export default function App() {
                         type="submit"
                         className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm"
                       >
-                        {editingSectionId ? 'Update Section' : 'Save Section to Module'}
+                        {editingSectionId ? 'Update Section & Sync' : 'Save Section & Sync'}
                       </button>
                     </div>
                   </form>
                 </div>
 
-                {/* QUIZ QUESTION EDITOR */}
-                <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-5">
+                {/* Module Knowledge Check Quiz Editor */}
+                <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div>
-                      <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                        <HelpCircle className="w-4 h-4 text-emerald-600" />
-                        <span>
-                          End-of-Module Quiz Questions ({adminModule.quiz.length})
-                        </span>
+                    <div className="flex items-center gap-2">
+                      <HelpCircle className="w-4 h-4 text-emerald-600" />
+                      <h3 className="text-sm font-bold text-slate-900">
+                        End-of-Module Knowledge Quiz ({adminModule.quiz.length} questions)
                       </h3>
-                      <p className="text-xs text-slate-500">
-                        These questions stay locked until the user finishes reading the final section of the module.
-                      </p>
                     </div>
                   </div>
 
                   {adminModule.quiz.length > 0 && (
-                    <div className="space-y-2.5">
+                    <div className="space-y-2">
                       {adminModule.quiz.map((qItem, idx) => (
                         <div
                           key={idx}
-                          className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-3"
+                          className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-3"
                         >
-                          <div className="space-y-1 text-xs">
-                            <div className="font-bold text-slate-900">
+                          <div className="space-y-1">
+                            <div className="text-xs sm:text-sm font-semibold text-slate-900">
                               {idx + 1}. {qItem.q}
                             </div>
-                            <div className="text-emerald-700 font-medium">
-                              Correct Answer: {qItem.options[qItem.correct]}
+                            <div className="text-xs text-emerald-700 font-medium">
+                              Correct answer: {qItem.options[qItem.correct]}
                             </div>
                           </div>
                           <button
                             onClick={() => handleDeleteQuizQuestion(idx)}
-                            className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-rose-600"
+                            className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-rose-600 shrink-0"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -6006,7 +6014,7 @@ export default function App() {
                       onChange={(e) =>
                         setNewQuizDraft({ ...newQuizDraft, q: e.target.value })
                       }
-                      placeholder="Question text..."
+                      placeholder="Question prompt..."
                       className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs sm:text-sm"
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -6040,50 +6048,40 @@ export default function App() {
                         className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
                       />
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
-                      <div>
-                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                          Correct Option
-                        </label>
-                        <select
-                          value={newQuizDraft.correct}
-                          onChange={(e) =>
-                            setNewQuizDraft({
-                              ...newQuizDraft,
-                              correct: Number(e.target.value)
-                            })
-                          }
-                          className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
-                        >
-                          <option value={0}>Option 1</option>
-                          <option value={1}>Option 2</option>
-                          <option value={2}>Option 3</option>
-                        </select>
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                          Feedback Explanation (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          value={newQuizDraft.explanation}
-                          onChange={(e) =>
-                            setNewQuizDraft({
-                              ...newQuizDraft,
-                              explanation: e.target.value
-                            })
-                          }
-                          placeholder="Why is this answer correct?"
-                          className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
-                        />
-                      </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <select
+                        value={newQuizDraft.correct}
+                        onChange={(e) =>
+                          setNewQuizDraft({
+                            ...newQuizDraft,
+                            correct: Number(e.target.value)
+                          })
+                        }
+                        className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-medium"
+                      >
+                        <option value={0}>Correct: Option 1</option>
+                        <option value={1}>Correct: Option 2</option>
+                        <option value={2}>Correct: Option 3</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={newQuizDraft.explanation}
+                        onChange={(e) =>
+                          setNewQuizDraft({
+                            ...newQuizDraft,
+                            explanation: e.target.value
+                          })
+                        }
+                        placeholder="Clinical explanation shown after answering..."
+                        className="sm:col-span-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                      />
                     </div>
                     <div className="flex justify-end">
                       <button
                         type="submit"
                         className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
                       >
-                        + Add Question to Quiz
+                        + Add Question & Sync
                       </button>
                     </div>
                   </form>
@@ -6095,20 +6093,20 @@ export default function App() {
       </main>
 
       {/* ==========================================
-          MODAL: GLOBAL INSTANT CLINICAL SEARCH (CTRL+K)
+          MODAL: INSTANT GLOBAL CLINICAL SEARCH (CTRL/CMD + K)
           ========================================== */}
       {showGlobalSearch && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-start justify-center p-4 pt-16 sm:pt-24">
           <div className="bg-white rounded-2xl max-w-xl w-full border border-slate-200 shadow-2xl overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center gap-3">
-              <Search className="w-5 h-5 text-emerald-600 shrink-0" />
+            <div className="p-3.5 border-b border-slate-100 flex items-center gap-2.5">
+              <Search className="w-4 h-4 text-emerald-600 shrink-0" />
               <input
                 type="text"
                 autoFocus
                 value={globalSearchQuery}
                 onChange={(e) => setGlobalSearchQuery(e.target.value)}
-                placeholder="Search pathways, steps, suction depth, laryngectomy, speaking valve..."
-                className="flex-1 text-sm sm:text-base text-slate-900 focus:outline-none"
+                placeholder="Search pathways, steps, suction size, speaking valve, laryngectomy..."
+                className="w-full text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
               />
               <button
                 onClick={() => setShowGlobalSearch(false)}
@@ -6118,27 +6116,24 @@ export default function App() {
               </button>
             </div>
 
-            <div className="max-h-96 overflow-y-auto p-4 space-y-4">
+            <div className="max-h-96 overflow-y-auto p-3.5 space-y-4">
               {!globalSearchQuery.trim() ? (
-                <div className="text-xs text-slate-500 space-y-2">
-                  <div className="font-semibold text-slate-700">Popular Roadside Searches:</div>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      'Suction catheter',
-                      'Remove tube',
-                      'Laryngectomy',
-                      'Speaking valve',
-                      'Rescue breaths',
-                      'Downsize'
-                    ].map((tag) => (
-                      <button
-                        key={tag}
-                        onClick={() => setGlobalSearchQuery(tag)}
-                        className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 text-slate-700 font-medium transition"
-                      >
-                        {tag}
-                      </button>
-                    ))}
+                <div className="text-center py-6 space-y-2">
+                  <p className="text-xs text-slate-500">
+                    Type any clinical term to jump straight to a pathway step or learning module.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-1.5 pt-1">
+                    {['Rescue breaths', 'Cuff', 'Obturator', 'Red pathway', 'Suction depth'].map(
+                      (tag) => (
+                        <button
+                          key={tag}
+                          onClick={() => setGlobalSearchQuery(tag)}
+                          className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-[11px] font-medium text-slate-700"
+                        >
+                          {tag}
+                        </button>
+                      )
+                    )}
                   </div>
                 </div>
               ) : (
@@ -6146,14 +6141,14 @@ export default function App() {
                   {globalSearchResults.pathways.length === 0 &&
                     globalSearchResults.steps.length === 0 &&
                     globalSearchResults.modules.length === 0 && (
-                      <p className="text-xs text-slate-400 text-center py-6">
-                        No matching pathways or learning modules found for "{globalSearchQuery}".
+                      <p className="text-center text-xs text-slate-400 py-6">
+                        No matching pathways, steps, or modules found for &ldquo;{globalSearchQuery}&rdquo;.
                       </p>
                     )}
 
                   {globalSearchResults.pathways.length > 0 && (
                     <div className="space-y-1.5">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
                         Pathways
                       </div>
                       {globalSearchResults.pathways.map((p) => (
@@ -6163,7 +6158,7 @@ export default function App() {
                             setShowGlobalSearch(false);
                             handleOpenPathway(p.id);
                           }}
-                          className="w-full text-left p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200/80 flex items-center justify-between gap-2 transition"
+                          className="w-full text-left p-2.5 rounded-xl hover:bg-emerald-50/70 border border-transparent hover:border-emerald-200 transition flex items-center justify-between"
                         >
                           <div>
                             <div className="text-xs sm:text-sm font-bold text-slate-900">
@@ -6179,8 +6174,8 @@ export default function App() {
 
                   {globalSearchResults.steps.length > 0 && (
                     <div className="space-y-1.5">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                        Direct Pathway Steps
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
+                        Pathway Steps
                       </div>
                       {globalSearchResults.steps.map(({ pathway, node }) => (
                         <button
@@ -6189,17 +6184,17 @@ export default function App() {
                             setShowGlobalSearch(false);
                             handleOpenPathway(pathway.id, node.id);
                           }}
-                          className="w-full text-left p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200/80 flex items-center justify-between gap-2 transition"
+                          className="w-full text-left p-2.5 rounded-xl hover:bg-slate-100 transition flex items-center justify-between gap-2"
                         >
                           <div>
-                            <span className="text-[10px] font-semibold text-emerald-700">
-                              {pathway.title}
-                            </span>
-                            <div className="text-xs sm:text-sm font-bold text-slate-900">
+                            <div className="text-xs font-bold text-slate-900">
                               {cleanStepTitle(node.title)}
                             </div>
+                            <div className="text-[11px] text-emerald-700 font-medium">
+                              In {pathway.title}
+                            </div>
                           </div>
-                          <ChevronRight className="w-4 h-4 text-slate-400" />
+                          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
                         </button>
                       ))}
                     </div>
@@ -6207,7 +6202,7 @@ export default function App() {
 
                   {globalSearchResults.modules.length > 0 && (
                     <div className="space-y-1.5">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
                         Learning Modules
                       </div>
                       {globalSearchResults.modules.map((m) => (
@@ -6220,7 +6215,7 @@ export default function App() {
                             setActiveSectionIndex(0);
                             setQuizUnlocked(false);
                           }}
-                          className="w-full text-left p-3 rounded-xl bg-slate-50 hover:bg-sky-50 border border-slate-200/80 flex items-center justify-between gap-2 transition"
+                          className="w-full text-left p-2.5 rounded-xl hover:bg-sky-50/70 transition flex items-center justify-between"
                         >
                           <div>
                             <div className="text-xs sm:text-sm font-bold text-slate-900">
@@ -6671,13 +6666,14 @@ export default function App() {
             {activeToolModal === 'calculator' && (
               <div className="space-y-5">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">
+                  <label className="block text-xs font-semibold text-slate-600 mb-2">
                     Select Tracheostomy Tube Inner Diameter (ID mm)
                   </label>
                   <div className="grid grid-cols-5 gap-2">
                     {SUCTION_SIZING_TABLE.map((row) => (
                       <button
                         key={row.id}
+                        type="button"
                         onClick={() => setSelectedTubeIdSize(row.id)}
                         className={`py-2.5 px-2 rounded-xl text-xs font-bold border transition ${
                           selectedTubeIdSize === row.id
@@ -6691,48 +6687,57 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 text-center">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200">
                     <div className="text-[11px] font-semibold text-emerald-800">
-                      Suction Catheter
+                      Suction Catheter (ID × 2)
                     </div>
-                    <div className="text-xl sm:text-2xl font-bold text-emerald-950 mt-1">
+                    <div className="text-xl font-extrabold text-emerald-950 mt-0.5">
                       {currentSizingRow.catFr}
                     </div>
                   </div>
-
-                  <div className="p-4 rounded-2xl bg-sky-50/70 border border-sky-200/80 text-center">
+                  <div className="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-200">
                     <div className="text-[11px] font-semibold text-sky-800">
-                      Max Safe Depth
+                      Typical Safe Depth
                     </div>
-                    <div className="text-lg sm:text-xl font-bold text-sky-950 mt-1">
+                    <div className="text-xl font-extrabold text-sky-950 mt-0.5">
                       {currentSizingRow.depthCm}
                     </div>
                   </div>
-
-                  <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-center">
+                  <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200">
                     <div className="text-[11px] font-semibold text-amber-800">
-                      Downsize Tube
+                      0.5 mm Downsize Tube
                     </div>
-                    <div className="text-xl sm:text-2xl font-bold text-amber-950 mt-1">
+                    <div className="text-xl font-extrabold text-amber-950 mt-0.5">
                       {currentSizingRow.downsize}
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                    <div className="text-[11px] font-semibold text-slate-500">
+                      Approx Age Guide
+                    </div>
+                    <div className="text-base font-bold text-slate-800 mt-1">
+                      {currentSizingRow.ageGuide}
                     </div>
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Rule of thumb: <strong>Catheter Fr = Tube ID (mm) × 2</strong>. Always verify the child’s exact pre-measured suction depth on their Bedhead Sign.
+                <p className="text-[11px] text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                  Always defer to the child’s pre-measured suction depth documented on their NTSP Bedhead Sign or Caregiver Emergency Card.
                 </p>
               </div>
             )}
 
             {activeToolModal === 'checklist' && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>Tap to check off equipment before transport:</span>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-slate-500">
+                    Verify essential airway kit travels with the child in the ambulance.
+                  </p>
                   <button
+                    type="button"
                     onClick={() => setBagChecked({})}
-                    className="font-semibold text-emerald-700 hover:underline"
+                    className="text-xs font-semibold text-slate-500 hover:text-rose-600"
                   >
                     Reset
                   </button>
@@ -6744,20 +6749,21 @@ export default function App() {
                     return (
                       <button
                         key={item.id}
+                        type="button"
                         onClick={() =>
                           setBagChecked((prev) => ({
                             ...prev,
                             [item.id]: !prev[item.id]
                           }))
                         }
-                        className={`w-full p-3.5 rounded-xl border text-left flex items-start gap-3 transition ${
+                        className={`w-full text-left p-3 rounded-xl border text-xs sm:text-sm transition flex items-start gap-3 ${
                           checked
                             ? 'bg-emerald-50/60 border-emerald-200 text-slate-400'
-                            : 'bg-slate-50/70 border-slate-200 text-slate-800 hover:bg-slate-100/70'
+                            : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                         }`}
                       >
                         <div
-                          className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 ${
+                          className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 mt-0.5 border ${
                             checked
                               ? 'bg-emerald-600 border-emerald-600 text-white'
                               : 'bg-white border-slate-300'
@@ -6765,11 +6771,7 @@ export default function App() {
                         >
                           {checked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                         </div>
-                        <span
-                          className={`text-xs sm:text-sm font-medium ${
-                            checked ? 'line-through' : ''
-                          }`}
-                        >
+                        <span className={checked ? 'line-through' : 'font-medium'}>
                           {item.label}
                         </span>
                       </button>
@@ -6779,129 +6781,719 @@ export default function App() {
               </div>
             )}
 
-            {activeToolModal === 'handover' && (
-              <div className="space-y-4">
-                <p className="text-xs text-slate-500">
-                  Generate a structured SBAR / ASHICE pre-alert summary for Paediatric ED & ENT teams (no patient identifiable details entered).
-                </p>
+            {activeToolModal === 'handover' && (() => {
+              const formattedTube = formatWithUnit(handoverForm.tubeId, 'mm');
+              const formattedDepth = formatWithUnit(handoverForm.suctionDepth, 'cm');
+              const formattedSpo2 = formatWithUnit(handoverForm.obsSpo2, '%');
+              const formattedO2 = formatWithUnit(handoverForm.obsO2, 'L/min');
+              const formattedRr = formatWithUnit(handoverForm.obsRr, '/min');
+              const formattedHr = formatWithUnit(handoverForm.obsHr, 'bpm');
+              const formattedEtco2 = formatWithUnit(handoverForm.obsEtco2, 'kPa');
+              const formattedCycles = formatWithUnit(handoverForm.cprCycles, 'cycles');
 
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      NTSP Airway Status
-                    </label>
-                    <select
-                      value={handoverForm.airwayType}
-                      onChange={(e) =>
-                        setHandoverForm({ ...handoverForm, airwayType: e.target.value })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold"
+              const obsList = [
+                formattedSpo2 && `SpO2 ${formattedSpo2}`,
+                formattedO2 && `O2 ${formattedO2}`,
+                formattedRr && `RR ${formattedRr}`,
+                formattedHr && `HR ${formattedHr}`,
+                formattedEtco2 && `EtCO2 ${formattedEtco2}`
+              ].filter(Boolean);
+
+              const interventionsList = [
+                ...(handoverForm.selectedInterventions || []),
+                ...(handoverForm.otherIntervention.trim()
+                  ? [handoverForm.otherIntervention.trim()]
+                  : [])
+              ];
+
+              const givenDrugsList = ALS_DRUG_OPTIONS.filter(
+                (d) => handoverForm.alsDrugs?.[d.id]?.given
+              ).map((d) => {
+                const doseVal = (handoverForm.alsDrugs?.[d.id]?.doses || '').trim();
+                const doseText = doseVal
+                  ? `${doseVal} ${Number(doseVal) === 1 ? 'dose' : 'doses'}`
+                  : '1 dose';
+                return `${d.label} — ${doseText}`;
+              });
+
+              const travellingList = [
+                ...(handoverForm.travellingWith || []),
+                ...(handoverForm.travellingOther.trim()
+                  ? [handoverForm.travellingOther.trim()]
+                  : [])
+              ];
+
+              const isRedAirway = handoverForm.airwayType.startsWith('Red');
+
+              const copyablePreAlertText = [
+                'PAED TRACHEOSTOMY PRE-ALERT',
+                `Airway: ${handoverForm.airwayType}`,
+                handoverForm.childAge.trim() && `Age: ${handoverForm.childAge.trim()}`,
+                (formattedTube || formattedDepth) &&
+                  `Tube: ${formattedTube || 'Not stated'}${
+                    formattedDepth ? ` (Depth ${formattedDepth})` : ''
+                  }`,
+                handoverForm.airwayEvent.trim() &&
+                  `Airway Event: ${handoverForm.airwayEvent.trim()}`,
+                interventionsList.length > 0 &&
+                  `Interventions: ${interventionsList.join(', ')}`,
+                obsList.length > 0 && `Obs: ${obsList.join(', ')}`,
+                handoverForm.cprPerformed &&
+                  `CPR: Performed${formattedCycles ? ` (${formattedCycles})` : ''}`,
+                givenDrugsList.length > 0 &&
+                  `ALS drugs given:\n${givenDrugsList.map((g) => `- ${g}`).join('\n')}`,
+                travellingList.length > 0 &&
+                  `Travelling with: ${travellingList.join(', ')}`
+              ]
+                .filter(Boolean)
+                .join('\n');
+
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-slate-500">
+                      Build a structured SBAR pre-alert (no patient identifiable details).
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHandoverForm(createEmptyHandoverForm());
+                        setShowHandoverCpr(false);
+                      }}
+                      className="text-xs font-semibold text-slate-500 hover:text-rose-600 shrink-0"
                     >
-                      <option value="Green (Patent Upper Airway)">
-                        Green (Patent Upper Airway)
-                      </option>
-                      <option value="Red (Laryngectomy / Neck-Only)">
-                        Red (Laryngectomy / Neck-Only)
-                      </option>
-                    </select>
+                      Clear All
+                    </button>
                   </div>
+
+                  {/* Airway & Tube Details */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        NTSP Airway Status
+                      </label>
+                      <select
+                        value={handoverForm.airwayType}
+                        onChange={(e) =>
+                          setHandoverForm({ ...handoverForm, airwayType: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-900"
+                      >
+                        <option value="Green (Patent Upper Airway)">
+                          Green (Patent Upper Airway)
+                        </option>
+                        <option value="Red (Laryngectomy / Neck-Only)">
+                          Red (Laryngectomy / Neck-Only)
+                        </option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Child Approx Age
+                      </label>
+                      <input
+                        type="text"
+                        value={handoverForm.childAge}
+                        onChange={(e) =>
+                          setHandoverForm({ ...handoverForm, childAge: e.target.value })
+                        }
+                        placeholder="e.g., 18 months"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Tracheostomy Tube Size
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={handoverForm.tubeId}
+                          onChange={(e) =>
+                            setHandoverForm({ ...handoverForm, tubeId: e.target.value })
+                          }
+                          placeholder="e.g., 4.0"
+                          className="w-full pl-3 pr-10 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-slate-400 pointer-events-none">
+                          mm
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Safe Suction Depth
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={handoverForm.suctionDepth}
+                          onChange={(e) =>
+                            setHandoverForm({ ...handoverForm, suctionDepth: e.target.value })
+                          }
+                          placeholder="e.g., 8.0"
+                          className="w-full pl-3 pr-10 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-slate-400 pointer-events-none">
+                          cm
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Separate Airway Event Input */}
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Child Approx Age
+                      Airway Event / Presentation
                     </label>
                     <input
                       type="text"
-                      value={handoverForm.childAge}
+                      value={handoverForm.airwayEvent}
                       onChange={(e) =>
-                        setHandoverForm({ ...handoverForm, childAge: e.target.value })
+                        setHandoverForm({ ...handoverForm, airwayEvent: e.target.value })
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                      placeholder="e.g., Suspected mucus plug with acute desaturation"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Tracheostomy Tube ID
+
+                  {/* Common Interventions Tick-Boxes */}
+                  <div className="space-y-2">
+                    <label className="block text-[11px] font-semibold text-slate-600">
+                      Interventions Performed (Tick all that apply)
                     </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                      {COMMON_INTERVENTIONS_OPTIONS.map((item) => {
+                        const checked = (handoverForm.selectedInterventions || []).includes(item);
+                        return (
+                          <button
+                            key={item}
+                            type="button"
+                            onClick={() =>
+                              setHandoverForm((prev) => {
+                                const list = prev.selectedInterventions || [];
+                                return {
+                                  ...prev,
+                                  selectedInterventions: checked
+                                    ? list.filter((x) => x !== item)
+                                    : [...list, item]
+                                };
+                              })
+                            }
+                            className={`px-2.5 py-2 rounded-xl border text-left text-[11px] font-medium flex items-center gap-2 transition ${
+                              checked
+                                ? 'bg-sky-50 border-sky-300 text-sky-950 font-semibold'
+                                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            <div
+                              className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border ${
+                                checked
+                                  ? 'bg-sky-600 border-sky-600 text-white'
+                                  : 'bg-white border-slate-300'
+                              }`}
+                            >
+                              {checked && <Check className="w-3 h-3 stroke-[3]" />}
+                            </div>
+                            <span className="leading-tight">{item}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                     <input
                       type="text"
-                      value={handoverForm.tubeId}
+                      value={handoverForm.otherIntervention}
                       onChange={(e) =>
-                        setHandoverForm({ ...handoverForm, tubeId: e.target.value })
+                        setHandoverForm({ ...handoverForm, otherIntervention: e.target.value })
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                      placeholder="Other intervention (optional, e.g., Nebulised 0.9% NaCl)"
+                      className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Safe Suction Depth
+
+                  {/* Separate Observation Boxes */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-semibold text-slate-600">
+                      Current Observations
                     </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      <div>
+                        <span className="block text-[10px] font-medium text-slate-500 mb-0.5">
+                          SpO2
+                        </span>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={handoverForm.obsSpo2}
+                            onChange={(e) =>
+                              setHandoverForm({ ...handoverForm, obsSpo2: e.target.value })
+                            }
+                            placeholder="97"
+                            className="w-full pl-2.5 pr-7 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
+                          />
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-400 pointer-events-none">
+                            %
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] font-medium text-slate-500 mb-0.5">
+                          O2 Delivery
+                        </span>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={handoverForm.obsO2}
+                            onChange={(e) =>
+                              setHandoverForm({ ...handoverForm, obsO2: e.target.value })
+                            }
+                            placeholder="10"
+                            className="w-full pl-2.5 pr-11 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
+                          />
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-400 pointer-events-none">
+                            L/min
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] font-medium text-slate-500 mb-0.5">
+                          Resp Rate
+                        </span>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={handoverForm.obsRr}
+                            onChange={(e) =>
+                              setHandoverForm({ ...handoverForm, obsRr: e.target.value })
+                            }
+                            placeholder="28"
+                            className="w-full pl-2.5 pr-10 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
+                          />
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-400 pointer-events-none">
+                            /min
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] font-medium text-slate-500 mb-0.5">
+                          Heart Rate
+                        </span>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={handoverForm.obsHr}
+                            onChange={(e) =>
+                              setHandoverForm({ ...handoverForm, obsHr: e.target.value })
+                            }
+                            placeholder="132"
+                            className="w-full pl-2.5 pr-10 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
+                          />
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-400 pointer-events-none">
+                            bpm
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] font-medium text-slate-500 mb-0.5">
+                          EtCO2
+                        </span>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={handoverForm.obsEtco2}
+                            onChange={(e) =>
+                              setHandoverForm({ ...handoverForm, obsEtco2: e.target.value })
+                            }
+                            placeholder="4.8"
+                            className="w-full pl-2.5 pr-9 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
+                          />
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-400 pointer-events-none">
+                            kPa
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Travelling With Tick-Boxes */}
+                  <div className="space-y-2">
+                    <label className="block text-[11px] font-semibold text-slate-600">
+                      Travelling With & Equipment On Board
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {TRAVELLING_WITH_OPTIONS.map((item) => {
+                        const checked = (handoverForm.travellingWith || []).includes(item);
+                        return (
+                          <button
+                            key={item}
+                            type="button"
+                            onClick={() =>
+                              setHandoverForm((prev) => {
+                                const list = prev.travellingWith || [];
+                                return {
+                                  ...prev,
+                                  travellingWith: checked
+                                    ? list.filter((x) => x !== item)
+                                    : [...list, item]
+                                };
+                              })
+                            }
+                            className={`px-3 py-2 rounded-xl border text-left text-xs font-medium flex items-center gap-2 transition ${
+                              checked
+                                ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-semibold'
+                                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            <div
+                              className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border ${
+                                checked
+                                  ? 'bg-emerald-600 border-emerald-600 text-white'
+                                  : 'bg-white border-slate-300'
+                              }`}
+                            >
+                              {checked && <Check className="w-3 h-3 stroke-[3]" />}
+                            </div>
+                            <span className="leading-tight">{item}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                     <input
                       type="text"
-                      value={handoverForm.suctionDepth}
+                      value={handoverForm.travellingOther}
                       onChange={(e) =>
-                        setHandoverForm({ ...handoverForm, suctionDepth: e.target.value })
+                        setHandoverForm({ ...handoverForm, travellingOther: e.target.value })
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                      placeholder="Other / notes (optional)"
+                      className="w-full px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Airway Event & Interventions Performed
-                  </label>
-                  <input
-                    type="text"
-                    value={handoverForm.eventSummary}
-                    onChange={(e) =>
-                      setHandoverForm({ ...handoverForm, eventSummary: e.target.value })
-                    }
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
-                  />
-                </div>
+                  {/* Optional Expandable CPR & Paediatric ALS Drugs Section */}
+                  <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50/70">
+                    <button
+                      type="button"
+                      onClick={() => setShowHandoverCpr((prev) => !prev)}
+                      className="w-full px-3.5 py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-100/70 transition"
+                    >
+                      <span className="text-xs font-semibold text-slate-700 flex items-center gap-2">
+                        <span>CPR / Resuscitation & ALS Drugs (Optional)</span>
+                        {(handoverForm.cprPerformed || givenDrugsList.length > 0) && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">
+                            Active
+                          </span>
+                        )}
+                      </span>
+                      {showHandoverCpr ? (
+                        <ChevronUp className="w-4 h-4 text-slate-400" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                      )}
+                    </button>
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Current Observations & EtCO2
-                  </label>
-                  <input
-                    type="text"
-                    value={handoverForm.currentObs}
-                    onChange={(e) =>
-                      setHandoverForm({ ...handoverForm, currentObs: e.target.value })
-                    }
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
-                  />
-                </div>
+                    {showHandoverCpr && (
+                      <div className="p-3.5 pt-2.5 border-t border-slate-200/80 space-y-3 bg-white">
+                        <div className="p-2.5 rounded-xl bg-rose-50/70 border border-rose-200/80 flex flex-wrap items-center justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setHandoverForm((prev) => ({
+                                ...prev,
+                                cprPerformed: !prev.cprPerformed
+                              }))
+                            }
+                            className="inline-flex items-center gap-2.5 text-xs font-bold text-rose-950"
+                          >
+                            <div
+                              className={`w-5 h-5 rounded-md border flex items-center justify-center transition ${
+                                handoverForm.cprPerformed
+                                  ? 'bg-rose-600 border-rose-600 text-white'
+                                  : 'bg-white border-rose-300'
+                              }`}
+                            >
+                              {handoverForm.cprPerformed && (
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              )}
+                            </div>
+                            <span>CPR / Chest Compressions Given</span>
+                          </button>
 
-                <div className="p-3.5 rounded-xl bg-slate-900 text-slate-100 text-xs font-mono leading-relaxed">
-                  PAED TRACHEOSTOMY PRE-ALERT • Age: {handoverForm.childAge} | Airway: {handoverForm.airwayType} | Tube: {handoverForm.tubeId} (Depth {handoverForm.suctionDepth}) | Interventions: {handoverForm.eventSummary} | Obs: {handoverForm.currentObs} | Emergency Go-Bag & Caregiver on board.
-                </div>
+                          {handoverForm.cprPerformed && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-semibold text-rose-900">
+                                Cycles:
+                              </span>
+                              <div className="relative w-28">
+                                <input
+                                  type="text"
+                                  value={handoverForm.cprCycles}
+                                  onChange={(e) =>
+                                    setHandoverForm({
+                                      ...handoverForm,
+                                      cprCycles: e.target.value
+                                    })
+                                  }
+                                  placeholder="e.g., 3"
+                                  className="w-full pl-2.5 pr-12 py-1.5 rounded-xl bg-white border border-rose-200 text-xs font-semibold text-slate-900 placeholder:text-slate-400"
+                                />
+                                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-400 pointer-events-none">
+                                  cycles
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    const summaryStr = `PAED TRACHEOSTOMY PRE-ALERT • Age: ${handoverForm.childAge} | Airway: ${handoverForm.airwayType} | Tube: ${handoverForm.tubeId} (Depth ${handoverForm.suctionDepth}) | Interventions: ${handoverForm.eventSummary} | Obs: ${handoverForm.currentObs} | Emergency Go-Bag & Caregiver on board.`;
-                    const ta = document.createElement('textarea');
-                    ta.value = summaryStr;
-                    document.body.appendChild(ta);
-                    ta.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(ta);
-                    setHandoverCopied(true);
-                    setTimeout(() => setHandoverCopied(false), 3000);
-                  }}
-                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>
-                    {handoverCopied
-                      ? '✓ Copied Pre-Alert to Clipboard!'
-                      : 'Copy Pre-Alert Text for CAD / MDT'}
-                  </span>
-                </button>
-              </div>
-            )}
+                        {/* Paediatric ALS Drugs Tick-Boxes + Doses Counter */}
+                        <div className="space-y-1.5 pt-1 border-t border-slate-100">
+                          <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            Paediatric ALS Drugs Given (Tick & enter doses)
+                          </span>
+                          <div className="space-y-1.5">
+                            {ALS_DRUG_OPTIONS.map((drug) => {
+                              const entry = handoverForm.alsDrugs?.[drug.id] || {
+                                given: false,
+                                doses: '1'
+                              };
+                              return (
+                                <div
+                                  key={drug.id}
+                                  className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 transition ${
+                                    entry.given
+                                      ? 'bg-rose-50/60 border-rose-200'
+                                      : 'bg-slate-50/70 border-slate-200/80'
+                                  }`}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setHandoverForm((prev) => ({
+                                        ...prev,
+                                        alsDrugs: {
+                                          ...(prev.alsDrugs || {}),
+                                          [drug.id]: {
+                                            given: !entry.given,
+                                            doses: entry.doses || '1'
+                                          }
+                                        }
+                                      }))
+                                    }
+                                    className="flex items-center gap-2 text-left text-xs font-medium text-slate-800 flex-1"
+                                  >
+                                    <div
+                                      className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border ${
+                                        entry.given
+                                          ? 'bg-rose-600 border-rose-600 text-white'
+                                          : 'bg-white border-slate-300'
+                                      }`}
+                                    >
+                                      {entry.given && <Check className="w-3 h-3 stroke-[3]" />}
+                                    </div>
+                                    <span className={entry.given ? 'font-semibold text-slate-900' : ''}>
+                                      {drug.label}
+                                    </span>
+                                  </button>
+
+                                  {entry.given && (
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <span className="text-[10px] font-semibold text-slate-500">
+                                        Doses:
+                                      </span>
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        max="20"
+                                        value={entry.doses}
+                                        onChange={(e) =>
+                                          setHandoverForm((prev) => ({
+                                            ...prev,
+                                            alsDrugs: {
+                                              ...(prev.alsDrugs || {}),
+                                              [drug.id]: {
+                                                given: true,
+                                                doses: e.target.value
+                                              }
+                                            }
+                                          }))
+                                        }
+                                        className="w-14 px-2 py-1 rounded-lg bg-white border border-rose-200 text-xs font-bold text-center text-slate-900"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Aesthetic Structured Pre-Alert Summary Card */}
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 overflow-hidden shadow-2xs">
+                    <div
+                      className={`px-4 py-2.5 flex items-center justify-between border-b ${
+                        isRedAirway
+                          ? 'bg-rose-50 border-rose-200/80 text-rose-900'
+                          : 'bg-emerald-50 border-emerald-200/80 text-emerald-900'
+                      }`}
+                    >
+                      <span className="text-[11px] font-extrabold uppercase tracking-wider">
+                        Pre-Alert Handover Summary
+                      </span>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                          isRedAirway
+                            ? 'bg-rose-600 text-white'
+                            : 'bg-emerald-600 text-white'
+                        }`}
+                      >
+                        {handoverForm.airwayType}
+                      </span>
+                    </div>
+
+                    <div className="p-4 space-y-3 text-xs">
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="p-2.5 rounded-xl bg-white border border-slate-200/80">
+                          <div className="text-[10px] font-semibold uppercase text-slate-400">
+                            Approx Age
+                          </div>
+                          <div className="font-bold text-slate-900 mt-0.5">
+                            {handoverForm.childAge.trim() || '—'}
+                          </div>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-white border border-slate-200/80">
+                          <div className="text-[10px] font-semibold uppercase text-slate-400">
+                            Tube Size
+                          </div>
+                          <div className="font-bold text-slate-900 mt-0.5">
+                            {formattedTube || '—'}
+                          </div>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-white border border-slate-200/80">
+                          <div className="text-[10px] font-semibold uppercase text-slate-400">
+                            Suction Depth
+                          </div>
+                          <div className="font-bold text-slate-900 mt-0.5">
+                            {formattedDepth || '—'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-white border border-slate-200/80 space-y-2">
+                        <div>
+                          <div className="text-[10px] font-semibold uppercase text-slate-400">
+                            Airway Event
+                          </div>
+                          <div className="text-slate-800 font-medium mt-0.5">
+                            {handoverForm.airwayEvent.trim() || 'No event entered yet'}
+                          </div>
+                        </div>
+
+                        {interventionsList.length > 0 && (
+                          <div className="pt-2 border-t border-slate-100">
+                            <div className="text-[10px] font-semibold uppercase text-slate-400 mb-1">
+                              Interventions Performed
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {interventionsList.map((inv) => (
+                                <span
+                                  key={inv}
+                                  className="px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200/70 font-semibold text-[11px]"
+                                >
+                                  {inv}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {obsList.length > 0 && (
+                        <div className="p-3 rounded-xl bg-white border border-slate-200/80">
+                          <div className="text-[10px] font-semibold uppercase text-slate-400 mb-1.5">
+                            Current Observations
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {obsList.map((ob) => (
+                              <span
+                                key={ob}
+                                className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 font-semibold text-[11px]"
+                              >
+                                {ob}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {(handoverForm.cprPerformed || givenDrugsList.length > 0) && (
+                        <div className="p-3 rounded-xl bg-rose-50/80 border border-rose-200 text-rose-950 space-y-1.5">
+                          {handoverForm.cprPerformed && (
+                            <div className="font-bold">
+                              CPR Performed
+                              {formattedCycles ? ` (${formattedCycles})` : ''}
+                            </div>
+                          )}
+                          {givenDrugsList.length > 0 && (
+                            <div className="space-y-0.5">
+                              <div className="font-bold text-rose-900">ALS drugs given:</div>
+                              <div className="space-y-0.5 pl-1">
+                                {givenDrugsList.map((drugLine, idx) => (
+                                  <div key={idx} className="text-rose-900">
+                                    • {drugLine}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {travellingList.length > 0 && (
+                        <div className="p-3 rounded-xl bg-white border border-slate-200/80">
+                          <div className="text-[10px] font-semibold uppercase text-slate-400 mb-1.5">
+                            Travelling With & Equipment
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {travellingList.map((item) => (
+                              <span
+                                key={item}
+                                className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-semibold text-[11px]"
+                              >
+                                ✓ {item}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ta = document.createElement('textarea');
+                      ta.value = copyablePreAlertText;
+                      document.body.appendChild(ta);
+                      ta.select();
+                      document.execCommand('copy');
+                      document.body.removeChild(ta);
+                      setHandoverCopied(true);
+                      setTimeout(() => setHandoverCopied(false), 3000);
+                    }}
+                    className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>
+                      {handoverCopied
+                        ? '✓ Copied Pre-Alert to Clipboard!'
+                        : 'Copy Pre-Alert Text for CAD / MDT'}
+                    </span>
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
