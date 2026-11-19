@@ -14,6 +14,7 @@ import {
   getFirestore,
   doc,
   setDoc,
+  deleteDoc,
   onSnapshot
 } from 'firebase/firestore';
 import {
@@ -1139,16 +1140,23 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Keep currentAdminUser's role and display name synced with Firestore roster updates
+  // Keep currentAdminUser's role synced with Firestore roster & immediately revoke access if removed
   useEffect(() => {
-    if (!fbUser || fbUser.isAnonymous || !fbUser.email) return;
+    if (!fbUser || fbUser.isAnonymous || !fbUser.email || cloudStatus !== 'synced') return;
     const matchedProfile = adminUsers.find(
       (adm) => adm.email.toLowerCase() === fbUser.email.toLowerCase()
     );
     if (matchedProfile) {
       setCurrentAdminUser(matchedProfile);
+    } else if (adminUsers.length > 0) {
+      // User was removed from the Firestore admin roster — revoke session immediately
+      signOut(auth)
+        .then(() => signInAnonymously(auth))
+        .catch(() => {});
+      setCurrentAdminUser(null);
+      setLoginError('Your admin access has been revoked by a Super Admin.');
     }
-  }, [fbUser, adminUsers]);
+  }, [fbUser, adminUsers, cloudStatus]);
 
   useEffect(() => {
     if (!fbUser || !db) return;
@@ -1553,21 +1561,41 @@ export default function App() {
         (u) => u.email.toLowerCase() === signedInEmail
       );
 
-      // Auto-register first Firebase Auth user into Firestore roster if not listed yet
       if (!matchedProfile) {
-        const firstAdminProfile = {
-          id: cred.user.uid,
-          name: cred.user.displayName || signedInEmail.split('@')[0],
-          email: signedInEmail,
-          role: 'Clinical Lead (Super Admin)',
-          addedAt: new Date().toISOString().slice(0, 10)
-        };
-        const updatedRoster = [...adminUsers, firstAdminProfile];
-        setCurrentAdminUser(firstAdminProfile);
-        await publishCloudUpdate({
-          nextAdmins: updatedRoster,
-          actionDescription: `Verified Super Admin ${firstAdminProfile.email} via Firebase Auth`
-        });
+        // Check if this is a brand-new database with only the placeholder seed user
+        const isFreshSeedOnly =
+          adminUsers.length === 1 && adminUsers[0].email === 'lead@paedtrach.org.uk';
+
+        if (isFreshSeedOnly) {
+          const firstAdminProfile = {
+            id: cred.user.uid,
+            name: cred.user.displayName || signedInEmail.split('@')[0],
+            email: signedInEmail,
+            role: 'Clinical Lead (Super Admin)',
+            addedAt: new Date().toISOString().slice(0, 10)
+          };
+          const updatedRoster = [firstAdminProfile];
+          if (db) {
+            await setDoc(
+              doc(db, 'artifacts', appId, 'public', 'data', 'admin_team', signedInEmail),
+              firstAdminProfile
+            ).catch(() => {});
+          }
+          setCurrentAdminUser(firstAdminProfile);
+          await publishCloudUpdate({
+            nextAdmins: updatedRoster,
+            actionDescription: `Verified initial Super Admin ${firstAdminProfile.email}`
+          });
+        } else {
+          // User was removed from the Firestore admin team — deny entry & sign out
+          await signOut(auth);
+          await signInAnonymously(auth);
+          setLoginError(
+            'Access denied: This email is not on the active Firestore Admin roster.'
+          );
+          setAuthLoading(false);
+          return;
+        }
       } else {
         setCurrentAdminUser(matchedProfile);
       }
@@ -1696,6 +1724,13 @@ export default function App() {
         addedAt: new Date().toISOString().slice(0, 10)
       };
 
+      if (db) {
+        await setDoc(
+          doc(db, 'artifacts', appId, 'public', 'data', 'admin_team', cleanEmail),
+          createdUser
+        ).catch(() => {});
+      }
+
       const nextAdmins = [...adminUsers, createdUser];
       await publishCloudUpdate({
         nextAdmins,
@@ -1721,6 +1756,12 @@ export default function App() {
           role: newAdminForm.role,
           addedAt: new Date().toISOString().slice(0, 10)
         };
+        if (db) {
+          await setDoc(
+            doc(db, 'artifacts', appId, 'public', 'data', 'admin_team', cleanEmail),
+            createdUser
+          ).catch(() => {});
+        }
         const nextAdmins = [...adminUsers, createdUser];
         await publishCloudUpdate({
           nextAdmins,
@@ -1733,28 +1774,41 @@ export default function App() {
           password: ''
         });
         notifyCms(
-          `${createdUser.email} already had a Firebase Auth login — added to Firestore team roster!`
+          `Added ${createdUser.name} to Firestore roster (existing Firebase Auth account linked).`
         );
       } else {
-        notifyCms(err.message || 'Could not create team member in Firebase Auth.');
+        notifyCms(err.message || 'Could not create team member account.');
       }
     } finally {
       setAuthLoading(false);
     }
   };
 
-  const handleRemoveAdminUser = (targetId) => {
+  const handleRemoveAdminUser = async (targetId) => {
     if (adminUsers.length <= 1) {
       notifyCms('Cannot remove the last remaining administrator.');
       return;
     }
     const target = adminUsers.find((u) => u.id === targetId);
+    if (target && db) {
+      await deleteDoc(
+        doc(
+          db,
+          'artifacts',
+          appId,
+          'public',
+          'data',
+          'admin_team',
+          target.email.toLowerCase()
+        )
+      ).catch(() => {});
+    }
     const nextAdmins = adminUsers.filter((u) => u.id !== targetId);
-    publishCloudUpdate({
+    await publishCloudUpdate({
       nextAdmins,
-      actionDescription: `Removed admin user ${target?.name || targetId}`
+      actionDescription: `Removed admin user ${target?.name || targetId} from Firestore database`
     });
-    notifyCms('Removed admin user from roster');
+    notifyCms(`Removed ${target?.name || 'user'} from Firestore & revoked admin access`);
   };
 
   const handleDownloadBackupJson = () => {
