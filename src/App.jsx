@@ -1100,40 +1100,55 @@ export default function App() {
       setCloudStatus('offline');
       return;
     }
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
+
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      if (!u) {
+        // Only fall back to anonymous auth if there is genuinely no active session
+        try {
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+        } catch (err) {
+          setCloudStatus('offline');
         }
-      } catch (err) {
-        setCloudStatus('offline');
+        return;
       }
-    };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
+
       setFbUser(u);
-      if (u && !u.isAnonymous && u.email) {
+      if (!u.isAnonymous && u.email) {
         // User is signed in with real Firebase Email/Password Auth
-        const matchedProfile = adminUsers.find(
-          (adm) => adm.email.toLowerCase() === u.email.toLowerCase()
-        );
-        setCurrentAdminUser(
-          matchedProfile || {
+        setCurrentAdminUser((prev) => {
+          if (prev && prev.email?.toLowerCase() === u.email.toLowerCase()) {
+            return prev;
+          }
+          return {
             id: u.uid,
             name: u.displayName || u.email.split('@')[0],
             email: u.email,
             role: 'Clinical Lead (Super Admin)',
             addedAt: new Date().toISOString().slice(0, 10)
-          }
-        );
+          };
+        });
       } else {
         setCurrentAdminUser(null);
       }
     });
+
     return () => unsubscribe();
-  }, [adminUsers]);
+  }, []);
+
+  // Keep currentAdminUser's role and display name synced with Firestore roster updates
+  useEffect(() => {
+    if (!fbUser || fbUser.isAnonymous || !fbUser.email) return;
+    const matchedProfile = adminUsers.find(
+      (adm) => adm.email.toLowerCase() === fbUser.email.toLowerCase()
+    );
+    if (matchedProfile) {
+      setCurrentAdminUser(matchedProfile);
+    }
+  }, [fbUser, adminUsers]);
 
   useEffect(() => {
     if (!fbUser || !db) return;
