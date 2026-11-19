@@ -1521,71 +1521,26 @@ export default function App() {
   const [cpdReflectionText, setCpdReflectionText] = useState('');
   const [showCpdModal, setShowCpdModal] = useState(false);
 
-  // Keyboard shortcut Ctrl/Cmd + K for Global Search
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setShowGlobalSearch((prev) => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
+  // CPR Timer, Modals & Learning Module State
   const [showCprTimer, setShowCprTimer] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
-
-  useEffect(() => {
-    let interval = null;
-    if (timerRunning) {
-      interval = setInterval(() => {
-        setTimerSeconds((prev) => prev + 1);
-      }, 1000);
-    } else {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [timerRunning]);
-
-  const [activeModuleId, setActiveModuleId] = useState(null);
-  const [activeSectionIndex, setActiveSectionIndex] = useState(0);
-  const [quizUnlocked, setQuizUnlocked] = useState(false);
-  const [quizAnswers, setQuizAnswers] = useState({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
-
+  const [timerSeconds, setTimerSeconds] = useState(0);
   const [showPwaModal, setShowPwaModal] = useState(false);
   const [showGovernanceModal, setShowGovernanceModal] = useState(false);
   const [legalModalTab, setLegalModalTab] = useState('disclaimer');
 
-  // ==========================================
-  // ADMIN CMS STATE
-  // ==========================================
+  const [activeModuleId, setActiveModuleId] = useState(null);
+  const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+  const [quizUnlocked, setQuizUnlocked] = useState(false);
+  const [quizAttemptSeed, setQuizAttemptSeed] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+
+  // Admin CMS State
   const [adminTab, setAdminTab] = useState('pathways');
   const [cmsNotification, setCmsNotification] = useState(null);
-
-  const [newAdminForm, setNewAdminForm] = useState({
-    name: '',
-    email: '',
-    role: 'Content Editor',
-    password: ''
-  });
-  const [ownProfileForm, setOwnProfileForm] = useState({
-    name: '',
-    email: '',
-    newPassword: ''
-  });
-  const [importJsonText, setImportJsonText] = useState('');
-  const [customFirebaseJsonInput, setCustomFirebaseJsonInput] = useState(() => {
-    try {
-      return localStorage.getItem('paedtrach_custom_firebase_config') || '';
-    } catch (e) {
-      return '';
-    }
-  });
-
   const [adminPathwayId, setAdminPathwayId] = useState('ntsp-green');
+  const [editingNodeId, setEditingNodeId] = useState(null);
   const [showNewPathwayModal, setShowNewPathwayModal] = useState(false);
   const [newPathwayForm, setNewPathwayForm] = useState({
     title: '',
@@ -1594,7 +1549,6 @@ export default function App() {
     theme: 'amber',
     badge: 'Routine & Secondary Care'
   });
-  const [editingNodeId, setEditingNodeId] = useState(null);
   const [newNodeForm, setNewNodeForm] = useState({
     type: 'action',
     title: '',
@@ -1614,21 +1568,14 @@ export default function App() {
     url: ''
   });
 
-  // Enhanced Learning Module Section Editor State
-  const [adminModuleId, setAdminModuleId] = useState(() => INITIAL_LEARNING_MODULES[0].id);
-  const [showNewModuleModal, setShowNewModuleModal] = useState(false);
-  const [newModuleForm, setNewModuleForm] = useState({
-    title: '',
-    category: 'Clinical Skills',
-    duration: '5 min read',
-    summary: ''
-  });
+  const [adminModuleId, setAdminModuleId] = useState('mod-anatomy');
   const [editingSectionId, setEditingSectionId] = useState(null);
+  const [previewSectionInEditor, setPreviewSectionInEditor] = useState(false);
   const [sectionForm, setSectionForm] = useState({
     heading: '',
     layout: 'stacked',
     body: '',
-    calloutType: 'pearl', // 'pearl' | 'warning' | 'info'
+    calloutType: 'pearl',
     pearl: '',
     comparisonTable: [],
     images: [],
@@ -1644,8 +1591,13 @@ export default function App() {
   });
   const [uploadingMediaType, setUploadingMediaType] = useState(null);
   const [uploadProgressPct, setUploadProgressPct] = useState(0);
-  const [previewSectionInEditor, setPreviewSectionInEditor] = useState(false);
-
+  const [showNewModuleModal, setShowNewModuleModal] = useState(false);
+  const [newModuleForm, setNewModuleForm] = useState({
+    title: '',
+    category: 'Clinical Skills',
+    duration: '5 min read',
+    summary: ''
+  });
   const [newQuizDraft, setNewQuizDraft] = useState({
     q: '',
     opt0: '',
@@ -1655,87 +1607,50 @@ export default function App() {
     explanation: ''
   });
 
-  const isAdminAuthenticated = !!currentAdminUser;
-  const isSuperAdmin = useMemo(() => {
-    if (!currentAdminUser) return false;
-    return (
-      currentAdminUser.role === 'Clinical Lead (Super Admin)' ||
-      currentAdminUser.role?.toLowerCase().includes('super admin')
-    );
-  }, [currentAdminUser]);
+  const [ownProfileForm, setOwnProfileForm] = useState({
+    name: '',
+    email: '',
+    newPassword: ''
+  });
+  const [newAdminForm, setNewAdminForm] = useState({
+    name: '',
+    email: '',
+    role: 'Content Editor',
+    password: ''
+  });
+  const [customFirebaseJsonInput, setCustomFirebaseJsonInput] = useState('');
+  const [importJsonText, setImportJsonText] = useState('');
 
-  useEffect(() => {
-    document.title = 'PaedTraches — Paediatric Tracheostomy Guide';
-
-    try {
-      const canvas = document.createElement('canvas');
-      canvas.width = 192;
-      canvas.height = 192;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        const grad = ctx.createLinearGradient(0, 0, 192, 192);
-        grad.addColorStop(0, '#10b981');
-        grad.addColorStop(1, '#0f766e');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.roundRect(0, 0, 192, 192, 42);
-        ctx.fill();
-
-        ctx.strokeStyle = '#ffffff';
-        ctx.fillStyle = '#ffffff';
-        ctx.lineWidth = 12;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        ctx.beginPath();
-        ctx.roundRect(32, 56, 128, 30, 15);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.roundRect(76, 30, 40, 26, 6);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(82, 86);
-        ctx.quadraticCurveTo(82, 148, 126, 158);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(110, 86);
-        ctx.quadraticCurveTo(110, 126, 138, 134);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(54, 71, 6, 0, Math.PI * 2);
-        ctx.arc(138, 71, 6, 0, Math.PI * 2);
-        ctx.fill();
-
-        const pngDataUrl = canvas.toDataURL('image/png');
-
-        const setLinkTag = (rel, href) => {
-          let link = document.querySelector(`link[rel="${rel}"]`);
-          if (!link) {
-            link = document.createElement('link');
-            link.rel = rel;
-            document.head.appendChild(link);
-          }
-          link.href = href;
-        };
-
-        setLinkTag('icon', pngDataUrl);
-        setLinkTag('apple-touch-icon', pngDataUrl);
-      }
-    } catch (e) {
-      // Fallback
-    }
-  }, []);
+  const isAdminAuthenticated = Boolean(currentAdminUser);
+  const isSuperAdmin = Boolean(
+    currentAdminUser &&
+      typeof currentAdminUser.role === 'string' &&
+      currentAdminUser.role.toLowerCase().includes('super admin')
+  );
 
   const notifyCms = (msg) => {
-    setCmsNotification(msg);
-    setTimeout(() => setCmsNotification(null), 4000);
+    setCmsNotification(typeof msg === 'string' ? msg : String(msg));
   };
 
-  // Global Instant Search Results across Pathways, Steps & Modules
+  useEffect(() => {
+    if (!timerRunning) return;
+    const interval = setInterval(() => {
+      setTimerSeconds((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timerRunning]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowGlobalSearch((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const globalSearchResults = useMemo(() => {
     const q = globalSearchQuery.trim().toLowerCase();
     if (!q) return { pathways: [], steps: [], modules: [] };
@@ -1743,19 +1658,20 @@ export default function App() {
     const matchedPathways = pathways.filter(
       (p) =>
         p.title.toLowerCase().includes(q) ||
-        p.subtitle.toLowerCase().includes(q) ||
-        p.badge.toLowerCase().includes(q)
+        (p.subtitle && p.subtitle.toLowerCase().includes(q)) ||
+        (p.badge && p.badge.toLowerCase().includes(q))
     );
 
     const matchedSteps = [];
     pathways.forEach((p) => {
-      p.nodes.forEach((n) => {
-        if (
-          n.title.toLowerCase().includes(q) ||
-          (n.subtitle && n.subtitle.toLowerCase().includes(q)) ||
-          (n.checklist && n.checklist.some((c) => c.toLowerCase().includes(q)))
-        ) {
-          matchedSteps.push({ pathway: p, node: n });
+      (p.nodes || []).forEach((node) => {
+        const inTitle = node.title && node.title.toLowerCase().includes(q);
+        const inSub = node.subtitle && node.subtitle.toLowerCase().includes(q);
+        const inChecklist = (node.checklist || []).some((c) =>
+          c.toLowerCase().includes(q)
+        );
+        if (inTitle || inSub || inChecklist) {
+          matchedSteps.push({ pathway: p, node });
         }
       });
     });
@@ -1763,100 +1679,294 @@ export default function App() {
     const matchedModules = learningModules.filter(
       (m) =>
         m.title.toLowerCase().includes(q) ||
-        m.summary.toLowerCase().includes(q) ||
-        m.sections.some(
+        (m.summary && m.summary.toLowerCase().includes(q)) ||
+        (m.sections || []).some(
           (s) =>
-            s.heading.toLowerCase().includes(q) ||
-            s.body.toLowerCase().includes(q)
+            (s.heading && s.heading.toLowerCase().includes(q)) ||
+            (s.body && s.body.toLowerCase().includes(q))
         )
     );
 
     return {
       pathways: matchedPathways,
-      steps: matchedSteps.slice(0, 6),
+      steps: matchedSteps.slice(0, 8),
       modules: matchedModules
     };
   }, [globalSearchQuery, pathways, learningModules]);
 
   const handleAdminLoginSubmit = async (e) => {
     e.preventDefault();
-    if (!auth) {
-      setLoginError(
-        'Firebase Authentication is not configured yet. Please connect your Firebase project first.'
-      );
-      return;
-    }
+    const email = loginEmailInput.trim().toLowerCase();
+    const pass = loginPasswordInput;
+    if (!email || !pass) return;
 
-    const cleanEmail = loginEmailInput.trim().toLowerCase();
     setAuthLoading(true);
     setLoginError('');
-
     try {
-      const cred = await signInWithEmailAndPassword(
-        auth,
-        cleanEmail,
-        loginPasswordInput
-      );
-      const signedInEmail = cred.user.email.toLowerCase();
-      const matchedProfile = adminUsers.find(
-        (u) => u.email.toLowerCase() === signedInEmail
-      );
-
-      if (!matchedProfile) {
-        const isFreshSeedOnly =
-          adminUsers.length === 1 && adminUsers[0].email === 'lead@paedtrach.org.uk';
-
-        if (isFreshSeedOnly) {
-          const firstAdminProfile = {
-            id: cred.user.uid,
-            name: cred.user.displayName || signedInEmail.split('@')[0],
-            email: signedInEmail,
-            role: 'Clinical Lead (Super Admin)',
-            addedAt: new Date().toISOString().slice(0, 10)
-          };
-          const updatedRoster = [firstAdminProfile];
-          if (db) {
-            await setDoc(
-              doc(db, 'artifacts', appId, 'public', 'data', 'admin_team', signedInEmail),
-              firstAdminProfile
-            ).catch(() => {});
-          }
-          setCurrentAdminUser(firstAdminProfile);
-          await publishCloudUpdate({
-            nextAdmins: updatedRoster,
-            actionDescription: `Verified initial Super Admin ${firstAdminProfile.email}`
-          });
-        } else {
-          await signOut(auth);
-          await signInAnonymously(auth);
-          setLoginError(
-            'Access denied: This email is not on the active Firestore Admin roster.'
-          );
-          setAuthLoading(false);
-          return;
-        }
-      } else {
-        setCurrentAdminUser(matchedProfile);
+      if (!auth) {
+        throw new Error('Firebase Authentication is not configured.');
       }
-
-      setAdminTab('pathways');
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      const matched = adminUsers.find(
+        (u) => u.email.toLowerCase() === email
+      );
+      if (adminUsers.length > 0 && !matched) {
+        await signOut(auth);
+        await signInAnonymously(auth).catch(() => {});
+        setLoginError('Access denied: This email is not on the active Firestore Admin roster.');
+        return;
+      }
+      setCurrentAdminUser(
+        matched || {
+          id: cred.user.uid,
+          name: cred.user.displayName || email.split('@')[0],
+          email,
+          role: 'Clinical Lead (Super Admin)',
+          addedAt: new Date().toISOString().slice(0, 10)
+        }
+      );
       setLoginPasswordInput('');
     } catch (err) {
-      if (
-        err.code === 'auth/invalid-credential' ||
-        err.code === 'auth/wrong-password' ||
-        err.code === 'auth/user-not-found'
-      ) {
-        setLoginError('Incorrect email or password. Please check your credentials.');
-      } else if (err.code === 'auth/too-many-requests') {
-        setLoginError('Too many failed attempts. Please wait a few minutes and try again.');
-      } else {
-        setLoginError(
-          err.message || 'Sign-in failed. Verify Email/Password Auth is enabled in Firebase.'
-        );
-      }
+      setLoginError(err?.message || 'Invalid email or password.');
     } finally {
       setAuthLoading(false);
+    }
+  };
+
+  const generateCpdCertificateDataUrl = () => {
+    if (!activeModule) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1600;
+    canvas.height = 1130;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    // Clean white & subtle emerald gradient background
+    const bgGrad = ctx.createLinearGradient(0, 0, 1600, 1130);
+    bgGrad.addColorStop(0, '#ffffff');
+    bgGrad.addColorStop(1, '#f0fdf4');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 1600, 1130);
+
+    // Outer & inner decorative borders
+    ctx.strokeStyle = '#059669';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(44, 44, 1512, 1042);
+
+    ctx.strokeStyle = '#a7f3d0';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(64, 64, 1472, 1002);
+
+    // Draw PaedTraches Emblem on Top Left
+    const logoGrad = ctx.createLinearGradient(110, 105, 196, 191);
+    logoGrad.addColorStop(0, '#10b981');
+    logoGrad.addColorStop(1, '#0f766e');
+    ctx.fillStyle = logoGrad;
+    ctx.beginPath();
+    ctx.roundRect(110, 105, 86, 86, 20);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.fillStyle = '#ffffff';
+    ctx.lineWidth = 5.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.roundRect(124, 130, 58, 14, 7);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.roundRect(144, 118, 18, 12, 3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(147, 144);
+    ctx.quadraticCurveTo(147, 172, 167, 177);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(159, 144);
+    ctx.quadraticCurveTo(159, 162, 172, 166);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(134, 137, 2.8, 0, Math.PI * 2);
+    ctx.arc(172, 137, 2.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Brand Header Text
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 38px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('PaedTraches', 216, 146);
+
+    ctx.fillStyle = '#059669';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillText('PaedTraches.co.uk  •  Paediatric Tracheostomy Clinical Education', 216, 178);
+
+    // Top Right Badge
+    ctx.fillStyle = '#ecfdf5';
+    ctx.beginPath();
+    ctx.roundRect(1185, 115, 300, 52, 26);
+    ctx.fill();
+    ctx.strokeStyle = '#6ee7b7';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#065f46';
+    ctx.font = 'bold 19px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('CPD CERTIFICATE', 1335, 148);
+
+    // Divider line
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(110, 224);
+    ctx.lineTo(1490, 224);
+    ctx.stroke();
+
+    // Certificate Main Title
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#059669';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.fillText('CERTIFICATE OF CONTINUING PROFESSIONAL DEVELOPMENT', 800, 295);
+
+    ctx.fillStyle = '#475569';
+    ctx.font = '26px sans-serif';
+    ctx.fillText('This certifies that', 800, 360);
+
+    // Clinician Name & Registration
+    const displayName = cpdClinicianName.trim() || 'Registered Healthcare Clinician';
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 54px sans-serif';
+    ctx.fillText(displayName, 800, 435);
+
+    if (cpdRegNumber.trim()) {
+      ctx.fillStyle = '#475569';
+      ctx.font = '600 24px sans-serif';
+      ctx.fillText(`Professional Registration / Pin: ${cpdRegNumber.trim()}`, 800, 480);
+    }
+
+    // Underline under name
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(420, 505);
+    ctx.lineTo(1180, 505);
+    ctx.stroke();
+
+    // Module Completion Statement
+    const todayFormatted = new Date().toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+
+    ctx.fillStyle = '#475569';
+    ctx.font = '26px sans-serif';
+    ctx.fillText('has successfully completed the clinical learning module & assessment', 800, 565);
+
+    ctx.fillStyle = '#065f46';
+    ctx.font = 'bold 38px sans-serif';
+    ctx.fillText(`“${activeModule.title}”`, 800, 625);
+
+    ctx.fillStyle = '#334155';
+    ctx.font = '600 24px sans-serif';
+    ctx.fillText(
+      `via PaedTraches.co.uk  •  Completed on ${todayFormatted}  (${activeModule.duration})`,
+      800,
+      675
+    );
+
+    // Optional Reflection Box
+    if (cpdReflectionText.trim()) {
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.roundRect(160, 725, 1280, 175, 20);
+      ctx.fill();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#059669';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('CLINICIAN PRACTICE REFLECTION:', 195, 765);
+
+      ctx.fillStyle = '#334155';
+      ctx.font = 'italic 21px sans-serif';
+      const words = `“${cpdReflectionText.trim()}”`.split(' ');
+      let line = '';
+      let y = 805;
+      for (let i = 0; i < words.length; i++) {
+        const testLine = line + words[i] + ' ';
+        if (ctx.measureText(testLine).width > 1210 && i > 0) {
+          ctx.fillText(line.trim(), 195, y);
+          line = words[i] + ' ';
+          y += 32;
+          if (y > 875) {
+            line = line.trim() + '...';
+            break;
+          }
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line.trim(), 195, y);
+    }
+
+    // Footer Governance Line
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#64748b';
+    ctx.font = '20px sans-serif';
+    ctx.fillText(
+      `PaedTraches.co.uk • Paediatric Tracheostomy Reference (${INITIAL_GOVERNANCE_META.version}) • Aligned with NTSP & Resuscitation Council UK`,
+      800,
+      985
+    );
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '18px sans-serif';
+    ctx.fillText(
+      `Certificate ID: PT-${activeModule.id.toUpperCase()}-${Date.now().toString().slice(-6)}`,
+      800,
+      1020
+    );
+
+    return canvas.toDataURL('image/png');
+  };
+
+  const handleDownloadCertificateImage = () => {
+    const dataUrl = generateCpdCertificateDataUrl();
+    if (!dataUrl || !activeModule) return;
+    const safeName = (cpdClinicianName.trim() || 'Clinician')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `PaedTraches-CPD-Certificate-${safeName}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handlePrintCertificatePdf = () => {
+    const dataUrl = generateCpdCertificateDataUrl();
+    if (!dataUrl) return;
+    const printWin = window.open('', '_blank', 'width=1050,height=780');
+    if (printWin) {
+      printWin.document.write(`<!DOCTYPE html>
+<html>
+  <head>
+    <title>PaedTraches.co.uk — CPD Certificate</title>
+    <style>
+      @page { size: landscape; margin: 10mm; }
+      body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #fff; }
+      img { max-width: 100%; max-height: 96vh; object-fit: contain; }
+    </style>
+  </head>
+  <body>
+    <img src="${dataUrl}" onload="setTimeout(function(){ window.print(); }, 250);" />
+  </body>
+</html>`);
+      printWin.document.close();
+    } else {
+      handleDownloadCertificateImage();
     }
   };
 
@@ -2911,6 +3021,27 @@ export default function App() {
     () => learningModules.find((m) => m.id === activeModuleId) || null,
     [learningModules, activeModuleId]
   );
+
+  // Shuffle answer options on every new quiz attempt so button locations cannot be memorised
+  const shuffledQuizQuestions = useMemo(() => {
+    if (!activeModule || !Array.isArray(activeModule.quiz)) return [];
+    return activeModule.quiz.map((qItem) => {
+      const mapped = qItem.options.map((text, origIdx) => ({
+        text,
+        isCorrect: origIdx === qItem.correct
+      }));
+      for (let i = mapped.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [mapped[i], mapped[j]] = [mapped[j], mapped[i]];
+      }
+      return {
+        q: qItem.q,
+        options: mapped.map((m) => m.text),
+        correct: mapped.findIndex((m) => m.isCorrect),
+        explanation: qItem.explanation
+      };
+    });
+  }, [activeModule, quizAttemptSeed]);
 
   // Reusable Section Content Renderer (used both in Learner View & Live Admin Preview)
   const renderFormattedSectionContent = (sec) => {
@@ -4030,6 +4161,7 @@ export default function App() {
                           setActiveModuleId(mod.id);
                           setActiveSectionIndex(0);
                           setQuizUnlocked(false);
+                          setQuizAttemptSeed((s) => s + 1);
                           setQuizAnswers({});
                           setQuizSubmitted(false);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -4140,7 +4272,12 @@ export default function App() {
                           }
                           onClick={() => {
                             setQuizUnlocked(true);
-                            markModuleCompletedInCloud(activeModule.id);
+                            setQuizAttemptSeed((s) => s + 1);
+                            setQuizAnswers({});
+                            setQuizSubmitted(false);
+                            if (activeModule.quiz.length === 0) {
+                              markModuleCompletedInCloud(activeModule.id);
+                            }
                           }}
                           className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold transition flex items-center justify-between ${
                             quizUnlocked
@@ -4199,7 +4336,12 @@ export default function App() {
                             <button
                               onClick={() => {
                                 setQuizUnlocked(true);
-                                markModuleCompletedInCloud(activeModule.id);
+                                setQuizAttemptSeed((s) => s + 1);
+                                setQuizAnswers({});
+                                setQuizSubmitted(false);
+                                if (activeModule.quiz.length === 0) {
+                                  markModuleCompletedInCloud(activeModule.id);
+                                }
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                               }}
                               className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-2"
@@ -4231,22 +4373,22 @@ export default function App() {
                           </button>
                         </div>
 
-                        {activeModule.quiz.length === 0 ? (
+                        {shuffledQuizQuestions.length === 0 ? (
                           <div className="space-y-4">
                             <p className="text-sm text-slate-600">
-                              Module completed! You can now generate an HCPC CPD Reflection Certificate for your portfolio.
+                              Module completed! You can now generate your CPD Certificate.
                             </p>
                             <button
                               onClick={() => setShowCpdModal(true)}
                               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold"
                             >
                               <Award className="w-4 h-4" />
-                              <span>Generate CPD Reflection Certificate</span>
+                              <span>Generate CPD Certificate</span>
                             </button>
                           </div>
                         ) : (
                           <div className="space-y-6">
-                            {activeModule.quiz.map((qItem, qIdx) => (
+                            {shuffledQuizQuestions.map((qItem, qIdx) => (
                               <div key={qIdx} className="space-y-3">
                                 <div className="font-bold text-sm sm:text-base text-slate-900">
                                   {qIdx + 1}. {qItem.q}
@@ -4298,36 +4440,79 @@ export default function App() {
                               </div>
                             ))}
 
-                            <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                              {quizSubmitted ? (
-                                <>
-                                  <button
-                                    onClick={() => setShowCpdModal(true)}
-                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-2xs"
-                                  >
-                                    <Award className="w-4 h-4" />
-                                    <span>Generate CPD Reflection Certificate</span>
-                                  </button>
+                            {(() => {
+                              const correctCount = shuffledQuizQuestions.filter(
+                                (qItem, idx) => quizAnswers[idx] === qItem.correct
+                              ).length;
+                              const totalQuestions = shuffledQuizQuestions.length;
+                              const passed100 = correctCount === totalQuestions;
 
-                                  <button
-                                    onClick={() => {
-                                      setQuizSubmitted(false);
-                                      setQuizAnswers({});
-                                    }}
-                                    className="px-4 py-2.5 rounded-xl bg-slate-100 text-xs sm:text-sm font-semibold text-slate-700"
-                                  >
-                                    Retry Quiz
-                                  </button>
-                                </>
-                              ) : (
-                                <button
-                                  onClick={() => setQuizSubmitted(true)}
-                                  className="ml-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold"
-                                >
-                                  Check Answers
-                                </button>
-                              )}
-                            </div>
+                              return (
+                                <div className="pt-4 border-t border-slate-100 space-y-3">
+                                  {quizSubmitted && (
+                                    <div
+                                      className={`p-3.5 rounded-xl border text-xs sm:text-sm font-medium flex items-center justify-between gap-2 ${
+                                        passed100
+                                          ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                          : 'bg-amber-50 border-amber-200 text-amber-950'
+                                      }`}
+                                    >
+                                      <span>
+                                        {passed100
+                                          ? `✓ Score: ${correctCount}/${totalQuestions} (100%) — CPD Certificate unlocked!`
+                                          : `Score: ${correctCount}/${totalQuestions} (${Math.round(
+                                              (correctCount / totalQuestions) * 100
+                                            )}%) — 100% is required to unlock your CPD Certificate.`}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  <div className="flex flex-wrap items-center justify-between gap-3">
+                                    {quizSubmitted ? (
+                                      <>
+                                        {passed100 ? (
+                                          <button
+                                            onClick={() => setShowCpdModal(true)}
+                                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-2xs"
+                                          >
+                                            <Award className="w-4 h-4" />
+                                            <span>Generate CPD Certificate</span>
+                                          </button>
+                                        ) : (
+                                          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                                            <Lock className="w-3.5 h-3.5 text-amber-600" />
+                                            <span>Achieve 100% to unlock certificate</span>
+                                          </div>
+                                        )}
+
+                                        <button
+                                          onClick={() => {
+                                            setQuizSubmitted(false);
+                                            setQuizAnswers({});
+                                            setQuizAttemptSeed((s) => s + 1);
+                                          }}
+                                          className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs sm:text-sm font-semibold text-slate-700"
+                                        >
+                                          Retry Quiz
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <button
+                                        onClick={() => {
+                                          setQuizSubmitted(true);
+                                          if (passed100) {
+                                            markModuleCompletedInCloud(activeModule.id);
+                                          }
+                                        }}
+                                        className="ml-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold"
+                                      >
+                                        Check Answers
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         )}
                       </div>
@@ -6236,16 +6421,16 @@ export default function App() {
       )}
 
       {/* ==========================================
-          MODAL: HCPC CPD REFLECTION CERTIFICATE GENERATOR
+          MODAL: CPD CERTIFICATE GENERATOR
           ========================================== */}
       {showCpdModal && activeModule && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 border border-slate-200 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Award className="w-5 h-5 text-emerald-600" />
                 <h3 className="text-base font-bold text-slate-900">
-                  HCPC CPD Reflection & Completion Record
+                  PaedTraches.co.uk CPD Certificate
                 </h3>
               </div>
               <button
@@ -6257,13 +6442,13 @@ export default function App() {
             </div>
 
             <p className="text-xs text-slate-500">
-              Your details stay strictly on your own device (zero PII stored in the cloud). Fill in your reflection below and print or save as PDF for your CPD portfolio.
+              Your details stay strictly on your own device (zero PII stored in the cloud). Enter your name and reflection below, then download or print/save as PDF.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Clinician Name
+                  Clinician Name *
                 </label>
                 <input
                   type="text"
@@ -6275,7 +6460,7 @@ export default function App() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  HCPC / Professional Pin (Optional)
+                  Registration / Pin (Optional)
                 </label>
                 <input
                   type="text"
@@ -6289,10 +6474,10 @@ export default function App() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                How will this learning improve your pre-hospital practice?
+                Practice Reflection (Optional — included on certificate)
               </label>
               <textarea
-                rows={3}
+                rows={2}
                 value={cpdReflectionText}
                 onChange={(e) => setCpdReflectionText(e.target.value)}
                 placeholder="e.g., Reinforced checking the NTSP Bedhead Sign early, removing speaking valves immediately, and using ID × 2 to size suction catheters..."
@@ -6300,45 +6485,83 @@ export default function App() {
               />
             </div>
 
-            {/* Printable Certificate Preview Card */}
-            <div className="p-5 rounded-2xl border-2 border-emerald-600/30 bg-gradient-to-br from-emerald-50/50 to-white space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold uppercase tracking-widest text-emerald-700">
-                  PaedTraches CPD Record
-                </span>
-                <span className="text-[11px] text-slate-500">
-                  {new Date().toLocaleDateString('en-GB')}
+            {/* Official Certificate Preview Card with Logo & PaedTraches.co.uk */}
+            <div className="p-5 sm:p-6 rounded-2xl border-2 border-emerald-600/40 bg-gradient-to-br from-white via-emerald-50/30 to-emerald-50/70 shadow-xs space-y-4">
+              <div className="flex items-center justify-between gap-2 border-b border-emerald-200/70 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <PaedTrachesLogo className="w-9 h-9" />
+                  <div>
+                    <div className="font-extrabold text-sm text-slate-900 leading-none">
+                      PaedTraches.co.uk
+                    </div>
+                    <div className="text-[10px] font-semibold text-emerald-700 mt-0.5">
+                      Paediatric Tracheostomy Clinical Education
+                    </div>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-100/80 border border-emerald-200 text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 shrink-0">
+                  CPD Certificate
                 </span>
               </div>
-              <div className="text-base font-bold text-slate-900">
-                {cpdClinicianName.trim() || 'Registered Healthcare Clinician'}
+
+              <div className="text-center space-y-1.5 py-1">
+                <div className="text-[11px] font-medium text-slate-500">
+                  This certifies that
+                </div>
+                <div className="text-lg sm:text-xl font-extrabold text-slate-900">
+                  {cpdClinicianName.trim() || 'Registered Healthcare Clinician'}
+                </div>
                 {cpdRegNumber.trim() && (
-                  <span className="text-xs font-normal text-slate-500 ml-2">
-                    ({cpdRegNumber.trim()})
-                  </span>
+                  <div className="text-xs font-semibold text-slate-500">
+                    Registration / Pin: {cpdRegNumber.trim()}
+                  </div>
                 )}
+                <div className="text-[11px] font-medium text-slate-500 pt-1">
+                  has completed the clinical learning module
+                </div>
+                <div className="text-sm sm:text-base font-bold text-emerald-800">
+                  &ldquo;{activeModule.title}&rdquo;
+                </div>
+                <div className="text-[11px] font-semibold text-slate-600">
+                  on PaedTraches.co.uk •{' '}
+                  {new Date().toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}{' '}
+                  ({activeModule.duration})
+                </div>
               </div>
-              <div className="text-xs text-slate-600">
-                Completed module: <strong>{activeModule.title}</strong> ({activeModule.duration})
-              </div>
+
               {cpdReflectionText.trim() && (
-                <p className="text-xs text-slate-600 italic border-t border-emerald-200/70 pt-2">
+                <div className="p-3 rounded-xl bg-white/80 border border-emerald-200/70 text-xs text-slate-600 italic">
+                  <span className="not-italic font-bold text-emerald-800 block text-[10px] uppercase tracking-wider mb-0.5">
+                    Practice Reflection:
+                  </span>
                   &ldquo;{cpdReflectionText.trim()}&rdquo;
-                </p>
+                </div>
               )}
             </div>
 
-            <div className="flex justify-end gap-2 pt-1">
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setShowCpdModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700"
+                className="px-3.5 py-2 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700"
               >
                 Close
               </button>
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={handleDownloadCertificateImage}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-2xs"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download Certificate</span>
+              </button>
+              <button
+                type="button"
+                onClick={handlePrintCertificatePdf}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold"
               >
                 <Printer className="w-3.5 h-3.5" />
