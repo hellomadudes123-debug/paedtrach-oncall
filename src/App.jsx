@@ -4,6 +4,10 @@ import {
   getAuth,
   signInAnonymously,
   signInWithCustomToken,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updatePassword,
+  signOut,
   onAuthStateChanged
 } from 'firebase/auth';
 import {
@@ -12,6 +16,12 @@ import {
   setDoc,
   onSnapshot
 } from 'firebase/firestore';
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytesResumable,
+  getDownloadURL
+} from 'firebase/storage';
 import {
   Activity,
   BookOpen,
@@ -60,13 +70,18 @@ import {
   FileText,
   Scale,
   UserPlus,
-  History
+  History,
+  AlignLeft,
+  Columns,
+  PanelLeft,
+  PanelRight,
+  Loader2,
+  ShieldCheck
 } from 'lucide-react';
 
 // ==========================================
-// CLOUD DATABASE INITIALIZATION (CRASH-SAFE)
+// CLOUD DATABASE, AUTH & STORAGE INITIALIZATION
 // ==========================================
-// Optional: Paste your Firebase Config object inside PASTE_YOUR_FIREBASE_CONFIG_HERE if you want it hardcoded
 const PASTE_YOUR_FIREBASE_CONFIG_HERE = { 
   apiKey: "AIzaSyCJr5EtomUlvIQiqyOXw7jG7K9W4bUulgk",
   authDomain: "paedtrach-oncall.firebaseapp.com",
@@ -105,18 +120,55 @@ const firebaseConfig = resolveSafeFirebaseConfig();
 let app = null;
 let auth = null;
 let db = null;
+let storage = null;
+let secondaryApp = null;
+let secondaryAuth = null;
 
 try {
   if (firebaseConfig && firebaseConfig.apiKey) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+    storage = getStorage(app);
+
+    // Secondary Firebase App instance allows Super Admins to create new Firebase Auth accounts
+    // without signing out of their own current session.
+    secondaryApp = initializeApp(firebaseConfig, 'PaedTrachesAdminProvisioner');
+    secondaryAuth = getAuth(secondaryApp);
   }
 } catch (e) {
   console.warn('Running in offline fallback mode:', e);
 }
 
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'paedtrach-oncall-pwa';
+
+// Helper to convert YouTube/Vimeo URLs into clean embeddable iframes or detect direct video files
+const getEmbedVideoInfo = (url = '') => {
+  if (!url) return { type: 'none', src: '' };
+  const ytMatch = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+  if (ytMatch && ytMatch[1]) {
+    return {
+      type: 'iframe',
+      src: `https://www.youtube.com/embed/${ytMatch[1]}`
+    };
+  }
+  const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return {
+      type: 'iframe',
+      src: `https://player.vimeo.com/video/${vimeoMatch[1]}`
+    };
+  }
+  if (
+    url.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) ||
+    url.includes('firebasestorage.googleapis.com')
+  ) {
+    return { type: 'video', src: url };
+  }
+  return { type: 'link', src: url };
+};
 
 // ==========================================
 // CUSTOM PAEDTRACHES VECTOR LOGO EMBLEM
@@ -165,7 +217,7 @@ const PaedTrachesLogo = ({ className = 'w-9 h-9' }) => (
 );
 
 // ==========================================
-// INITIAL CLINICAL DATA (CLEAN TITLES + GUIDELINE LINKS)
+// INITIAL CLINICAL DATA (NO PLAINTEXT PASSWORDS STORED)
 // ==========================================
 const INITIAL_ADMIN_USERS = [
   {
@@ -173,16 +225,7 @@ const INITIAL_ADMIN_USERS = [
     name: 'Lead Clinical Editor',
     email: 'lead@paedtrach.org.uk',
     role: 'Clinical Lead (Super Admin)',
-    passcode: 'trach999',
     addedAt: '2025-01-15'
-  },
-  {
-    id: 'adm-edu',
-    name: 'Practice Educator',
-    email: 'educator@ambulance.nhs.uk',
-    role: 'Content Editor',
-    passcode: 'paeds123',
-    addedAt: '2025-02-01'
   }
 ];
 
@@ -751,6 +794,7 @@ const INITIAL_LEARNING_MODULES = [
       {
         id: 'sec-anat-1',
         heading: 'Why NTSP Colour Coding Matters on Scene',
+        layout: 'media-right',
         body: 'In a paediatric tracheostomy emergency, your critical first question is: "Can this child be oxygenated and ventilated via the mouth and nose if the tracheostomy tube is blocked or removed?" The National Tracheostomy Safety Project (NTSP) divides patients into Green and Red pathways so crews can tell at a glance.',
         pearl: 'Always check the colour of the child’s NTSP Bedhead Sign or caregiver emergency sheet inside their Go-Bag on arrival.',
         images: [
@@ -774,6 +818,7 @@ const INITIAL_LEARNING_MODULES = [
       {
         id: 'sec-anat-2',
         heading: 'Green Pathway: Tracheostomy (Upper Airway Connected)',
+        layout: 'media-left',
         body: 'In almost all children with a tracheostomy, the larynx remains present above the stoma. Even if the child has subglottic stenosis or tracheomalacia, oxygen can usually pass from the mouth and nose into the lungs once a blocked tube is removed. When ventilating via a face mask, you must gently occlude the open neck stoma with sterile gauze so air does not escape out of the neck.',
         pearl: 'Avoid hyperextending an infant’s neck—keep the head in neutral alignment with a thin shoulder roll.',
         images: [
@@ -789,6 +834,7 @@ const INITIAL_LEARNING_MODULES = [
       {
         id: 'sec-anat-3',
         heading: 'Red Pathway: Laryngectomy or Complete Obstruction',
+        layout: 'stacked',
         body: 'When there is no anatomical connection between the pharynx and the trachea (or complete Grade 4 subglottic obliteration), the neck stoma is the child’s ONLY airway. Never cover or occlude the stoma, and do not attempt oral BVM ventilation or oral intubation unless explicitly directed by the child’s specialist care plan.',
         pearl: 'To ventilate an open stoma directly when a tube cannot be replaced, seal a circular neonatal face mask or size 1 i-gel over the neck stoma.',
         images: [],
@@ -1068,9 +1114,26 @@ export default function App() {
     initAuth();
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setFbUser(u);
+      if (u && !u.isAnonymous && u.email) {
+        // User is signed in with real Firebase Email/Password Auth
+        const matchedProfile = adminUsers.find(
+          (adm) => adm.email.toLowerCase() === u.email.toLowerCase()
+        );
+        setCurrentAdminUser(
+          matchedProfile || {
+            id: u.uid,
+            name: u.displayName || u.email.split('@')[0],
+            email: u.email,
+            role: 'Clinical Lead (Super Admin)',
+            addedAt: new Date().toISOString().slice(0, 10)
+          }
+        );
+      } else {
+        setCurrentAdminUser(null);
+      }
     });
     return () => unsubscribe();
-  }, []);
+  }, [adminUsers]);
 
   useEffect(() => {
     if (!fbUser || !db) return;
@@ -1276,17 +1339,18 @@ export default function App() {
   const [loginEmailInput, setLoginEmailInput] = useState('');
   const [loginPasswordInput, setLoginPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
 
   const [newAdminForm, setNewAdminForm] = useState({
     name: '',
     email: '',
     role: 'Content Editor',
-    passcode: ''
+    password: ''
   });
   const [ownProfileForm, setOwnProfileForm] = useState({
     name: '',
     email: '',
-    passcode: ''
+    newPassword: ''
   });
   const [importJsonText, setImportJsonText] = useState('');
   const [customFirebaseJsonInput, setCustomFirebaseJsonInput] = useState(() => {
@@ -1337,6 +1401,7 @@ export default function App() {
   const [editingSectionId, setEditingSectionId] = useState(null);
   const [sectionForm, setSectionForm] = useState({
     heading: '',
+    layout: 'stacked',
     body: '',
     pearl: '',
     images: [],
@@ -1349,6 +1414,9 @@ export default function App() {
     url: '',
     description: ''
   });
+  const [uploadingMediaType, setUploadingMediaType] = useState(null); // 'image' | 'video' | null
+  const [uploadProgressPct, setUploadProgressPct] = useState(0);
+
   const [newQuizDraft, setNewQuizDraft] = useState({
     q: '',
     opt0: '',
@@ -1442,117 +1510,222 @@ export default function App() {
 
   const notifyCms = (msg) => {
     setCmsNotification(msg);
-    setTimeout(() => setCmsNotification(null), 3500);
+    setTimeout(() => setCmsNotification(null), 4000);
   };
 
-  const handleAdminLoginSubmit = (e) => {
+  // Cryptographically Secure Firebase Email/Password Login
+  const handleAdminLoginSubmit = async (e) => {
     e.preventDefault();
-    const cleanEmail = loginEmailInput.trim().toLowerCase();
-    const matchedAdmin = adminUsers.find(
-      (u) =>
-        (u.email.toLowerCase() === cleanEmail || u.name.toLowerCase() === cleanEmail) &&
-        u.passcode === loginPasswordInput
-    );
+    if (!auth) {
+      setLoginError(
+        'Firebase Authentication is not configured yet. Please connect your Firebase project first.'
+      );
+      return;
+    }
 
-    if (matchedAdmin) {
-      setCurrentAdminUser(matchedAdmin);
-      setOwnProfileForm({
-        name: matchedAdmin.name || '',
-        email: matchedAdmin.email || '',
-        passcode: matchedAdmin.passcode || ''
-      });
+    const cleanEmail = loginEmailInput.trim().toLowerCase();
+    setAuthLoading(true);
+    setLoginError('');
+
+    try {
+      const cred = await signInWithEmailAndPassword(
+        auth,
+        cleanEmail,
+        loginPasswordInput
+      );
+      const signedInEmail = cred.user.email.toLowerCase();
+      const matchedProfile = adminUsers.find(
+        (u) => u.email.toLowerCase() === signedInEmail
+      );
+
+      // Auto-register first Firebase Auth user into Firestore roster if not listed yet
+      if (!matchedProfile) {
+        const firstAdminProfile = {
+          id: cred.user.uid,
+          name: cred.user.displayName || signedInEmail.split('@')[0],
+          email: signedInEmail,
+          role: 'Clinical Lead (Super Admin)',
+          addedAt: new Date().toISOString().slice(0, 10)
+        };
+        const updatedRoster = [...adminUsers, firstAdminProfile];
+        setCurrentAdminUser(firstAdminProfile);
+        await publishCloudUpdate({
+          nextAdmins: updatedRoster,
+          actionDescription: `Verified Super Admin ${firstAdminProfile.email} via Firebase Auth`
+        });
+      } else {
+        setCurrentAdminUser(matchedProfile);
+      }
+
       setAdminTab('pathways');
       setLoginPasswordInput('');
-      setLoginError('');
-    } else {
-      setLoginError('Invalid email or passcode. Please check your credentials and try again.');
+    } catch (err) {
+      if (
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/wrong-password' ||
+        err.code === 'auth/user-not-found'
+      ) {
+        setLoginError('Incorrect email or password. Please check your credentials.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setLoginError('Too many failed attempts. Please wait a few minutes and try again.');
+      } else {
+        setLoginError(err.message || 'Sign-in failed. Verify Email/Password Auth is enabled in Firebase.');
+      }
+    } finally {
+      setAuthLoading(false);
     }
   };
 
-  const handleUpdateOwnProfile = (e) => {
+  const handleUpdateOwnProfile = async (e) => {
     e.preventDefault();
     if (!currentAdminUser) return;
-    if (
-      !ownProfileForm.name.trim() ||
-      !ownProfileForm.email.trim() ||
-      ownProfileForm.passcode.trim().length < 4
-    ) {
-      notifyCms('Please provide your name, email, and a passcode of at least 4 characters.');
-      return;
-    }
-    const emailTakenByOther = adminUsers.some(
-      (u) =>
-        u.id !== currentAdminUser.id &&
-        u.email.toLowerCase() === ownProfileForm.email.trim().toLowerCase()
-    );
-    if (emailTakenByOther) {
-      notifyCms('That email address is already used by another team member.');
+    if (!ownProfileForm.name.trim()) {
+      notifyCms('Please enter your display name.');
       return;
     }
 
-    const updatedSelf = {
-      ...currentAdminUser,
-      name: ownProfileForm.name.trim(),
-      email: ownProfileForm.email.trim().toLowerCase(),
-      passcode: ownProfileForm.passcode.trim()
-    };
+    try {
+      // If user entered a new password, update it securely in Firebase Authentication
+      if (ownProfileForm.newPassword.trim()) {
+        if (ownProfileForm.newPassword.trim().length < 6) {
+          notifyCms('Firebase requires new passwords to be at least 6 characters long.');
+          return;
+        }
+        if (auth && auth.currentUser && !auth.currentUser.isAnonymous) {
+          await updatePassword(auth.currentUser, ownProfileForm.newPassword.trim());
+        }
+      }
 
-    const nextAdmins = adminUsers.map((u) =>
-      u.id === currentAdminUser.id ? updatedSelf : u
-    );
+      const updatedSelf = {
+        ...currentAdminUser,
+        name: ownProfileForm.name.trim()
+      };
 
-    setCurrentAdminUser(updatedSelf);
-    publishCloudUpdate({
-      nextAdmins,
-      actionDescription: `${updatedSelf.name} updated their own profile details`
-    });
-    notifyCms('Your personal profile and passcode have been updated!');
+      const nextAdmins = adminUsers.map((u) =>
+        u.email.toLowerCase() === currentAdminUser.email.toLowerCase()
+          ? updatedSelf
+          : u
+      );
+
+      setCurrentAdminUser(updatedSelf);
+      setOwnProfileForm((prev) => ({ ...prev, newPassword: '' }));
+      await publishCloudUpdate({
+        nextAdmins,
+        actionDescription: `${updatedSelf.name} updated their profile${
+          ownProfileForm.newPassword.trim() ? ' & password' : ''
+        }`
+      });
+      notifyCms('Your profile and encrypted password have been updated!');
+    } catch (err) {
+      if (err.code === 'auth/requires-recent-login') {
+        notifyCms('For security, please sign out and sign back in before changing your password.');
+      } else {
+        notifyCms(err.message || 'Could not update profile.');
+      }
+    }
   };
 
-  const handleAdminLogout = () => {
+  const handleAdminLogout = async () => {
+    try {
+      if (auth) {
+        await signOut(auth);
+        await signInAnonymously(auth);
+      }
+    } catch (e) {
+      // Fallback
+    }
     setCurrentAdminUser(null);
     setLoginPasswordInput('');
     setLoginError('');
     setAppMode('oncall');
   };
 
-  const handleAddAdminTeamMember = (e) => {
+  // Super Admin provisions a brand-new user directly in Firebase Auth + Firestore simultaneously
+  const handleAddAdminTeamMember = async (e) => {
     e.preventDefault();
+    const cleanEmail = newAdminForm.email.trim().toLowerCase();
     if (
       !newAdminForm.name.trim() ||
-      !newAdminForm.email.trim() ||
-      newAdminForm.passcode.trim().length < 4
+      !cleanEmail ||
+      newAdminForm.password.trim().length < 6
     ) {
-      notifyCms('Please provide name, email, and a passcode (min 4 characters).');
+      notifyCms('Please provide name, email, and a password of at least 6 characters.');
       return;
     }
-    const exists = adminUsers.some(
-      (u) => u.email.toLowerCase() === newAdminForm.email.trim().toLowerCase()
-    );
+    const exists = adminUsers.some((u) => u.email.toLowerCase() === cleanEmail);
     if (exists) {
-      notifyCms('An admin user with this email already exists.');
+      notifyCms('An admin user with this email already exists in the team.');
       return;
     }
-    const createdUser = {
-      id: `adm-${Date.now()}`,
-      name: newAdminForm.name.trim(),
-      email: newAdminForm.email.trim().toLowerCase(),
-      role: newAdminForm.role,
-      passcode: newAdminForm.passcode.trim(),
-      addedAt: new Date().toISOString().slice(0, 10)
-    };
-    const nextAdmins = [...adminUsers, createdUser];
-    publishCloudUpdate({
-      nextAdmins,
-      actionDescription: `Added admin team member ${createdUser.name} (${createdUser.role})`
-    });
-    setNewAdminForm({
-      name: '',
-      email: '',
-      role: 'Content Editor',
-      passcode: ''
-    });
-    notifyCms(`Added ${createdUser.name} to Admin Team & synced to cloud`);
+
+    setAuthLoading(true);
+    try {
+      let provisionedUid = `adm-${Date.now()}`;
+
+      // Create the encrypted user account in Firebase Authentication using the secondary app instance
+      if (secondaryAuth) {
+        const userCredential = await createUserWithEmailAndPassword(
+          secondaryAuth,
+          cleanEmail,
+          newAdminForm.password.trim()
+        );
+        provisionedUid = userCredential.user.uid;
+        await signOut(secondaryAuth);
+      }
+
+      const createdUser = {
+        id: provisionedUid,
+        name: newAdminForm.name.trim(),
+        email: cleanEmail,
+        role: newAdminForm.role,
+        addedAt: new Date().toISOString().slice(0, 10)
+      };
+
+      const nextAdmins = [...adminUsers, createdUser];
+      await publishCloudUpdate({
+        nextAdmins,
+        actionDescription: `Provisioned Firebase Auth & Firestore account for ${createdUser.name} (${createdUser.role})`
+      });
+
+      setNewAdminForm({
+        name: '',
+        email: '',
+        role: 'Content Editor',
+        password: ''
+      });
+      notifyCms(
+        `Created encrypted login & Firestore profile for ${createdUser.name}! They can sign in immediately.`
+      );
+    } catch (err) {
+      if (err.code === 'auth/email-already-in-use') {
+        // User already exists in Firebase Auth—still add them to the Firestore team roster
+        const createdUser = {
+          id: `adm-${Date.now()}`,
+          name: newAdminForm.name.trim(),
+          email: cleanEmail,
+          role: newAdminForm.role,
+          addedAt: new Date().toISOString().slice(0, 10)
+        };
+        const nextAdmins = [...adminUsers, createdUser];
+        await publishCloudUpdate({
+          nextAdmins,
+          actionDescription: `Linked existing Firebase Auth user ${createdUser.name} to Firestore roster`
+        });
+        setNewAdminForm({
+          name: '',
+          email: '',
+          role: 'Content Editor',
+          password: ''
+        });
+        notifyCms(
+          `${createdUser.email} already had a Firebase Auth login — added to Firestore team roster!`
+        );
+      } else {
+        notifyCms(err.message || 'Could not create team member in Firebase Auth.');
+      }
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const handleRemoveAdminUser = (targetId) => {
@@ -2053,6 +2226,7 @@ export default function App() {
     setEditingSectionId(null);
     setSectionForm({
       heading: '',
+      layout: 'stacked',
       body: '',
       pearl: '',
       images: [],
@@ -2066,11 +2240,101 @@ export default function App() {
     setEditingSectionId(sec.id);
     setSectionForm({
       heading: sec.heading || '',
+      layout: sec.layout || 'stacked',
       body: sec.body || '',
       pearl: sec.pearl || '',
       images: sec.images ? [...sec.images] : [],
       videos: sec.videos ? [...sec.videos] : []
     });
+  };
+
+  // Direct Device File Upload to Firebase Storage (Photos & Videos)
+  const handleUploadMediaFile = (file, mediaKind) => {
+    if (!file) return;
+    if (!storage) {
+      notifyCms(
+        'Firebase Storage is not connected. Paste an image/video URL instead or connect Firebase.'
+      );
+      return;
+    }
+
+    const maxBytes = mediaKind === 'video' ? 80 * 1024 * 1024 : 15 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      notifyCms(
+        mediaKind === 'video'
+          ? 'Video exceeds 80 MB limit. Compress the clip or use a YouTube/Vimeo link.'
+          : 'Image exceeds 15 MB limit.'
+      );
+      return;
+    }
+
+    setUploadingMediaType(mediaKind);
+    setUploadProgressPct(0);
+
+    const safeFileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const fileRef = storageRef(
+      storage,
+      `artifacts/${appId}/public/media/${mediaKind}s/${safeFileName}`
+    );
+
+    const uploadTask = uploadBytesResumable(fileRef, file);
+
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const pct = Math.round(
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        );
+        setUploadProgressPct(pct);
+      },
+      (err) => {
+        setUploadingMediaType(null);
+        notifyCms(
+          err.message ||
+            'Upload failed. Check that Firebase Storage is enabled in your Firebase Console.'
+        );
+      },
+      async () => {
+        const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+        const cleanTitle = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+
+        if (mediaKind === 'image') {
+          setSectionForm((prev) => ({
+            ...prev,
+            images: [
+              ...prev.images,
+              {
+                id: `img-${Date.now()}`,
+                title: newImageDraft.title.trim() || cleanTitle,
+                caption: newImageDraft.caption.trim() || '',
+                url: downloadUrl
+              }
+            ]
+          }));
+          setNewImageDraft({ title: '', caption: '', url: '' });
+          notifyCms('Photo uploaded to Cloud Storage & attached to section!');
+        } else {
+          setSectionForm((prev) => ({
+            ...prev,
+            videos: [
+              ...prev.videos,
+              {
+                id: `vid-${Date.now()}`,
+                title: newVideoDraft.title.trim() || cleanTitle,
+                duration: newVideoDraft.duration.trim() || 'Video Clip',
+                url: downloadUrl,
+                description:
+                  newVideoDraft.description.trim() || 'Uploaded clinical training video.'
+              }
+            ]
+          }));
+          setNewVideoDraft({ title: '', duration: '03:00', url: '', description: '' });
+          notifyCms('Video uploaded to Cloud Storage & attached to section!');
+        }
+        setUploadingMediaType(null);
+        setUploadProgressPct(0);
+      }
+    );
   };
 
   const handleCreateNewModule = (e) => {
@@ -2095,6 +2359,7 @@ export default function App() {
         {
           id: `sec-${Date.now()}`,
           heading: 'Introduction & Key Concepts',
+          layout: 'stacked',
           body: 'Add your clinical content, photos, and videos to this section using the editor.',
           pearl: 'Always check the patient’s Bedhead Sign and follow local Trust guidelines.',
           images: [],
@@ -2185,6 +2450,7 @@ export default function App() {
     const secObj = {
       id: editingSectionId || `sec-${Date.now()}`,
       heading: sectionForm.heading.trim(),
+      layout: sectionForm.layout || 'stacked',
       body: sectionForm.body.trim(),
       pearl: sectionForm.pearl.trim(),
       images: sectionForm.images,
@@ -3326,8 +3592,121 @@ export default function App() {
                       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
                         {(() => {
                           const sec = activeModule.sections[activeSectionIndex];
-                          return (
-                            <>
+                          const layout = sec.layout || 'stacked';
+                          const hasMedia =
+                            (sec.images && sec.images.length > 0) ||
+                            (sec.videos && sec.videos.length > 0);
+                          const isSideBySide =
+                            hasMedia && (layout === 'media-right' || layout === 'media-left');
+
+                          const renderMediaBlocks = () => (
+                            <div className="space-y-4">
+                              {sec.images && sec.images.length > 0 && (
+                                <div
+                                  className={`grid gap-4 ${
+                                    isSideBySide || sec.images.length === 1
+                                      ? 'grid-cols-1'
+                                      : 'grid-cols-1 md:grid-cols-2'
+                                  }`}
+                                >
+                                  {sec.images.map((img) => (
+                                    <div
+                                      key={img.id}
+                                      className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-2xs"
+                                    >
+                                      <img
+                                        src={img.url}
+                                        alt={img.title}
+                                        className="w-full max-h-72 object-cover"
+                                      />
+                                      <div className="p-3.5">
+                                        <div className="font-bold text-xs sm:text-sm text-slate-900">
+                                          {img.title}
+                                        </div>
+                                        {img.caption && (
+                                          <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                                            {img.caption}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {sec.videos && sec.videos.length > 0 && (
+                                <div className="space-y-4">
+                                  {sec.videos.map((vid) => {
+                                    const embed = getEmbedVideoInfo(vid.url);
+                                    return (
+                                      <div
+                                        key={vid.id}
+                                        className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-2xs"
+                                      >
+                                        {embed.type === 'iframe' && (
+                                          <div className="aspect-video w-full bg-slate-900">
+                                            <iframe
+                                              src={embed.src}
+                                              title={vid.title}
+                                              className="w-full h-full"
+                                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                              allowFullScreen
+                                            />
+                                          </div>
+                                        )}
+
+                                        {embed.type === 'video' && (
+                                          <video
+                                            src={embed.src}
+                                            controls
+                                            playsInline
+                                            preload="metadata"
+                                            className="w-full max-h-80 bg-slate-950"
+                                          />
+                                        )}
+
+                                        <div className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                          <div className="space-y-0.5">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <Video className="w-4 h-4 text-emerald-600 shrink-0" />
+                                              <span className="font-bold text-xs sm:text-sm text-slate-900">
+                                                {vid.title}
+                                              </span>
+                                              {vid.duration && (
+                                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600">
+                                                  {vid.duration}
+                                                </span>
+                                              )}
+                                            </div>
+                                            {vid.description && (
+                                              <p className="text-xs text-slate-500 leading-relaxed">
+                                                {vid.description}
+                                              </p>
+                                            )}
+                                          </div>
+
+                                          {embed.type === 'link' && (
+                                            <a
+                                              href={vid.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shrink-0"
+                                            >
+                                              <Play className="w-3.5 h-3.5" />
+                                              <span>Open Video</span>
+                                            </a>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+
+                          const renderTextBlock = () => (
+                            <div className="space-y-4">
                               <div className="space-y-3">
                                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
                                   Section {activeSectionIndex + 1}
@@ -3345,78 +3724,32 @@ export default function App() {
                                   <strong>Clinical Takeaway:</strong> {sec.pearl}
                                 </div>
                               )}
+                            </div>
+                          );
 
-                              {sec.images && sec.images.length > 0 && (
-                                <div className="space-y-3 pt-2">
-                                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                    Clinical Diagrams & Photos
-                                  </h3>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {sec.images.map((img) => (
-                                      <div
-                                        key={img.id}
-                                        className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50"
-                                      >
-                                        <img
-                                          src={img.url}
-                                          alt={img.title}
-                                          className="w-full h-56 object-cover"
-                                        />
-                                        <div className="p-3.5">
-                                          <div className="font-bold text-xs sm:text-sm text-slate-900">
-                                            {img.title}
-                                          </div>
-                                          {img.caption && (
-                                            <p className="text-xs text-slate-500 mt-0.5">
-                                              {img.caption}
-                                            </p>
-                                          )}
-                                        </div>
-                                      </div>
-                                    ))}
+                          return (
+                            <>
+                              {isSideBySide ? (
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                                  <div
+                                    className={`md:col-span-6 ${
+                                      layout === 'media-left' ? 'md:order-2' : 'md:order-1'
+                                    }`}
+                                  >
+                                    {renderTextBlock()}
+                                  </div>
+                                  <div
+                                    className={`md:col-span-6 ${
+                                      layout === 'media-left' ? 'md:order-1' : 'md:order-2'
+                                    }`}
+                                  >
+                                    {renderMediaBlocks()}
                                   </div>
                                 </div>
-                              )}
-
-                              {sec.videos && sec.videos.length > 0 && (
-                                <div className="space-y-3 pt-2">
-                                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                    Clinical Video Walkthroughs
-                                  </h3>
-                                  <div className="space-y-3">
-                                    {sec.videos.map((vid) => (
-                                      <div
-                                        key={vid.id}
-                                        className="p-4 rounded-2xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
-                                      >
-                                        <div className="space-y-1">
-                                          <div className="flex items-center gap-2">
-                                            <Video className="w-4 h-4 text-emerald-600 shrink-0" />
-                                            <span className="font-bold text-sm text-slate-900">
-                                              {vid.title}
-                                            </span>
-                                            <span className="text-xs px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600">
-                                              {vid.duration}
-                                            </span>
-                                          </div>
-                                          {vid.description && (
-                                            <p className="text-xs text-slate-500">
-                                              {vid.description}
-                                            </p>
-                                          )}
-                                        </div>
-                                        <a
-                                          href={vid.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shrink-0"
-                                        >
-                                          <Play className="w-3.5 h-3.5" />
-                                          <span>Watch Video</span>
-                                        </a>
-                                      </div>
-                                    ))}
-                                  </div>
+                              ) : (
+                                <div className="space-y-6">
+                                  {renderTextBlock()}
+                                  {hasMedia && renderMediaBlocks()}
                                 </div>
                               )}
 
@@ -3570,21 +3903,21 @@ export default function App() {
         )}
 
         {/* ==========================================
-            3. ADMIN CMS (MULTI-USER LOGIN + LIVE CLOUD SYNC)
+            3. ADMIN CMS (ENCRYPTED FIREBASE EMAIL/PASSWORD LOGIN + CLOUD SYNC)
             ========================================== */}
         {appMode === 'admin' && !isAdminAuthenticated && (
           <div className="max-w-md mx-auto my-8">
             <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-slate-900 text-white flex items-center justify-center shrink-0">
-                  <Lock className="w-5 h-5" />
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">
                     Clinical Admin Sign In
                   </h1>
                   <p className="text-xs sm:text-sm text-slate-500">
-                    Authorised clinical editors only.
+                    Encrypted Firebase Authentication for clinical editors.
                   </p>
                 </div>
               </div>
@@ -3610,7 +3943,7 @@ export default function App() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Passcode
+                    Password
                   </label>
                   <input
                     type="password"
@@ -3640,9 +3973,11 @@ export default function App() {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-2xs"
+                    disabled={authLoading}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs sm:text-sm font-semibold shadow-2xs inline-flex items-center gap-1.5"
                   >
-                    Sign In
+                    {authLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>{authLoading ? 'Signing In...' : 'Sign In'}</span>
                   </button>
                 </div>
               </form>
@@ -3697,7 +4032,7 @@ export default function App() {
                       setOwnProfileForm({
                         name: currentAdminUser.name || '',
                         email: currentAdminUser.email || '',
-                        passcode: currentAdminUser.passcode || ''
+                        newPassword: ''
                       });
                       setAdminTab('profile');
                     }}
@@ -3767,21 +4102,33 @@ export default function App() {
                   <div className="border-b border-slate-100 pb-3">
                     <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                       <KeyRound className="w-4 h-4 text-emerald-600" />
-                      <span>Edit My Admin Profile & Passcode</span>
+                      <span>Edit My Admin Profile & Password</span>
                     </h2>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Update your personal display name, login email address, or passcode. Role permissions are managed by Super Admins.
+                      Passwords are encrypted by Google Firebase Authentication and never stored in plain text.
                     </p>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      My Role (Read-Only)
+                      My Role (Managed by Super Admin)
                     </label>
                     <input
                       type="text"
                       disabled
                       value={currentAdminUser.role}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Login Email Address (Read-Only)
+                    </label>
+                    <input
+                      type="email"
+                      disabled
+                      value={ownProfileForm.email}
                       className="w-full px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-500"
                     />
                   </div>
@@ -3803,30 +4150,15 @@ export default function App() {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Login Email Address *
+                      Change Password (Leave blank to keep current password)
                     </label>
                     <input
-                      type="email"
-                      required
-                      value={ownProfileForm.email}
+                      type="password"
+                      value={ownProfileForm.newPassword}
                       onChange={(e) =>
-                        setOwnProfileForm({ ...ownProfileForm, email: e.target.value })
+                        setOwnProfileForm({ ...ownProfileForm, newPassword: e.target.value })
                       }
-                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Personal Passcode (min 4 characters) *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={ownProfileForm.passcode}
-                      onChange={(e) =>
-                        setOwnProfileForm({ ...ownProfileForm, passcode: e.target.value })
-                      }
+                      placeholder="New password (min 6 characters)"
                       className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
                     />
                   </div>
@@ -3836,7 +4168,7 @@ export default function App() {
                       type="submit"
                       className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-2xs"
                     >
-                      Save My Details & Sync to Cloud
+                      Save My Details & Sync
                     </button>
                   </div>
                 </form>
@@ -3974,25 +4306,31 @@ export default function App() {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Assign Personal Passcode (min 4 chars) *
+                      Assign Initial Password (min 6 characters) *
                     </label>
                     <input
-                      type="text"
+                      type="password"
                       required
-                      value={newAdminForm.passcode}
+                      value={newAdminForm.password}
                       onChange={(e) =>
-                        setNewAdminForm({ ...newAdminForm, passcode: e.target.value })
+                        setNewAdminForm({ ...newAdminForm, password: e.target.value })
                       }
-                      placeholder="e.g., airway2025"
+                      placeholder="Encrypted via Firebase Auth"
                       className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-2xs"
+                    disabled={authLoading}
+                    className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs sm:text-sm font-semibold shadow-2xs inline-flex items-center justify-center gap-1.5"
                   >
-                    + Add User & Sync to Cloud
+                    {authLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    <span>
+                      {authLoading
+                        ? 'Provisioning Firebase Account...'
+                        : '+ Create Login & Sync to Firestore'}
+                    </span>
                   </button>
                 </form>
               </div>
@@ -4729,20 +5067,39 @@ export default function App() {
                         : 'Add a New Section to Module'}
                     </h3>
 
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Section Heading *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={sectionForm.heading}
-                        onChange={(e) =>
-                          setSectionForm({ ...sectionForm, heading: e.target.value })
-                        }
-                        placeholder="e.g., Green Pathway: Tracheostomy Anatomy"
-                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                      <div className="sm:col-span-7">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Section Heading *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={sectionForm.heading}
+                          onChange={(e) =>
+                            setSectionForm({ ...sectionForm, heading: e.target.value })
+                          }
+                          placeholder="e.g., Green Pathway: Tracheostomy Anatomy"
+                          className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-5">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Text & Media Flow Layout
+                        </label>
+                        <select
+                          value={sectionForm.layout}
+                          onChange={(e) =>
+                            setSectionForm({ ...sectionForm, layout: e.target.value })
+                          }
+                          className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800"
+                        >
+                          <option value="stacked">Stacked (Text Top, Media Below)</option>
+                          <option value="media-right">Side-by-Side: Text Left / Media Right</option>
+                          <option value="media-left">Side-by-Side: Media Left / Text Right</option>
+                        </select>
+                      </div>
                     </div>
 
                     <div>
@@ -4776,10 +5133,34 @@ export default function App() {
                       />
                     </div>
 
+                    {/* PHOTOS & DIAGRAMS (UPLOAD FROM DEVICE OR PASTE URL) */}
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                      <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                        <ImageIcon className="w-4 h-4 text-emerald-600" />
-                        <span>Photos & Diagrams in this Section ({sectionForm.images.length})</span>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <ImageIcon className="w-4 h-4 text-emerald-600" />
+                          <span>Photos & Diagrams ({sectionForm.images.length})</span>
+                        </div>
+
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 text-xs font-semibold text-slate-700 cursor-pointer shadow-2xs">
+                          <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>
+                            {uploadingMediaType === 'image'
+                              ? `Uploading ${uploadProgressPct}%...`
+                              : 'Upload Photo from Device'}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingMediaType !== null}
+                            onChange={(e) => {
+                              if (e.target.files?.[0]) {
+                                handleUploadMediaFile(e.target.files[0], 'image');
+                                e.target.value = '';
+                              }
+                            }}
+                            className="hidden"
+                          />
+                        </label>
                       </div>
 
                       {sectionForm.images.length > 0 && (
@@ -4789,11 +5170,18 @@ export default function App() {
                               key={img.id || i}
                               className="p-2.5 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2 text-xs"
                             >
-                              <div className="truncate">
-                                <span className="font-semibold text-slate-800">{img.title}</span>
-                                {img.caption && (
-                                  <span className="text-slate-500"> — {img.caption}</span>
-                                )}
+                              <div className="flex items-center gap-2 truncate">
+                                <img
+                                  src={img.url}
+                                  alt=""
+                                  className="w-8 h-8 rounded object-cover shrink-0 border border-slate-200"
+                                />
+                                <div className="truncate">
+                                  <span className="font-semibold text-slate-800">{img.title}</span>
+                                  {img.caption && (
+                                    <span className="text-slate-500"> — {img.caption}</span>
+                                  )}
+                                </div>
                               </div>
                               <button
                                 type="button"
@@ -4828,7 +5216,7 @@ export default function App() {
                           onChange={(e) =>
                             setNewImageDraft({ ...newImageDraft, url: e.target.value })
                           }
-                          placeholder="Image URL (https://...)"
+                          placeholder="Or paste Image URL (https://...)"
                           className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
                         />
                       </div>
@@ -4847,15 +5235,39 @@ export default function App() {
                           onClick={handleAddImageToSectionForm}
                           className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shrink-0"
                         >
-                          + Add Photo
+                          + Add URL
                         </button>
                       </div>
                     </div>
 
+                    {/* VIDEOS (UPLOAD MP4 FROM DEVICE OR PASTE YOUTUBE/VIMEO LINK) */}
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                      <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                        <Video className="w-4 h-4 text-emerald-600" />
-                        <span>Videos in this Section ({sectionForm.videos.length})</span>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <Video className="w-4 h-4 text-emerald-600" />
+                          <span>Videos ({sectionForm.videos.length})</span>
+                        </div>
+
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 text-xs font-semibold text-slate-700 cursor-pointer shadow-2xs">
+                          <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>
+                            {uploadingMediaType === 'video'
+                              ? `Uploading Video ${uploadProgressPct}%...`
+                              : 'Upload Video File (MP4/MOV)'}
+                          </span>
+                          <input
+                            type="file"
+                            accept="video/*"
+                            disabled={uploadingMediaType !== null}
+                            onChange={(e) => {
+                              if (e.target.files?.[0]) {
+                                handleUploadMediaFile(e.target.files[0], 'video');
+                                e.target.value = '';
+                              }
+                            }}
+                            className="hidden"
+                          />
+                        </label>
                       </div>
 
                       {sectionForm.videos.length > 0 && (
@@ -4869,6 +5281,11 @@ export default function App() {
                                 <span className="font-semibold text-slate-800">
                                   {vid.title} ({vid.duration})
                                 </span>
+                                {vid.url.includes('firebasestorage') && (
+                                  <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold">
+                                    Uploaded File
+                                  </span>
+                                )}
                               </div>
                               <button
                                 type="button"
@@ -4913,7 +5330,7 @@ export default function App() {
                         onChange={(e) =>
                           setNewVideoDraft({ ...newVideoDraft, url: e.target.value })
                         }
-                        placeholder="Video URL / Embed link (https://...)"
+                        placeholder="Or paste YouTube / Vimeo embed link (https://...)"
                         className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
                       />
                       <div className="flex gap-2">
@@ -4934,7 +5351,7 @@ export default function App() {
                           onClick={handleAddVideoToSectionForm}
                           className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shrink-0"
                         >
-                          + Add Video
+                          + Add Link
                         </button>
                       </div>
                     </div>
