@@ -26,7 +26,6 @@ import {
 import {
   Activity,
   BookOpen,
-  Settings,
   CheckCircle2,
   ChevronRight,
   ChevronLeft,
@@ -41,12 +40,10 @@ import {
   Trash2,
   Edit3,
   ArrowLeft,
-  GitBranch,
   Video,
   Image as ImageIcon,
   X,
   ShieldAlert,
-  HeartPulse,
   Check,
   FolderPlus,
   Layers,
@@ -58,7 +55,6 @@ import {
   ArrowDown,
   LogOut,
   KeyRound,
-  Share2,
   Copy,
   Download,
   Upload,
@@ -72,12 +68,20 @@ import {
   Scale,
   UserPlus,
   History,
-  AlignLeft,
-  Columns,
-  PanelLeft,
-  PanelRight,
   Loader2,
-  ShieldCheck
+  ShieldCheck,
+  Search,
+  List,
+  ListOrdered,
+  Bold,
+  Heading2,
+  Table,
+  Award,
+  Radio,
+  AlertTriangle,
+  Info,
+  Printer,
+  Eye
 } from 'lucide-react';
 
 // ==========================================
@@ -132,8 +136,6 @@ try {
     db = getFirestore(app);
     storage = getStorage(app);
 
-    // Secondary Firebase App instance allows Super Admins to create new Firebase Auth accounts
-    // without signing out of their own current session.
     secondaryApp = initializeApp(firebaseConfig, 'PaedTrachesAdminProvisioner');
     secondaryAuth = getAuth(secondaryApp);
   }
@@ -143,7 +145,6 @@ try {
 
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'paedtrach-oncall-pwa';
 
-// Helper to convert YouTube/Vimeo URLs into clean embeddable iframes or detect direct video files
 const getEmbedVideoInfo = (url = '') => {
   if (!url) return { type: 'none', src: '' };
   const ytMatch = url.match(
@@ -172,6 +173,123 @@ const getEmbedVideoInfo = (url = '') => {
 };
 
 // ==========================================
+// RICH TEXT FORMATTER FOR LEARNING MODULES
+// Supports:
+// - Bullet lists (- item or * item)
+// - Numbered lists (1. item)
+// - Subheadings (## Heading)
+// - Bold inline text (**bold**)
+// ==========================================
+const renderInlineBold = (text) => {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={i} className="font-bold text-slate-900">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
+};
+
+const RichFormattedText = ({ text = '' }) => {
+  if (!text) return null;
+  const lines = text.split('\n');
+  const blocks = [];
+  let currentList = null;
+
+  const flushList = () => {
+    if (currentList) {
+      blocks.push(currentList);
+      currentList = null;
+    }
+  };
+
+  lines.forEach((rawLine, idx) => {
+    const line = rawLine.trim();
+    if (!line) {
+      flushList();
+      return;
+    }
+
+    if (line.startsWith('## ')) {
+      flushList();
+      blocks.push({ type: 'heading', content: line.slice(3), key: `h-${idx}` });
+    } else if (/^[-*•]\s+/.test(line)) {
+      const itemText = line.replace(/^[-*•]\s+/, '');
+      if (!currentList || currentList.type !== 'ul') {
+        flushList();
+        currentList = { type: 'ul', items: [], key: `ul-${idx}` };
+      }
+      currentList.items.push(itemText);
+    } else if (/^\d+[.)]\s+/.test(line)) {
+      const itemText = line.replace(/^\d+[.)]\s+/, '');
+      if (!currentList || currentList.type !== 'ol') {
+        flushList();
+        currentList = { type: 'ol', items: [], key: `ol-${idx}` };
+      }
+      currentList.items.push(itemText);
+    } else {
+      flushList();
+      blocks.push({ type: 'p', content: line, key: `p-${idx}` });
+    }
+  });
+  flushList();
+
+  return (
+    <div className="space-y-3.5 text-sm sm:text-base text-slate-600 leading-relaxed">
+      {blocks.map((block) => {
+        if (block.type === 'heading') {
+          return (
+            <h3
+              key={block.key}
+              className="text-base sm:text-lg font-bold text-slate-900 pt-2"
+            >
+              {renderInlineBold(block.content)}
+            </h3>
+          );
+        }
+        if (block.type === 'ul') {
+          return (
+            <ul
+              key={block.key}
+              className="space-y-2 pl-1 text-slate-700"
+            >
+              {block.items.map((item, i) => (
+                <li key={i} className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-2.5 shrink-0" />
+                  <span>{renderInlineBold(item)}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        if (block.type === 'ol') {
+          return (
+            <ol
+              key={block.key}
+              className="space-y-2 pl-1 text-slate-700"
+            >
+              {block.items.map((item, i) => (
+                <li key={i} className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center mt-0.5 shrink-0">
+                    {i + 1}
+                  </span>
+                  <span>{renderInlineBold(item)}</span>
+                </li>
+              ))}
+            </ol>
+          );
+        }
+        return <p key={block.key}>{renderInlineBold(block.content)}</p>;
+      })}
+    </div>
+  );
+};
+
+// ==========================================
 // CUSTOM PAEDTRACHES VECTOR LOGO EMBLEM
 // ==========================================
 const PaedTrachesLogo = ({ className = 'w-9 h-9' }) => (
@@ -184,7 +302,6 @@ const PaedTrachesLogo = ({ className = 'w-9 h-9' }) => (
       className="w-5 h-5"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Tracheostomy Neck Flange */}
       <rect
         x="5"
         y="9"
@@ -194,7 +311,6 @@ const PaedTrachesLogo = ({ className = 'w-9 h-9' }) => (
         stroke="currentColor"
         strokeWidth="2.2"
       />
-      {/* 15mm Hub Connector */}
       <path
         d="M12.5 5H19.5V9H12.5V5Z"
         fill="currentColor"
@@ -203,14 +319,12 @@ const PaedTrachesLogo = ({ className = 'w-9 h-9' }) => (
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      {/* Curved Paediatric Cannula Tube */}
       <path
         d="M13.5 14V18.5C13.5 22.5 16 25.5 20.5 26.5M18.5 14V17.5C18.5 19.8 19.8 21.5 22.5 22.2"
         stroke="currentColor"
         strokeWidth="2.3"
         strokeLinecap="round"
       />
-      {/* Stoma Airflow Pulse Dot */}
       <circle cx="9" cy="11.5" r="1" fill="currentColor" />
       <circle cx="23" cy="11.5" r="1" fill="currentColor" />
     </svg>
@@ -218,7 +332,7 @@ const PaedTrachesLogo = ({ className = 'w-9 h-9' }) => (
 );
 
 // ==========================================
-// INITIAL CLINICAL DATA (NO PLAINTEXT PASSWORDS STORED)
+// INITIAL CLINICAL DATA (2026/27 EDITION)
 // ==========================================
 const INITIAL_ADMIN_USERS = [
   {
@@ -226,15 +340,15 @@ const INITIAL_ADMIN_USERS = [
     name: 'Lead Clinical Editor',
     email: 'lead@paedtrach.org.uk',
     role: 'Clinical Lead (Super Admin)',
-    addedAt: '2025-01-15'
+    addedAt: '2026-01-15'
   }
 ];
 
 const INITIAL_GOVERNANCE_META = {
-  version: 'v3.2 (2025/26 Edition)',
+  version: 'v3.3 (2026/27 Edition)',
   clinicalLead: 'Paediatric Airway & Pre-Hospital Education Group',
-  lastReviewed: '2025-02-18',
-  nextReviewDue: '2026-02-18',
+  lastReviewed: '2026-02-18',
+  nextReviewDue: '2027-02-18',
   mhraNotice:
     'Classified as an open-access clinical reference & educational pathway visualiser (not a bespoke diagnostic calculator or Class I Medical Device under UK MDR 2002 / MHRA guidance). Clinicians must apply independent professional judgement and verify against current JRCALC / local NHS Ambulance Trust guidelines.'
 };
@@ -796,8 +910,14 @@ const INITIAL_LEARNING_MODULES = [
         id: 'sec-anat-1',
         heading: 'Why NTSP Colour Coding Matters on Scene',
         layout: 'media-right',
-        body: 'In a paediatric tracheostomy emergency, your critical first question is: "Can this child be oxygenated and ventilated via the mouth and nose if the tracheostomy tube is blocked or removed?" The National Tracheostomy Safety Project (NTSP) divides patients into Green and Red pathways so crews can tell at a glance.',
+        body: `In a paediatric tracheostomy emergency, your critical first question is: **"Can this child be oxygenated and ventilated via the mouth and nose if the tracheostomy tube is blocked or removed?"**\n\n- **Green Bedhead Sign:** Upper airway is potentially patent (larynx remains present above the stoma).\n- **Red Bedhead Sign:** Complete laryngectomy or isolated neck-only stoma with no upper airway connection.\n- **Action on Arrival:** Locate the child's Bedhead Sign or Emergency Go-Bag card within the first 15 seconds.`,
+        calloutType: 'pearl',
         pearl: 'Always check the colour of the child’s NTSP Bedhead Sign or caregiver emergency sheet inside their Go-Bag on arrival.',
+        comparisonTable: [
+          { label: 'Upper Airway Route', value: 'Green: Potentially Patent • Red: Absent / Disconnected' },
+          { label: 'Initial Oxygen Site', value: 'Green: Dual-Site (Face + Neck) • Red: Neck Stoma Only' },
+          { label: 'Stoma Occlusion for Oral BVM', value: 'Green: Yes (with gauze) • Red: NEVER occlude stoma' }
+        ],
         images: [
           {
             id: 'img-anat-1',
@@ -820,8 +940,9 @@ const INITIAL_LEARNING_MODULES = [
         id: 'sec-anat-2',
         heading: 'Green Pathway: Tracheostomy (Upper Airway Connected)',
         layout: 'media-left',
-        body: 'In almost all children with a tracheostomy, the larynx remains present above the stoma. Even if the child has subglottic stenosis or tracheomalacia, oxygen can usually pass from the mouth and nose into the lungs once a blocked tube is removed. When ventilating via a face mask, you must gently occlude the open neck stoma with sterile gauze so air does not escape out of the neck.',
-        pearl: 'Avoid hyperextending an infant’s neck—keep the head in neutral alignment with a thin shoulder roll.',
+        body: `In almost all children with a tracheostomy, the larynx remains present above the stoma. Even if the child has subglottic stenosis or tracheomalacia, oxygen can usually pass from the mouth and nose into the lungs once a blocked tube is removed.\n\n1. Remove any speaking valve, cap, or HME filter immediately.\n2. Apply high-flow oxygen to both the mouth/nose and the tracheostomy.\n3. If the tube is removed and you ventilate via a face mask, **gently occlude the open neck stoma with sterile gauze** so positive-pressure air does not escape out of the neck.`,
+        calloutType: 'warning',
+        pearl: 'Avoid hyperextending an infant’s neck—keep the head in neutral alignment with a thin shoulder roll so the soft cartilage does not kink.',
         images: [
           {
             id: 'img-anat-2',
@@ -836,8 +957,9 @@ const INITIAL_LEARNING_MODULES = [
         id: 'sec-anat-3',
         heading: 'Red Pathway: Laryngectomy or Complete Obstruction',
         layout: 'stacked',
-        body: 'When there is no anatomical connection between the pharynx and the trachea (or complete Grade 4 subglottic obliteration), the neck stoma is the child’s ONLY airway. Never cover or occlude the stoma, and do not attempt oral BVM ventilation or oral intubation unless explicitly directed by the child’s specialist care plan.',
-        pearl: 'To ventilate an open stoma directly when a tube cannot be replaced, seal a circular neonatal face mask or size 1 i-gel over the neck stoma.',
+        body: `When there is no anatomical connection between the pharynx and the trachea (or complete Grade 4 subglottic obliteration), the neck stoma is the child’s **ONLY airway**.\n\n- **Never cover or occlude the stoma** with gauze.\n- **Do not attempt oral BVM ventilation** or oral intubation unless explicitly directed by the child’s specialist care plan.\n- To ventilate an open stoma directly when a tube cannot be replaced, seal a **circular neonatal face mask** or paediatric i-gel over the neck stoma.`,
+        calloutType: 'pearl',
+        pearl: 'Keep a circular neonatal silicone face mask (size 0 or 1) easily accessible in your paediatric airway pouch for direct stoma ventilation.',
         images: [],
         videos: [
           {
@@ -893,7 +1015,8 @@ const INITIAL_LEARNING_MODULES = [
       {
         id: 'sec-bed-1',
         heading: '3 Key Numbers on the Bedhead Sign',
-        body: 'When arriving at the bedside, look immediately for three numbers on the child’s emergency sheet: 1) Tube Inner Diameter (ID in mm, e.g. 4.0 mm), 2) Suction Catheter Size (e.g. 8 Fr) and Pre-Measured Suction Depth (e.g. 8.0 cm), and 3) Upper Airway Grade / Patency details.',
+        body: `When arriving at the bedside, look immediately for three critical figures on the child’s emergency sheet:\n\n1. **Tube Inner Diameter (ID in mm):** e.g. 4.0 mm (determines suction catheter & spare tube size).\n2. **Suction Catheter Size & Depth:** e.g. 8 Fr catheter to 8.0 cm pre-measured depth.\n3. **Upper Airway Status:** Documents vocal cord patency or subglottic narrowing.`,
+        calloutType: 'pearl',
         pearl: 'A child’s Emergency Tracheostomy Go-Bag travels everywhere with them and holds a copy of their Bedhead Sign plus spare tubes.',
         images: [
           {
@@ -908,7 +1031,8 @@ const INITIAL_LEARNING_MODULES = [
       {
         id: 'sec-bed-2',
         heading: 'Single-Lumen Paediatric Tubes & Speaking Valves',
-        body: 'Unlike adult tracheostomy tubes, neonatal and small paediatric tubes (2.5 mm to 5.0 mm ID) are almost always single-lumen tubes without an inner cannula. Furthermore, many children wear a colourful one-way speaking valve (e.g. Passy-Muir) or an HME filter on the 15 mm hub. In any respiratory distress, strip all attachments down to the bare white 15 mm tracheostomy hub immediately.',
+        body: `Unlike adult tracheostomy tubes, neonatal and small paediatric tubes (**2.5 mm to 5.0 mm ID**) are almost always **single-lumen tubes without an inner cannula**.\n\n- **Strip All Attachments First:** Many children wear a colourful one-way speaking valve (e.g. Passy-Muir) or an HME filter on the 15 mm hub.\n- **Eliminate Hidden Obstruction:** In any respiratory distress, twist off all attachments down to the bare white 15 mm tracheostomy hub immediately.\n- **Check for Sterile Water Cuffs:** Silicone Bivona TTS cuffs are often inflated with sterile water rather than air—aspirate completely with a syringe before removing a blocked tube.`,
+        calloutType: 'warning',
         pearl: 'A speaking valve is a one-way valve—it lets air in but blocks exhalation through the tube. If the upper airway swells, severe air trapping occurs unless removed.',
         images: [
           {
@@ -972,8 +1096,9 @@ const INITIAL_LEARNING_MODULES = [
       {
         id: 'sec-suc-1',
         heading: 'Suction Catheter Sizing: Tube ID (mm) × 2 = French (Fr)',
-        body: 'Double the tracheostomy tube internal diameter (mm) to find the maximum French catheter size. For example, a 4.0 mm tube requires an 8 Fr suction catheter. Only advance the catheter to the child’s pre-measured depth (typically 6 to 11 cm) so you do not traumatise the carina, and apply suction only while withdrawing for 5 to 10 seconds.',
-        pearl: 'Never use a rigid Yankauer sucker inside a tracheostomy tube—only use flexible, graduations-marked suction catheters.',
+        body: `Double the tracheostomy tube internal diameter (mm) to find the maximum French catheter size.\n\n- **Formula:** Tube ID (mm) × 2 = Catheter Size (Fr). For example, a 4.0 mm tube requires an **8 Fr** catheter.\n- **Pre-Measured Depth:** Only advance the catheter to the child’s documented safe depth (typically 6 to 11 cm) so you do not traumatise the carina or trigger vagal bradycardia.\n- **Time Limit:** Apply suction only while withdrawing for **5 to 10 seconds** maximum.`,
+        calloutType: 'warning',
+        pearl: 'Never use a rigid Yankauer sucker inside a tracheostomy tube—only use flexible, centimetre-graduated suction catheters.',
         images: [
           {
             id: 'img-suc-1',
@@ -987,8 +1112,9 @@ const INITIAL_LEARNING_MODULES = [
       {
         id: 'sec-suc-2',
         heading: 'The Obturator Rule During Emergency Tube Replacement',
-        body: 'When inserting a spare tube, the solid plastic obturator sits inside the tube to guide its curved tip smoothly through the stoma. Remember: the child CANNOT breathe while the obturator is inside the lumen. The instant the tube flange reaches the neck skin, hold the flange steady with one hand and pull the obturator out with the other.',
-        pearl: 'If the same-size spare tube will not slide in easily, do not force it—immediately switch to the 0.5 mm smaller downsize tube.',
+        body: `When inserting a spare tube, the solid plastic obturator sits inside the tube to guide its curved tip smoothly through the stoma.\n\n1. Lubricate the spare tube with water-soluble gel.\n2. Slide into the stoma following a gentle downward curve.\n3. **Remove the obturator immediately** once the flange reaches the neck skin — the child cannot breathe while the obturator is inside.\n4. If the same-size tube will not slide in easily, do not force it—immediately attempt the **0.5 mm smaller downsize tube**.`,
+        calloutType: 'pearl',
+        pearl: 'Confirm successful tube placement using waveform capnography (EtCO2), bilateral chest rise, and smooth passage of a suction catheter.',
         images: [],
         videos: [
           {
@@ -1072,7 +1198,6 @@ const formatTime = (totalSec) => {
 };
 
 export default function App() {
-  // Navigation State: 'oncall' | 'learning' | 'admin'
   const [appMode, setAppMode] = useState('oncall');
   const [onCallSubView, setOnCallSubView] = useState('main');
 
@@ -1091,10 +1216,16 @@ export default function App() {
     {
       id: 'log-init',
       actor: 'Lead Clinical Editor',
-      action: 'Published initial NTSP & NICE aligned clinical pathways',
-      timestamp: '2025-02-18 09:00'
+      action: 'Published 2026/27 NTSP & NICE aligned clinical pathways',
+      timestamp: '2026-02-18 09:00'
     }
   ]);
+
+  const [currentAdminUser, setCurrentAdminUser] = useState(null);
+  const [loginEmailInput, setLoginEmailInput] = useState('');
+  const [loginPasswordInput, setLoginPasswordInput] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
     if (!auth) {
@@ -1104,7 +1235,6 @@ export default function App() {
 
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       if (!u) {
-        // Only fall back to anonymous auth if there is genuinely no active session
         try {
           if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
             await signInWithCustomToken(auth, __initial_auth_token);
@@ -1119,7 +1249,6 @@ export default function App() {
 
       setFbUser(u);
       if (!u.isAnonymous && u.email) {
-        // User is signed in with real Firebase Email/Password Auth
         setCurrentAdminUser((prev) => {
           if (prev && prev.email?.toLowerCase() === u.email.toLowerCase()) {
             return prev;
@@ -1140,7 +1269,6 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Keep currentAdminUser's role synced with Firestore roster & immediately revoke access if removed
   useEffect(() => {
     if (!fbUser || fbUser.isAnonymous || !fbUser.email || cloudStatus !== 'synced') return;
     const matchedProfile = adminUsers.find(
@@ -1149,7 +1277,6 @@ export default function App() {
     if (matchedProfile) {
       setCurrentAdminUser(matchedProfile);
     } else if (adminUsers.length > 0) {
-      // User was removed from the Firestore admin roster — revoke session immediately
       signOut(auth)
         .then(() => signInAnonymously(auth))
         .catch(() => {});
@@ -1322,9 +1449,43 @@ export default function App() {
   const [flowchartInspectNode, setFlowchartInspectNode] = useState(null);
   const [showPathwayRefs, setShowPathwayRefs] = useState(false);
 
+  // Roadside Tools Modal State ('calculator' | 'checklist' | 'handover' | null)
   const [activeToolModal, setActiveToolModal] = useState(null);
   const [selectedTubeIdSize, setSelectedTubeIdSize] = useState('4.0');
   const [bagChecked, setBagChecked] = useState({});
+
+  // Hospital Pre-Alert / SBAR Handover Builder State
+  const [handoverForm, setHandoverForm] = useState({
+    airwayType: 'Green (Patent Upper Airway)',
+    tubeId: '4.0 mm',
+    suctionDepth: '8.0 cm',
+    childAge: '18 months',
+    eventSummary: 'Suspected mucus plug — suctioned & tube changed to 4.0mm spare',
+    currentObs: 'SpO2 97% on 10L O2, RR 28, HR 132, EtCO2 4.8 kPa'
+  });
+  const [handoverCopied, setHandoverCopied] = useState(false);
+
+  // Global Instant Search Modal State
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+
+  // CPD Certificate Modal State
+  const [cpdClinicianName, setCpdClinicianName] = useState('');
+  const [cpdRegNumber, setCpdRegNumber] = useState('');
+  const [cpdReflectionText, setCpdReflectionText] = useState('');
+  const [showCpdModal, setShowCpdModal] = useState(false);
+
+  // Keyboard shortcut Ctrl/Cmd + K for Global Search
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowGlobalSearch((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const [showCprTimer, setShowCprTimer] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
@@ -1357,12 +1518,6 @@ export default function App() {
   // ==========================================
   const [adminTab, setAdminTab] = useState('pathways');
   const [cmsNotification, setCmsNotification] = useState(null);
-
-  const [currentAdminUser, setCurrentAdminUser] = useState(null);
-  const [loginEmailInput, setLoginEmailInput] = useState('');
-  const [loginPasswordInput, setLoginPasswordInput] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [authLoading, setAuthLoading] = useState(false);
 
   const [newAdminForm, setNewAdminForm] = useState({
     name: '',
@@ -1413,6 +1568,7 @@ export default function App() {
     url: ''
   });
 
+  // Enhanced Learning Module Section Editor State
   const [adminModuleId, setAdminModuleId] = useState(() => INITIAL_LEARNING_MODULES[0].id);
   const [showNewModuleModal, setShowNewModuleModal] = useState(false);
   const [newModuleForm, setNewModuleForm] = useState({
@@ -1426,10 +1582,13 @@ export default function App() {
     heading: '',
     layout: 'stacked',
     body: '',
+    calloutType: 'pearl', // 'pearl' | 'warning' | 'info'
     pearl: '',
+    comparisonTable: [],
     images: [],
     videos: []
   });
+  const [newTableRowDraft, setNewTableRowDraft] = useState({ label: '', value: '' });
   const [newImageDraft, setNewImageDraft] = useState({ title: '', caption: '', url: '' });
   const [newVideoDraft, setNewVideoDraft] = useState({
     title: '',
@@ -1437,8 +1596,9 @@ export default function App() {
     url: '',
     description: ''
   });
-  const [uploadingMediaType, setUploadingMediaType] = useState(null); // 'image' | 'video' | null
+  const [uploadingMediaType, setUploadingMediaType] = useState(null);
   const [uploadProgressPct, setUploadProgressPct] = useState(0);
+  const [previewSectionInEditor, setPreviewSectionInEditor] = useState(false);
 
   const [newQuizDraft, setNewQuizDraft] = useState({
     q: '',
@@ -1458,7 +1618,6 @@ export default function App() {
     );
   }, [currentAdminUser]);
 
-  // Dynamically set browser tab title ("PaedTraches"), favicon, and iOS/Android Home Screen App Icon
   useEffect(() => {
     document.title = 'PaedTraches — Paediatric Tracheostomy Guide';
 
@@ -1468,7 +1627,6 @@ export default function App() {
       canvas.height = 192;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Emerald-to-Teal rounded square background
         const grad = ctx.createLinearGradient(0, 0, 192, 192);
         grad.addColorStop(0, '#10b981');
         grad.addColorStop(1, '#0f766e');
@@ -1477,24 +1635,20 @@ export default function App() {
         ctx.roundRect(0, 0, 192, 192, 42);
         ctx.fill();
 
-        // White Tracheostomy Flange & Cannula Emblem
         ctx.strokeStyle = '#ffffff';
         ctx.fillStyle = '#ffffff';
         ctx.lineWidth = 12;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
-        // Neck Flange
         ctx.beginPath();
         ctx.roundRect(32, 56, 128, 30, 15);
         ctx.stroke();
 
-        // 15mm Hub Connector
         ctx.beginPath();
         ctx.roundRect(76, 30, 40, 26, 6);
         ctx.stroke();
 
-        // Curved Paediatric Cannula Tube
         ctx.beginPath();
         ctx.moveTo(82, 86);
         ctx.quadraticCurveTo(82, 148, 126, 158);
@@ -1505,7 +1659,6 @@ export default function App() {
         ctx.quadraticCurveTo(110, 126, 138, 134);
         ctx.stroke();
 
-        // Flange tie holes
         ctx.beginPath();
         ctx.arc(54, 71, 6, 0, Math.PI * 2);
         ctx.arc(138, 71, 6, 0, Math.PI * 2);
@@ -1527,7 +1680,7 @@ export default function App() {
         setLinkTag('apple-touch-icon', pngDataUrl);
       }
     } catch (e) {
-      // Fallback if canvas roundRect unsupported
+      // Fallback
     }
   }, []);
 
@@ -1536,7 +1689,49 @@ export default function App() {
     setTimeout(() => setCmsNotification(null), 4000);
   };
 
-  // Cryptographically Secure Firebase Email/Password Login
+  // Global Instant Search Results across Pathways, Steps & Modules
+  const globalSearchResults = useMemo(() => {
+    const q = globalSearchQuery.trim().toLowerCase();
+    if (!q) return { pathways: [], steps: [], modules: [] };
+
+    const matchedPathways = pathways.filter(
+      (p) =>
+        p.title.toLowerCase().includes(q) ||
+        p.subtitle.toLowerCase().includes(q) ||
+        p.badge.toLowerCase().includes(q)
+    );
+
+    const matchedSteps = [];
+    pathways.forEach((p) => {
+      p.nodes.forEach((n) => {
+        if (
+          n.title.toLowerCase().includes(q) ||
+          (n.subtitle && n.subtitle.toLowerCase().includes(q)) ||
+          (n.checklist && n.checklist.some((c) => c.toLowerCase().includes(q)))
+        ) {
+          matchedSteps.push({ pathway: p, node: n });
+        }
+      });
+    });
+
+    const matchedModules = learningModules.filter(
+      (m) =>
+        m.title.toLowerCase().includes(q) ||
+        m.summary.toLowerCase().includes(q) ||
+        m.sections.some(
+          (s) =>
+            s.heading.toLowerCase().includes(q) ||
+            s.body.toLowerCase().includes(q)
+        )
+    );
+
+    return {
+      pathways: matchedPathways,
+      steps: matchedSteps.slice(0, 6),
+      modules: matchedModules
+    };
+  }, [globalSearchQuery, pathways, learningModules]);
+
   const handleAdminLoginSubmit = async (e) => {
     e.preventDefault();
     if (!auth) {
@@ -1562,7 +1757,6 @@ export default function App() {
       );
 
       if (!matchedProfile) {
-        // Check if this is a brand-new database with only the placeholder seed user
         const isFreshSeedOnly =
           adminUsers.length === 1 && adminUsers[0].email === 'lead@paedtrach.org.uk';
 
@@ -1587,7 +1781,6 @@ export default function App() {
             actionDescription: `Verified initial Super Admin ${firstAdminProfile.email}`
           });
         } else {
-          // User was removed from the Firestore admin team — deny entry & sign out
           await signOut(auth);
           await signInAnonymously(auth);
           setLoginError(
@@ -1612,7 +1805,9 @@ export default function App() {
       } else if (err.code === 'auth/too-many-requests') {
         setLoginError('Too many failed attempts. Please wait a few minutes and try again.');
       } else {
-        setLoginError(err.message || 'Sign-in failed. Verify Email/Password Auth is enabled in Firebase.');
+        setLoginError(
+          err.message || 'Sign-in failed. Verify Email/Password Auth is enabled in Firebase.'
+        );
       }
     } finally {
       setAuthLoading(false);
@@ -1628,7 +1823,6 @@ export default function App() {
     }
 
     try {
-      // If user entered a new password, update it securely in Firebase Authentication
       if (ownProfileForm.newPassword.trim()) {
         if (ownProfileForm.newPassword.trim().length < 6) {
           notifyCms('Firebase requires new passwords to be at least 6 characters long.');
@@ -1683,7 +1877,6 @@ export default function App() {
     setAppMode('oncall');
   };
 
-  // Super Admin provisions a brand-new user directly in Firebase Auth + Firestore simultaneously
   const handleAddAdminTeamMember = async (e) => {
     e.preventDefault();
     const cleanEmail = newAdminForm.email.trim().toLowerCase();
@@ -1705,7 +1898,6 @@ export default function App() {
     try {
       let provisionedUid = `adm-${Date.now()}`;
 
-      // Create the encrypted user account in Firebase Authentication using the secondary app instance
       if (secondaryAuth) {
         const userCredential = await createUserWithEmailAndPassword(
           secondaryAuth,
@@ -1748,7 +1940,6 @@ export default function App() {
       );
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') {
-        // User already exists in Firebase Auth—still add them to the Firestore team roster
         const createdUser = {
           id: `adm-${Date.now()}`,
           name: newAdminForm.name.trim(),
@@ -1966,11 +2157,12 @@ export default function App() {
     [activePathway, currentNodeId]
   );
 
-  const handleOpenPathway = (pathwayId) => {
+  const handleOpenPathway = (pathwayId, specificNodeId = null) => {
     const target = pathways.find((p) => p.id === pathwayId);
     if (!target) return;
+    setAppMode('oncall');
     setActivePathwayId(pathwayId);
-    const startId = target.startNodeId || target.nodes[0]?.id;
+    const startId = specificNodeId || target.startNodeId || target.nodes[0]?.id;
     setCurrentNodeId(startId);
     setNodeHistory([startId]);
     setPathwayViewMode('interactive');
@@ -2297,12 +2489,16 @@ export default function App() {
       heading: '',
       layout: 'stacked',
       body: '',
+      calloutType: 'pearl',
       pearl: '',
+      comparisonTable: [],
       images: [],
       videos: []
     });
+    setNewTableRowDraft({ label: '', value: '' });
     setNewImageDraft({ title: '', caption: '', url: '' });
     setNewVideoDraft({ title: '', duration: '03:00', url: '', description: '' });
+    setPreviewSectionInEditor(false);
   };
 
   const loadSectionIntoForm = (sec) => {
@@ -2311,13 +2507,40 @@ export default function App() {
       heading: sec.heading || '',
       layout: sec.layout || 'stacked',
       body: sec.body || '',
+      calloutType: sec.calloutType || 'pearl',
       pearl: sec.pearl || '',
+      comparisonTable: sec.comparisonTable ? [...sec.comparisonTable] : [],
       images: sec.images ? [...sec.images] : [],
       videos: sec.videos ? [...sec.videos] : []
     });
+    setPreviewSectionInEditor(false);
   };
 
-  // Direct Device File Upload to Firebase Storage (Photos & Videos)
+  const insertFormattingToken = (tokenType) => {
+    const snippetMap = {
+      bullet: '\n- Bullet point item',
+      numbered: '\n1. Numbered step item',
+      heading: '\n## Subheading Title\n',
+      bold: '**bold clinical term**'
+    };
+    setSectionForm((prev) => ({
+      ...prev,
+      body: prev.body + (snippetMap[tokenType] || '')
+    }));
+  };
+
+  const handleAddTableRowToSection = () => {
+    if (!newTableRowDraft.label.trim() || !newTableRowDraft.value.trim()) return;
+    setSectionForm((prev) => ({
+      ...prev,
+      comparisonTable: [
+        ...(prev.comparisonTable || []),
+        { label: newTableRowDraft.label.trim(), value: newTableRowDraft.value.trim() }
+      ]
+    }));
+    setNewTableRowDraft({ label: '', value: '' });
+  };
+
   const handleUploadMediaFile = (file, mediaKind) => {
     if (!file) return;
     if (!storage) {
@@ -2429,8 +2652,10 @@ export default function App() {
           id: `sec-${Date.now()}`,
           heading: 'Introduction & Key Concepts',
           layout: 'stacked',
-          body: 'Add your clinical content, photos, and videos to this section using the editor.',
+          body: 'Add your formatted clinical content, bullet points, tables, photos, and videos to this section using the editor.',
+          calloutType: 'pearl',
           pearl: 'Always check the patient’s Bedhead Sign and follow local Trust guidelines.',
+          comparisonTable: [],
           images: [],
           videos: []
         }
@@ -2521,7 +2746,9 @@ export default function App() {
       heading: sectionForm.heading.trim(),
       layout: sectionForm.layout || 'stacked',
       body: sectionForm.body.trim(),
+      calloutType: sectionForm.calloutType || 'pearl',
       pearl: sectionForm.pearl.trim(),
+      comparisonTable: sectionForm.comparisonTable || [],
       images: sectionForm.images,
       videos: sectionForm.videos
     };
@@ -2639,11 +2866,210 @@ export default function App() {
     [learningModules, activeModuleId]
   );
 
+  // Reusable Section Content Renderer (used both in Learner View & Live Admin Preview)
+  const renderFormattedSectionContent = (sec) => {
+    const layout = sec.layout || 'stacked';
+    const hasMedia =
+      (sec.images && sec.images.length > 0) ||
+      (sec.videos && sec.videos.length > 0);
+    const isSideBySide =
+      hasMedia && (layout === 'media-right' || layout === 'media-left');
+
+    const calloutStyle =
+      sec.calloutType === 'warning'
+        ? {
+            bg: 'bg-amber-50/90 border-amber-200 text-amber-950',
+            icon: <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />,
+            label: 'Clinical Safety Caution'
+          }
+        : sec.calloutType === 'info'
+        ? {
+            bg: 'bg-sky-50/90 border-sky-200 text-sky-950',
+            icon: <Info className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />,
+            label: 'Key Reference Note'
+          }
+        : {
+            bg: 'bg-emerald-50/70 border-emerald-200 text-emerald-950',
+            icon: <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />,
+            label: 'Clinical Takeaway'
+          };
+
+    const renderMediaBlocks = () => (
+      <div className="space-y-4">
+        {sec.images && sec.images.length > 0 && (
+          <div
+            className={`grid gap-4 ${
+              isSideBySide || sec.images.length === 1
+                ? 'grid-cols-1'
+                : 'grid-cols-1 md:grid-cols-2'
+            }`}
+          >
+            {sec.images.map((img) => (
+              <div
+                key={img.id}
+                className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-2xs"
+              >
+                <img
+                  src={img.url}
+                  alt={img.title}
+                  className="w-full max-h-72 object-cover"
+                />
+                <div className="p-3.5">
+                  <div className="font-bold text-xs sm:text-sm text-slate-900">
+                    {img.title}
+                  </div>
+                  {img.caption && (
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                      {img.caption}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {sec.videos && sec.videos.length > 0 && (
+          <div className="space-y-4">
+            {sec.videos.map((vid) => {
+              const embed = getEmbedVideoInfo(vid.url);
+              return (
+                <div
+                  key={vid.id}
+                  className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-2xs"
+                >
+                  {embed.type === 'iframe' && (
+                    <div className="aspect-video w-full bg-slate-900">
+                      <iframe
+                        src={embed.src}
+                        title={vid.title}
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  )}
+
+                  {embed.type === 'video' && (
+                    <video
+                      src={embed.src}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="w-full max-h-80 bg-slate-950"
+                    />
+                  )}
+
+                  <div className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Video className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span className="font-bold text-xs sm:text-sm text-slate-900">
+                          {vid.title}
+                        </span>
+                        {vid.duration && (
+                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600">
+                            {vid.duration}
+                          </span>
+                        )}
+                      </div>
+                      {vid.description && (
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                          {vid.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {embed.type === 'link' && (
+                      <a
+                        href={vid.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shrink-0"
+                      >
+                        <Play className="w-3.5 h-3.5" />
+                        <span>Open Video</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+
+    const renderTextBlock = () => (
+      <div className="space-y-4">
+        <RichFormattedText text={sec.body} />
+
+        {sec.comparisonTable && sec.comparisonTable.length > 0 && (
+          <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50/60">
+            <div className="divide-y divide-slate-200/80">
+              {sec.comparisonTable.map((row, rIdx) => (
+                <div
+                  key={rIdx}
+                  className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-3 px-4 py-2.5 text-xs sm:text-sm"
+                >
+                  <div className="sm:col-span-4 font-bold text-slate-800">
+                    {row.label}
+                  </div>
+                  <div className="sm:col-span-8 text-slate-600">
+                    {renderInlineBold(row.value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {sec.pearl && (
+          <div
+            className={`p-4 rounded-2xl border text-xs sm:text-sm font-medium flex items-start gap-2.5 ${calloutStyle.bg}`}
+          >
+            {calloutStyle.icon}
+            <div>
+              <strong>{calloutStyle.label}:</strong> {sec.pearl}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+
+    if (isSideBySide) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+          <div
+            className={`md:col-span-6 ${
+              layout === 'media-left' ? 'md:order-2' : 'md:order-1'
+            }`}
+          >
+            {renderTextBlock()}
+          </div>
+          <div
+            className={`md:col-span-6 ${
+              layout === 'media-left' ? 'md:order-1' : 'md:order-2'
+            }`}
+          >
+            {renderMediaBlocks()}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {renderTextBlock()}
+        {hasMedia && renderMediaBlocks()}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900">
       {/* ==========================================
           TOP NAVIGATION BAR + MOBILE SUB-ROW
-          (Everything lives at the top so bottom banners like Netlify never cover mobile controls)
           ========================================== */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between gap-3">
@@ -2668,7 +3094,6 @@ export default function App() {
                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
                       : 'bg-slate-100 text-slate-500'
                   }`}
-                  title={cloudStatus === 'synced' ? 'Cloud Live Sync Active' : 'Offline Ready'}
                 >
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${
@@ -2713,8 +3138,20 @@ export default function App() {
             </button>
           </div>
 
-          {/* Right Actions */}
+          {/* Right Actions: Search + Save App + Admin */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button
+              onClick={() => {
+                setGlobalSearchQuery('');
+                setShowGlobalSearch(true);
+              }}
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition flex items-center gap-1.5 text-xs font-medium border border-transparent hover:border-slate-200"
+              title="Quick Clinical Search (Ctrl+K)"
+            >
+              <Search className="w-4 h-4" />
+              <span className="hidden lg:inline">Search</span>
+            </button>
+
             <button
               onClick={() => setShowPwaModal(true)}
               className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition flex items-center gap-1.5 text-xs font-medium"
@@ -2723,6 +3160,7 @@ export default function App() {
               <Smartphone className="w-4 h-4" />
               <span className="hidden lg:inline">Save App</span>
             </button>
+
             <button
               onClick={() => {
                 setAppMode(appMode === 'admin' ? 'oncall' : 'admin');
@@ -2747,7 +3185,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* MOBILE SECOND ROW (Phones Only): Spacious 4-button strip at TOP so bottom banners never cover it */}
+        {/* MOBILE SECOND ROW (Phones Only): Top Sub-Bar */}
         <div className="sm:hidden border-t border-slate-100 bg-slate-50/90 px-3 py-1.5 grid grid-cols-4 gap-1.5">
           <button
             onClick={() => {
@@ -2786,32 +3224,31 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveToolModal('checklist')}
+            onClick={() => setActiveToolModal('handover')}
             className="py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 text-xs font-semibold text-slate-600 hover:bg-white hover:text-slate-900 transition"
           >
-            <ClipboardCheck className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-            <span>Go-Bag</span>
+            <Radio className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <span>Pre-Alert</span>
           </button>
         </div>
       </header>
 
       {/* ==========================================
-          MAIN CONTENT AREA (WIDER MAX-W-7XL ON DESKTOP, COMPACT ON MOBILE)
+          MAIN CONTENT AREA
           ========================================== */}
       <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1">
         {/* ==========================================
-            1A. ON-CALL HOME VIEW (3-COLUMN GRID ON DESKTOP, STACKED ON MOBILE)
+            1A. ON-CALL HOME VIEW
             ========================================== */}
         {appMode === 'oncall' && !activePathwayId && onCallSubView === 'main' && (
           <div className="space-y-8 sm:space-y-10">
-            {/* Calm Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200/80 pb-5">
               <div className="space-y-1.5">
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
                   PaedTraches Clinical Guide
                 </h1>
                 <p className="text-sm sm:text-base text-slate-500">
-                  Select an emergency clinical pathway or open a roadside sizing tool.
+                  Select an emergency clinical pathway or open a roadside decision & handover aid.
                 </p>
               </div>
               <div className="hidden sm:flex items-center gap-2">
@@ -2820,19 +3257,26 @@ export default function App() {
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold transition"
                 >
                   <Calculator className="w-4 h-4 text-emerald-600" />
-                  <span>Quick Tube Sizer</span>
+                  <span>Tube Sizer</span>
                 </button>
                 <button
                   onClick={() => setActiveToolModal('checklist')}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-semibold transition"
                 >
                   <ClipboardCheck className="w-4 h-4 text-sky-600" />
-                  <span>Go-Bag Checklist</span>
+                  <span>Go-Bag Check</span>
+                </button>
+                <button
+                  onClick={() => setActiveToolModal('handover')}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-semibold transition"
+                >
+                  <Radio className="w-4 h-4 text-amber-600" />
+                  <span>Hospital Pre-Alert</span>
                 </button>
               </div>
             </div>
 
-            {/* Core Emergency Pathway Cards (1 col on phone, 3 cols on desktop) */}
+            {/* Core Emergency Pathway Cards */}
             <div className="space-y-4">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Core Emergency Pathways
@@ -2879,7 +3323,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Bottom Row on Desktop: Extra Pathways + Roadside Tools Side by Side */}
+            {/* Bottom Row on Desktop: Extra Pathways + 3 Roadside Tools */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pt-2">
               <div className="lg:col-span-5 space-y-3">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -2920,45 +3364,56 @@ export default function App() {
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                   Quick Roadside Tools
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-[calc(100%-1.75rem)]">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 h-[calc(100%-1.75rem)]">
                   <button
                     onClick={() => setActiveToolModal('calculator')}
-                    className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex items-center justify-between text-left group"
+                    className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between text-left group gap-3"
                   >
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200/60 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
-                        <Calculator className="w-5 h-5" />
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200/60 text-emerald-600 flex items-center justify-center shrink-0">
+                      <Calculator className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900 text-sm">
+                        Tube & Suction Sizer
                       </div>
-                      <div>
-                        <div className="font-bold text-slate-900 text-base">
-                          Suction & Tube Sizer
-                        </div>
-                        <div className="text-xs sm:text-sm text-slate-500 mt-1">
-                          Catheter Fr, safe depth (cm) & 0.5mm downsize tube
-                        </div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        Fr catheter, safe depth & downsize tube
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-700 shrink-0" />
                   </button>
 
                   <button
                     onClick={() => setActiveToolModal('checklist')}
-                    className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex items-center justify-between text-left group"
+                    className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between text-left group gap-3"
                   >
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-11 h-11 rounded-xl bg-sky-50 border border-sky-200/60 text-sky-600 flex items-center justify-center shrink-0 mt-0.5">
-                        <ClipboardCheck className="w-5 h-5" />
+                    <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-200/60 text-sky-600 flex items-center justify-center shrink-0">
+                      <ClipboardCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900 text-sm">
+                        Go-Bag Checklist
                       </div>
-                      <div>
-                        <div className="font-bold text-slate-900 text-base">
-                          Go-Bag Checklist
-                        </div>
-                        <div className="text-xs sm:text-sm text-slate-500 mt-1">
-                          Verify essential bedside equipment before transport
-                        </div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        Verify essential kit prior to transport
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-700 shrink-0" />
+                  </button>
+
+                  <button
+                    onClick={() => setActiveToolModal('handover')}
+                    className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between text-left group gap-3"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-600 flex items-center justify-center shrink-0">
+                      <Radio className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900 text-sm">
+                        ED Pre-Alert Builder
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        1-tap SBAR / ENT pre-alert summary
+                      </div>
+                    </div>
                   </button>
                 </div>
               </div>
@@ -3022,11 +3477,10 @@ export default function App() {
         )}
 
         {/* ==========================================
-            1C. ACTIVE PATHWAY VIEW (SIDE-BY-SIDE TOOLS & OUTLINE ON DESKTOP, SINGLE CARD ON MOBILE)
+            1C. ACTIVE PATHWAY VIEW
             ========================================== */}
         {appMode === 'oncall' && activePathwayId && (
           <div className="space-y-5">
-            {/* Top Bar */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <button
                 onClick={() => setActivePathwayId(null)}
@@ -3082,7 +3536,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Compact Collapsible 2-Minute CPR Cycle Bar */}
             {showCprTimer && (
               <div className="bg-white rounded-2xl p-3.5 border border-rose-200 shadow-2xs flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -3114,7 +3567,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Pathway Title Banner */}
             <div className="flex items-center justify-between gap-2 px-1">
               <div>
                 <span
@@ -3149,10 +3601,8 @@ export default function App() {
               )}
             </div>
 
-            {/* DESKTOP 2-COLUMN LAYOUT FOR INTERACTIVE STEP-BY-STEP */}
             {pathwayViewMode === 'interactive' && currentNode && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* Main Interactive Decision Card (8 cols on desktop, full width on mobile) */}
                 <div
                   className={`lg:col-span-8 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6 ${
                     getThemeStyles(activePathway.theme).topBar
@@ -3267,20 +3717,27 @@ export default function App() {
                           <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                           <span>End of clinical pathway reached.</span>
                         </div>
-                        <button
-                          onClick={handleRestartPathway}
-                          className="px-4 py-2 rounded-xl bg-white border border-emerald-300 text-emerald-800 text-xs font-semibold hover:bg-emerald-100"
-                        >
-                          Restart Pathway
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setActiveToolModal('handover')}
+                            className="px-3.5 py-2 rounded-xl bg-emerald-700 text-white text-xs font-semibold hover:bg-emerald-800"
+                          >
+                            Build ED Pre-Alert
+                          </button>
+                          <button
+                            onClick={handleRestartPathway}
+                            className="px-3.5 py-2 rounded-xl bg-white border border-emerald-300 text-emerald-800 text-xs font-semibold hover:bg-emerald-100"
+                          >
+                            Restart
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Desktop Right Sidebar (Hidden on mobile so phones stay clean, visible on lg+ screens) */}
+                {/* Desktop Right Sidebar */}
                 <div className="hidden lg:block lg:col-span-4 space-y-5 sticky top-24">
-                  {/* Live Pathway Map Outline */}
                   <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                       <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -3317,7 +3774,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Quick Desktop Inline Suction & Tube Sizer Widget */}
                   <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3.5">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                       <div className="flex items-center gap-2">
@@ -3370,7 +3826,6 @@ export default function App() {
               </div>
             )}
 
-            {/* VIEW 2: FULL FLOWCHART OVERVIEW (2-Column Grid on Desktop, Vertical Timeline on Mobile) */}
             {pathwayViewMode === 'overview' && (
               <div className="space-y-3">
                 <p className="text-xs text-slate-500 px-1">
@@ -3499,7 +3954,7 @@ export default function App() {
         )}
 
         {/* ==========================================
-            2. LEARNING MODULES MODE (3-COL GRID ON DESKTOP + SIDEBAR TOC WHEN READING)
+            2. LEARNING MODULES MODE
             ========================================== */}
         {appMode === 'learning' && (
           <div className="space-y-6">
@@ -3511,7 +3966,7 @@ export default function App() {
                       Learning Modules
                     </h1>
                     <p className="text-sm sm:text-base text-slate-500">
-                      Multi-section clinical guides with diagrams, videos, and end-of-module self-assessment.
+                      Multi-section clinical guides with formatted bullet takeaways, tables, videos, and CPD reflection certificates.
                     </p>
                   </div>
                   <div className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 shrink-0 self-start sm:self-auto">
@@ -3566,7 +4021,6 @@ export default function App() {
                 </div>
               </>
             ) : (
-              /* Active Multi-Section Learning Module View with Desktop Sidebar */
               <div className="space-y-6">
                 <div className="flex items-center justify-between gap-2">
                   <button
@@ -3582,7 +4036,6 @@ export default function App() {
                   </span>
                 </div>
 
-                {/* Progress Bar */}
                 <div className="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden">
                   <div
                     className="bg-emerald-600 h-full transition-all duration-300"
@@ -3596,7 +4049,6 @@ export default function App() {
                   />
                 </div>
 
-                {/* Module Header */}
                 <div className="space-y-1">
                   <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
                     {activeModule.category}
@@ -3607,7 +4059,6 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  {/* Desktop Left Table of Contents Sidebar */}
                   <div className="hidden lg:block lg:col-span-4 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3 sticky top-24">
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2.5">
                       Module Sections
@@ -3637,7 +4088,10 @@ export default function App() {
 
                       <div className="pt-2 border-t border-slate-100">
                         <button
-                          disabled={!quizUnlocked && activeSectionIndex < activeModule.sections.length - 1}
+                          disabled={
+                            !quizUnlocked &&
+                            activeSectionIndex < activeModule.sections.length - 1
+                          }
                           onClick={() => {
                             setQuizUnlocked(true);
                             markModuleCompletedInCloud(activeModule.id);
@@ -3648,221 +4102,67 @@ export default function App() {
                               : 'bg-slate-50 text-slate-400 disabled:opacity-60'
                           }`}
                         >
-                          <span>Knowledge Check Quiz</span>
+                          <span>Knowledge Check & CPD</span>
                           <Sparkles className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  {/* Right Main Reader / Quiz Area (8 cols on desktop) */}
                   <div className="lg:col-span-8">
                     {!quizUnlocked && activeModule.sections[activeSectionIndex] && (
                       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
-                        {(() => {
-                          const sec = activeModule.sections[activeSectionIndex];
-                          const layout = sec.layout || 'stacked';
-                          const hasMedia =
-                            (sec.images && sec.images.length > 0) ||
-                            (sec.videos && sec.videos.length > 0);
-                          const isSideBySide =
-                            hasMedia && (layout === 'media-right' || layout === 'media-left');
+                        <div className="space-y-2">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+                            Section {activeSectionIndex + 1}
+                          </div>
+                          <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                            {activeModule.sections[activeSectionIndex].heading}
+                          </h2>
+                        </div>
 
-                          const renderMediaBlocks = () => (
-                            <div className="space-y-4">
-                              {sec.images && sec.images.length > 0 && (
-                                <div
-                                  className={`grid gap-4 ${
-                                    isSideBySide || sec.images.length === 1
-                                      ? 'grid-cols-1'
-                                      : 'grid-cols-1 md:grid-cols-2'
-                                  }`}
-                                >
-                                  {sec.images.map((img) => (
-                                    <div
-                                      key={img.id}
-                                      className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-2xs"
-                                    >
-                                      <img
-                                        src={img.url}
-                                        alt={img.title}
-                                        className="w-full max-h-72 object-cover"
-                                      />
-                                      <div className="p-3.5">
-                                        <div className="font-bold text-xs sm:text-sm text-slate-900">
-                                          {img.title}
-                                        </div>
-                                        {img.caption && (
-                                          <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                                            {img.caption}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+                        {renderFormattedSectionContent(
+                          activeModule.sections[activeSectionIndex]
+                        )}
 
-                              {sec.videos && sec.videos.length > 0 && (
-                                <div className="space-y-4">
-                                  {sec.videos.map((vid) => {
-                                    const embed = getEmbedVideoInfo(vid.url);
-                                    return (
-                                      <div
-                                        key={vid.id}
-                                        className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-2xs"
-                                      >
-                                        {embed.type === 'iframe' && (
-                                          <div className="aspect-video w-full bg-slate-900">
-                                            <iframe
-                                              src={embed.src}
-                                              title={vid.title}
-                                              className="w-full h-full"
-                                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                              allowFullScreen
-                                            />
-                                          </div>
-                                        )}
+                        <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                          <button
+                            disabled={activeSectionIndex === 0}
+                            onClick={() => {
+                              setActiveSectionIndex((i) => Math.max(0, i - 1));
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-1.5"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                            <span>Previous</span>
+                          </button>
 
-                                        {embed.type === 'video' && (
-                                          <video
-                                            src={embed.src}
-                                            controls
-                                            playsInline
-                                            preload="metadata"
-                                            className="w-full max-h-80 bg-slate-950"
-                                          />
-                                        )}
-
-                                        <div className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                          <div className="space-y-0.5">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                              <Video className="w-4 h-4 text-emerald-600 shrink-0" />
-                                              <span className="font-bold text-xs sm:text-sm text-slate-900">
-                                                {vid.title}
-                                              </span>
-                                              {vid.duration && (
-                                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600">
-                                                  {vid.duration}
-                                                </span>
-                                              )}
-                                            </div>
-                                            {vid.description && (
-                                              <p className="text-xs text-slate-500 leading-relaxed">
-                                                {vid.description}
-                                              </p>
-                                            )}
-                                          </div>
-
-                                          {embed.type === 'link' && (
-                                            <a
-                                              href={vid.url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shrink-0"
-                                            >
-                                              <Play className="w-3.5 h-3.5" />
-                                              <span>Open Video</span>
-                                            </a>
-                                          )}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-
-                          const renderTextBlock = () => (
-                            <div className="space-y-4">
-                              <div className="space-y-3">
-                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
-                                  Section {activeSectionIndex + 1}
-                                </div>
-                                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-                                  {sec.heading}
-                                </h2>
-                                <p className="text-sm sm:text-base text-slate-600 leading-relaxed whitespace-pre-line">
-                                  {sec.body}
-                                </p>
-                              </div>
-
-                              {sec.pearl && (
-                                <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs sm:text-sm text-emerald-950 font-medium">
-                                  <strong>Clinical Takeaway:</strong> {sec.pearl}
-                                </div>
-                              )}
-                            </div>
-                          );
-
-                          return (
-                            <>
-                              {isSideBySide ? (
-                                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                                  <div
-                                    className={`md:col-span-6 ${
-                                      layout === 'media-left' ? 'md:order-2' : 'md:order-1'
-                                    }`}
-                                  >
-                                    {renderTextBlock()}
-                                  </div>
-                                  <div
-                                    className={`md:col-span-6 ${
-                                      layout === 'media-left' ? 'md:order-1' : 'md:order-2'
-                                    }`}
-                                  >
-                                    {renderMediaBlocks()}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="space-y-6">
-                                  {renderTextBlock()}
-                                  {hasMedia && renderMediaBlocks()}
-                                </div>
-                              )}
-
-                              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-                                <button
-                                  disabled={activeSectionIndex === 0}
-                                  onClick={() => {
-                                    setActiveSectionIndex((i) => Math.max(0, i - 1));
-                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                  }}
-                                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-1.5"
-                                >
-                                  <ChevronLeft className="w-4 h-4" />
-                                  <span>Previous</span>
-                                </button>
-
-                                {activeSectionIndex < activeModule.sections.length - 1 ? (
-                                  <button
-                                    onClick={() => {
-                                      setActiveSectionIndex((i) => i + 1);
-                                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                                    }}
-                                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5"
-                                  >
-                                    <span>Next Section</span>
-                                    <ChevronRight className="w-4 h-4" />
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => {
-                                      setQuizUnlocked(true);
-                                      markModuleCompletedInCloud(activeModule.id);
-                                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                                    }}
-                                    className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-2"
-                                  >
-                                    <Sparkles className="w-4 h-4" />
-                                    <span>Unlock Knowledge Quiz</span>
-                                  </button>
-                                )}
-                              </div>
-                            </>
-                          );
-                        })()}
+                          {activeSectionIndex < activeModule.sections.length - 1 ? (
+                            <button
+                              onClick={() => {
+                                setActiveSectionIndex((i) => i + 1);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5"
+                            >
+                              <span>Next Section</span>
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setQuizUnlocked(true);
+                                markModuleCompletedInCloud(activeModule.id);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-2"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              <span>Unlock Knowledge Quiz</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     )}
 
@@ -3886,9 +4186,18 @@ export default function App() {
                         </div>
 
                         {activeModule.quiz.length === 0 ? (
-                          <p className="text-sm text-slate-500">
-                            Module marked as completed! No quiz questions are attached to this module.
-                          </p>
+                          <div className="space-y-4">
+                            <p className="text-sm text-slate-600">
+                              Module completed! You can now generate an HCPC CPD Reflection Certificate for your portfolio.
+                            </p>
+                            <button
+                              onClick={() => setShowCpdModal(true)}
+                              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold"
+                            >
+                              <Award className="w-4 h-4" />
+                              <span>Generate CPD Reflection Certificate</span>
+                            </button>
+                          </div>
                         ) : (
                           <div className="space-y-6">
                             {activeModule.quiz.map((qItem, qIdx) => (
@@ -3920,7 +4229,10 @@ export default function App() {
                                         key={optIdx}
                                         disabled={quizSubmitted}
                                         onClick={() =>
-                                          setQuizAnswers((prev) => ({ ...prev, [qIdx]: optIdx }))
+                                          setQuizAnswers((prev) => ({
+                                            ...prev,
+                                            [qIdx]: optIdx
+                                          }))
                                         }
                                         className={`w-full text-left p-3.5 rounded-xl border text-xs sm:text-sm transition flex items-center justify-between ${btnStyle}`}
                                       >
@@ -3940,21 +4252,31 @@ export default function App() {
                               </div>
                             ))}
 
-                            <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                            <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
                               {quizSubmitted ? (
-                                <button
-                                  onClick={() => {
-                                    setQuizSubmitted(false);
-                                    setQuizAnswers({});
-                                  }}
-                                  className="px-4 py-2.5 rounded-xl bg-slate-100 text-xs sm:text-sm font-semibold text-slate-700"
-                                >
-                                  Retry Quiz
-                                </button>
+                                <>
+                                  <button
+                                    onClick={() => setShowCpdModal(true)}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-2xs"
+                                  >
+                                    <Award className="w-4 h-4" />
+                                    <span>Generate CPD Reflection Certificate</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      setQuizSubmitted(false);
+                                      setQuizAnswers({});
+                                    }}
+                                    className="px-4 py-2.5 rounded-xl bg-slate-100 text-xs sm:text-sm font-semibold text-slate-700"
+                                  >
+                                    Retry Quiz
+                                  </button>
+                                </>
                               ) : (
                                 <button
                                   onClick={() => setQuizSubmitted(true)}
-                                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold"
+                                  className="ml-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold"
                                 >
                                   Check Answers
                                 </button>
@@ -3972,7 +4294,7 @@ export default function App() {
         )}
 
         {/* ==========================================
-            3. ADMIN CMS (ENCRYPTED FIREBASE EMAIL/PASSWORD LOGIN + CLOUD SYNC)
+            3. ADMIN CMS
             ========================================== */}
         {appMode === 'admin' && !isAdminAuthenticated && (
           <div className="max-w-md mx-auto my-8">
@@ -4161,7 +4483,7 @@ export default function App() {
               </div>
             )}
 
-            {/* MY PROFILE TAB (Accessible to ALL signed-in Admins to edit their own details) */}
+            {/* MY PROFILE TAB */}
             {adminTab === 'profile' && (
               <div className="max-w-xl mx-auto">
                 <form
@@ -4225,7 +4547,10 @@ export default function App() {
                       type="password"
                       value={ownProfileForm.newPassword}
                       onChange={(e) =>
-                        setOwnProfileForm({ ...ownProfileForm, newPassword: e.target.value })
+                        setOwnProfileForm({
+                          ...ownProfileForm,
+                          newPassword: e.target.value
+                        })
                       }
                       placeholder="New password (min 6 characters)"
                       className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
@@ -4244,7 +4569,7 @@ export default function App() {
               </div>
             )}
 
-            {/* TEAM MANAGEMENT TAB (Strictly Super Admin Only) */}
+            {/* TEAM MANAGEMENT TAB */}
             {adminTab === 'team' && isSuperAdmin && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-4">
@@ -4268,7 +4593,9 @@ export default function App() {
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-slate-900">{u.name}</span>
+                            <span className="text-sm font-bold text-slate-900">
+                              {u.name}
+                            </span>
                             <span className="text-[11px] px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700 font-semibold">
                               {u.role}
                             </span>
@@ -4469,7 +4796,9 @@ export default function App() {
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                         <Cloud className="w-4 h-4 text-emerald-600" />
-                        <span>Connect Your Own Firebase Cloud Config (Optional for External Hosting)</span>
+                        <span>
+                          Connect Your Own Firebase Cloud Config (Optional for External Hosting)
+                        </span>
                       </label>
                       <span className="text-[11px] text-slate-500">
                         {cloudStatus === 'synced' ? '✓ Connected to Cloud' : 'Using Local Fallback'}
@@ -4954,6 +5283,7 @@ export default function App() {
               </div>
             )}
 
+            {/* ENHANCED LEARNING MODULES EDITOR WITH RICH FORMATTING, TABLES, CALLOUTS & LIVE PREVIEW */}
             {adminTab === 'modules' && adminModule && (
               <div className="space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -5051,7 +5381,7 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  <div className="lg:col-span-5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 space-y-3 self-start">
+                  <div className="lg:col-span-4 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 space-y-3 self-start">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                       <h3 className="text-sm font-bold text-slate-900">
                         Sections ({adminModule.sections.length})
@@ -5082,10 +5412,16 @@ export default function App() {
                             <div className="text-xs sm:text-sm font-semibold text-slate-900">
                               {sec.heading}
                             </div>
-                            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                            <div className="flex items-center gap-2 text-[11px] text-slate-500 flex-wrap">
                               <span>{(sec.images || []).length} photos</span>
                               <span>•</span>
                               <span>{(sec.videos || []).length} videos</span>
+                              {(sec.comparisonTable || []).length > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span>table</span>
+                                </>
+                              )}
                             </div>
                           </div>
 
@@ -5128,302 +5464,471 @@ export default function App() {
 
                   <form
                     onSubmit={handleSaveSection}
-                    className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-5"
+                    className="lg:col-span-8 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-5"
                   >
-                    <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
-                      {editingSectionId
-                        ? 'Edit Section Content & Media'
-                        : 'Add a New Section to Module'}
-                    </h3>
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
+                      <h3 className="text-base font-bold text-slate-900">
+                        {editingSectionId
+                          ? 'Edit Section Content & Media'
+                          : 'Add a New Section to Module'}
+                      </h3>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                      <div className="sm:col-span-7">
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Section Heading *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={sectionForm.heading}
-                          onChange={(e) =>
-                            setSectionForm({ ...sectionForm, heading: e.target.value })
-                          }
-                          placeholder="e.g., Green Pathway: Tracheostomy Anatomy"
-                          className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
-                        />
+                      <button
+                        type="button"
+                        onClick={() => setPreviewSectionInEditor((p) => !p)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                          previewSectionInEditor
+                            ? 'bg-emerald-600 text-white border-emerald-600'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>{previewSectionInEditor ? 'Back to Editor' : 'Live Preview'}</span>
+                      </button>
+                    </div>
+
+                    {previewSectionInEditor ? (
+                      <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-slate-200 space-y-4">
+                        <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+                          Learner View Preview
+                        </div>
+                        <h2 className="text-xl font-bold text-slate-900">
+                          {sectionForm.heading || 'Untitled Section'}
+                        </h2>
+                        {renderFormattedSectionContent(sectionForm)}
                       </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                          <div className="sm:col-span-7">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Section Heading *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={sectionForm.heading}
+                              onChange={(e) =>
+                                setSectionForm({ ...sectionForm, heading: e.target.value })
+                              }
+                              placeholder="e.g., Green Pathway: Tracheostomy Anatomy"
+                              className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
+                            />
+                          </div>
 
-                      <div className="sm:col-span-5">
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Text & Media Flow Layout
-                        </label>
-                        <select
-                          value={sectionForm.layout}
-                          onChange={(e) =>
-                            setSectionForm({ ...sectionForm, layout: e.target.value })
-                          }
-                          className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800"
-                        >
-                          <option value="stacked">Stacked (Text Top, Media Below)</option>
-                          <option value="media-right">Side-by-Side: Text Left / Media Right</option>
-                          <option value="media-left">Side-by-Side: Media Left / Text Right</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Educational Content / Text *
-                      </label>
-                      <textarea
-                        rows={4}
-                        required
-                        value={sectionForm.body}
-                        onChange={(e) =>
-                          setSectionForm({ ...sectionForm, body: e.target.value })
-                        }
-                        placeholder="Write the detailed clinical explanation for this section..."
-                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Key Clinical Takeaway / Pearl (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={sectionForm.pearl}
-                        onChange={(e) =>
-                          setSectionForm({ ...sectionForm, pearl: e.target.value })
-                        }
-                        placeholder="e.g., Always remove speaking valves before assessing breathing"
-                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900"
-                      />
-                    </div>
-
-                    {/* PHOTOS & DIAGRAMS (UPLOAD FROM DEVICE OR PASTE URL) */}
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                          <ImageIcon className="w-4 h-4 text-emerald-600" />
-                          <span>Photos & Diagrams ({sectionForm.images.length})</span>
+                          <div className="sm:col-span-5">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Text & Media Flow Layout
+                            </label>
+                            <select
+                              value={sectionForm.layout}
+                              onChange={(e) =>
+                                setSectionForm({ ...sectionForm, layout: e.target.value })
+                              }
+                              className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800"
+                            >
+                              <option value="stacked">Stacked (Text Top, Media Below)</option>
+                              <option value="media-right">Side-by-Side: Text Left / Media Right</option>
+                              <option value="media-left">Side-by-Side: Media Left / Text Right</option>
+                            </select>
+                          </div>
                         </div>
 
-                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 text-xs font-semibold text-slate-700 cursor-pointer shadow-2xs">
-                          <Upload className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>
-                            {uploadingMediaType === 'image'
-                              ? `Uploading ${uploadProgressPct}%...`
-                              : 'Upload Photo from Device'}
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            disabled={uploadingMediaType !== null}
-                            onChange={(e) => {
-                              if (e.target.files?.[0]) {
-                                handleUploadMediaFile(e.target.files[0], 'image');
-                                e.target.value = '';
-                              }
-                            }}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
+                        {/* RICH TEXT FORMATTING TOOLBAR & BODY */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <label className="block text-xs font-semibold text-slate-700">
+                              Formatted Content (Supports Bullet Lists, Numbered Steps, Subheadings & Bold) *
+                            </label>
+                            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                              <button
+                                type="button"
+                                onClick={() => insertFormattingToken('bullet')}
+                                className="px-2 py-1 rounded hover:bg-white text-[11px] font-semibold text-slate-700 flex items-center gap-1"
+                                title="Insert Bullet List (- item)"
+                              >
+                                <List className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Bullets</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => insertFormattingToken('numbered')}
+                                className="px-2 py-1 rounded hover:bg-white text-[11px] font-semibold text-slate-700 flex items-center gap-1"
+                                title="Insert Numbered List (1. item)"
+                              >
+                                <ListOrdered className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Numbered</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => insertFormattingToken('heading')}
+                                className="px-2 py-1 rounded hover:bg-white text-[11px] font-semibold text-slate-700 flex items-center gap-1"
+                                title="Insert Subheading (## Heading)"
+                              >
+                                <Heading2 className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Subheading</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => insertFormattingToken('bold')}
+                                className="px-2 py-1 rounded hover:bg-white text-[11px] font-semibold text-slate-700 flex items-center gap-1"
+                                title="Insert Bold Text (**text**)"
+                              >
+                                <Bold className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Bold</span>
+                              </button>
+                            </div>
+                          </div>
 
-                      {sectionForm.images.length > 0 && (
-                        <div className="space-y-2">
-                          {sectionForm.images.map((img, i) => (
-                            <div
-                              key={img.id || i}
-                              className="p-2.5 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2 text-xs"
+                          <textarea
+                            rows={5}
+                            required
+                            value={sectionForm.body}
+                            onChange={(e) =>
+                              setSectionForm({ ...sectionForm, body: e.target.value })
+                            }
+                            placeholder={`Write paragraphs or use formatting:\n- Start lines with "- " for bullet points\n1. Start lines with "1. " for numbered steps\n## Use "## " for section subheadings\nWrap important words in **double asterisks** for bold`}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 font-sans"
+                          />
+                        </div>
+
+                        {/* CALLOUT BANNER BUILDER */}
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                          <div className="sm:col-span-4">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Callout Box Style
+                            </label>
+                            <select
+                              value={sectionForm.calloutType}
+                              onChange={(e) =>
+                                setSectionForm({
+                                  ...sectionForm,
+                                  calloutType: e.target.value
+                                })
+                              }
+                              className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold"
                             >
-                              <div className="flex items-center gap-2 truncate">
-                                <img
-                                  src={img.url}
-                                  alt=""
-                                  className="w-8 h-8 rounded object-cover shrink-0 border border-slate-200"
-                                />
-                                <div className="truncate">
-                                  <span className="font-semibold text-slate-800">{img.title}</span>
-                                  {img.caption && (
-                                    <span className="text-slate-500"> — {img.caption}</span>
-                                  )}
+                              <option value="pearl">Green — Clinical Takeaway</option>
+                              <option value="warning">Amber — Safety Caution</option>
+                              <option value="info">Blue — Reference Note</option>
+                            </select>
+                          </div>
+                          <div className="sm:col-span-8">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Callout Box Text (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={sectionForm.pearl}
+                              onChange={(e) =>
+                                setSectionForm({ ...sectionForm, pearl: e.target.value })
+                              }
+                              placeholder="e.g., Always remove speaking valves before assessing breathing"
+                              className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs sm:text-sm text-slate-900"
+                            />
+                          </div>
+                        </div>
+
+                        {/* KEY-VALUE QUICK REFERENCE TABLE BUILDER */}
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                          <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <Table className="w-4 h-4 text-emerald-600" />
+                            <span>
+                              Quick Reference Table Rows ({(sectionForm.comparisonTable || []).length})
+                            </span>
+                          </div>
+
+                          {(sectionForm.comparisonTable || []).length > 0 && (
+                            <div className="space-y-1.5">
+                              {sectionForm.comparisonTable.map((r, rIdx) => (
+                                <div
+                                  key={rIdx}
+                                  className="px-3 py-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2 text-xs"
+                                >
+                                  <div>
+                                    <strong className="text-slate-900">{r.label}:</strong>{' '}
+                                    <span className="text-slate-600">{r.value}</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setSectionForm((prev) => ({
+                                        ...prev,
+                                        comparisonTable: prev.comparisonTable.filter(
+                                          (_, i) => i !== rIdx
+                                        )
+                                      }))
+                                    }
+                                    className="text-rose-600 hover:underline shrink-0"
+                                  >
+                                    Remove
+                                  </button>
                                 </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setSectionForm((prev) => ({
-                                    ...prev,
-                                    images: prev.images.filter((_, idx) => idx !== i)
-                                  }))
-                                }
-                                className="text-rose-600 hover:underline shrink-0"
-                              >
-                                Remove
-                              </button>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      )}
+                          )}
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          value={newImageDraft.title}
-                          onChange={(e) =>
-                            setNewImageDraft({ ...newImageDraft, title: e.target.value })
-                          }
-                          placeholder="Photo / Diagram title"
-                          className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
-                        />
-                        <input
-                          type="text"
-                          value={newImageDraft.url}
-                          onChange={(e) =>
-                            setNewImageDraft({ ...newImageDraft, url: e.target.value })
-                          }
-                          placeholder="Or paste Image URL (https://...)"
-                          className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={newImageDraft.caption}
-                          onChange={(e) =>
-                            setNewImageDraft({ ...newImageDraft, caption: e.target.value })
-                          }
-                          placeholder="Caption explaining the photo or diagram"
-                          className="flex-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleAddImageToSectionForm}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shrink-0"
-                        >
-                          + Add URL
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* VIDEOS (UPLOAD MP4 FROM DEVICE OR PASTE YOUTUBE/VIMEO LINK) */}
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                          <Video className="w-4 h-4 text-emerald-600" />
-                          <span>Videos ({sectionForm.videos.length})</span>
-                        </div>
-
-                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 text-xs font-semibold text-slate-700 cursor-pointer shadow-2xs">
-                          <Upload className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>
-                            {uploadingMediaType === 'video'
-                              ? `Uploading Video ${uploadProgressPct}%...`
-                              : 'Upload Video File (MP4/MOV)'}
-                          </span>
-                          <input
-                            type="file"
-                            accept="video/*"
-                            disabled={uploadingMediaType !== null}
-                            onChange={(e) => {
-                              if (e.target.files?.[0]) {
-                                handleUploadMediaFile(e.target.files[0], 'video');
-                                e.target.value = '';
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                            <input
+                              type="text"
+                              value={newTableRowDraft.label}
+                              onChange={(e) =>
+                                setNewTableRowDraft({
+                                  ...newTableRowDraft,
+                                  label: e.target.value
+                                })
                               }
-                            }}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-
-                      {sectionForm.videos.length > 0 && (
-                        <div className="space-y-2">
-                          {sectionForm.videos.map((vid, i) => (
-                            <div
-                              key={vid.id || i}
-                              className="p-2.5 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2 text-xs"
+                              placeholder="Row Label (e.g., Cuff Inflation)"
+                              className="sm:col-span-4 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                            />
+                            <input
+                              type="text"
+                              value={newTableRowDraft.value}
+                              onChange={(e) =>
+                                setNewTableRowDraft({
+                                  ...newTableRowDraft,
+                                  value: e.target.value
+                                })
+                              }
+                              placeholder="Details (e.g., Sterile water for Bivona TTS)"
+                              className="sm:col-span-6 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleAddTableRowToSection}
+                              className="sm:col-span-2 px-3 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-semibold"
                             >
-                              <div className="truncate">
-                                <span className="font-semibold text-slate-800">
-                                  {vid.title} ({vid.duration})
-                                </span>
-                                {vid.url.includes('firebasestorage') && (
-                                  <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold">
-                                    Uploaded File
-                                  </span>
-                                )}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setSectionForm((prev) => ({
-                                    ...prev,
-                                    videos: prev.videos.filter((_, idx) => idx !== i)
-                                  }))
-                                }
-                                className="text-rose-600 hover:underline shrink-0"
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          ))}
+                              + Add Row
+                            </button>
+                          </div>
                         </div>
-                      )}
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <input
-                          type="text"
-                          value={newVideoDraft.title}
-                          onChange={(e) =>
-                            setNewVideoDraft({ ...newVideoDraft, title: e.target.value })
-                          }
-                          placeholder="Video title"
-                          className="sm:col-span-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
-                        />
-                        <input
-                          type="text"
-                          value={newVideoDraft.duration}
-                          onChange={(e) =>
-                            setNewVideoDraft({ ...newVideoDraft, duration: e.target.value })
-                          }
-                          placeholder="Duration (03:30)"
-                          className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        value={newVideoDraft.url}
-                        onChange={(e) =>
-                          setNewVideoDraft({ ...newVideoDraft, url: e.target.value })
-                        }
-                        placeholder="Or paste YouTube / Vimeo embed link (https://...)"
-                        className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
-                      />
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={newVideoDraft.description}
-                          onChange={(e) =>
-                            setNewVideoDraft({
-                              ...newVideoDraft,
-                              description: e.target.value
-                            })
-                          }
-                          placeholder="Short description of what the video demonstrates"
-                          className="flex-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleAddVideoToSectionForm}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shrink-0"
-                        >
-                          + Add Link
-                        </button>
-                      </div>
-                    </div>
+                        {/* PHOTOS & DIAGRAMS */}
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                              <ImageIcon className="w-4 h-4 text-emerald-600" />
+                              <span>Photos & Diagrams ({sectionForm.images.length})</span>
+                            </div>
+
+                            <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 text-xs font-semibold text-slate-700 cursor-pointer shadow-2xs">
+                              <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>
+                                {uploadingMediaType === 'image'
+                                  ? `Uploading ${uploadProgressPct}%...`
+                                  : 'Upload Photo from Device'}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                disabled={uploadingMediaType !== null}
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) {
+                                    handleUploadMediaFile(e.target.files[0], 'image');
+                                    e.target.value = '';
+                                  }
+                                }}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
+
+                          {sectionForm.images.length > 0 && (
+                            <div className="space-y-2">
+                              {sectionForm.images.map((img, i) => (
+                                <div
+                                  key={img.id || i}
+                                  className="p-2.5 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2 text-xs"
+                                >
+                                  <div className="flex items-center gap-2 truncate">
+                                    <img
+                                      src={img.url}
+                                      alt=""
+                                      className="w-8 h-8 rounded object-cover shrink-0 border border-slate-200"
+                                    />
+                                    <div className="truncate">
+                                      <span className="font-semibold text-slate-800">
+                                        {img.title}
+                                      </span>
+                                      {img.caption && (
+                                        <span className="text-slate-500"> — {img.caption}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setSectionForm((prev) => ({
+                                        ...prev,
+                                        images: prev.images.filter((_, idx) => idx !== i)
+                                      }))
+                                    }
+                                    className="text-rose-600 hover:underline shrink-0"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              value={newImageDraft.title}
+                              onChange={(e) =>
+                                setNewImageDraft({ ...newImageDraft, title: e.target.value })
+                              }
+                              placeholder="Photo / Diagram title"
+                              className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                            />
+                            <input
+                              type="text"
+                              value={newImageDraft.url}
+                              onChange={(e) =>
+                                setNewImageDraft({ ...newImageDraft, url: e.target.value })
+                              }
+                              placeholder="Or paste Image URL (https://...)"
+                              className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={newImageDraft.caption}
+                              onChange={(e) =>
+                                setNewImageDraft({ ...newImageDraft, caption: e.target.value })
+                              }
+                              placeholder="Caption explaining the photo or diagram"
+                              className="flex-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleAddImageToSectionForm}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shrink-0"
+                            >
+                              + Add URL
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* VIDEOS */}
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                              <Video className="w-4 h-4 text-emerald-600" />
+                              <span>Videos ({sectionForm.videos.length})</span>
+                            </div>
+
+                            <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 text-xs font-semibold text-slate-700 cursor-pointer shadow-2xs">
+                              <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>
+                                {uploadingMediaType === 'video'
+                                  ? `Uploading Video ${uploadProgressPct}%...`
+                                  : 'Upload Video File (MP4/MOV)'}
+                              </span>
+                              <input
+                                type="file"
+                                accept="video/*"
+                                disabled={uploadingMediaType !== null}
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) {
+                                    handleUploadMediaFile(e.target.files[0], 'video');
+                                    e.target.value = '';
+                                  }
+                                }}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
+
+                          {sectionForm.videos.length > 0 && (
+                            <div className="space-y-2">
+                              {sectionForm.videos.map((vid, i) => (
+                                <div
+                                  key={vid.id || i}
+                                  className="p-2.5 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2 text-xs"
+                                >
+                                  <div className="truncate">
+                                    <span className="font-semibold text-slate-800">
+                                      {vid.title} ({vid.duration})
+                                    </span>
+                                    {vid.url.includes('firebasestorage') && (
+                                      <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold">
+                                        Uploaded File
+                                      </span>
+                                    )}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setSectionForm((prev) => ({
+                                        ...prev,
+                                        videos: prev.videos.filter((_, idx) => idx !== i)
+                                      }))
+                                    }
+                                    className="text-rose-600 hover:underline shrink-0"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <input
+                              type="text"
+                              value={newVideoDraft.title}
+                              onChange={(e) =>
+                                setNewVideoDraft({ ...newVideoDraft, title: e.target.value })
+                              }
+                              placeholder="Video title"
+                              className="sm:col-span-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                            />
+                            <input
+                              type="text"
+                              value={newVideoDraft.duration}
+                              onChange={(e) =>
+                                setNewVideoDraft({ ...newVideoDraft, duration: e.target.value })
+                              }
+                              placeholder="Duration (03:30)"
+                              className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            value={newVideoDraft.url}
+                            onChange={(e) =>
+                              setNewVideoDraft({ ...newVideoDraft, url: e.target.value })
+                            }
+                            placeholder="Or paste YouTube / Vimeo embed link (https://...)"
+                            className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                          />
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={newVideoDraft.description}
+                              onChange={(e) =>
+                                setNewVideoDraft({
+                                  ...newVideoDraft,
+                                  description: e.target.value
+                                })
+                              }
+                              placeholder="Short description of what the video demonstrates"
+                              className="flex-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleAddVideoToSectionForm}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shrink-0"
+                            >
+                              + Add Link
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                     <div className="flex items-center justify-end gap-2 pt-2">
                       {editingSectionId && (
@@ -5445,6 +5950,7 @@ export default function App() {
                   </form>
                 </div>
 
+                {/* QUIZ QUESTION EDITOR */}
                 <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-5">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <div>
@@ -5587,6 +6093,266 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* ==========================================
+          MODAL: GLOBAL INSTANT CLINICAL SEARCH (CTRL+K)
+          ========================================== */}
+      {showGlobalSearch && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-start justify-center p-4 pt-16 sm:pt-24">
+          <div className="bg-white rounded-2xl max-w-xl w-full border border-slate-200 shadow-2xl overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex items-center gap-3">
+              <Search className="w-5 h-5 text-emerald-600 shrink-0" />
+              <input
+                type="text"
+                autoFocus
+                value={globalSearchQuery}
+                onChange={(e) => setGlobalSearchQuery(e.target.value)}
+                placeholder="Search pathways, steps, suction depth, laryngectomy, speaking valve..."
+                className="flex-1 text-sm sm:text-base text-slate-900 focus:outline-none"
+              />
+              <button
+                onClick={() => setShowGlobalSearch(false)}
+                className="p-1.5 rounded-lg bg-slate-100 text-slate-500 hover:text-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="max-h-96 overflow-y-auto p-4 space-y-4">
+              {!globalSearchQuery.trim() ? (
+                <div className="text-xs text-slate-500 space-y-2">
+                  <div className="font-semibold text-slate-700">Popular Roadside Searches:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      'Suction catheter',
+                      'Remove tube',
+                      'Laryngectomy',
+                      'Speaking valve',
+                      'Rescue breaths',
+                      'Downsize'
+                    ].map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => setGlobalSearchQuery(tag)}
+                        className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 text-slate-700 font-medium transition"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {globalSearchResults.pathways.length === 0 &&
+                    globalSearchResults.steps.length === 0 &&
+                    globalSearchResults.modules.length === 0 && (
+                      <p className="text-xs text-slate-400 text-center py-6">
+                        No matching pathways or learning modules found for "{globalSearchQuery}".
+                      </p>
+                    )}
+
+                  {globalSearchResults.pathways.length > 0 && (
+                    <div className="space-y-1.5">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        Pathways
+                      </div>
+                      {globalSearchResults.pathways.map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => {
+                            setShowGlobalSearch(false);
+                            handleOpenPathway(p.id);
+                          }}
+                          className="w-full text-left p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200/80 flex items-center justify-between gap-2 transition"
+                        >
+                          <div>
+                            <div className="text-xs sm:text-sm font-bold text-slate-900">
+                              {p.title}
+                            </div>
+                            <div className="text-xs text-slate-500">{p.subtitle}</div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-slate-400" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {globalSearchResults.steps.length > 0 && (
+                    <div className="space-y-1.5">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        Direct Pathway Steps
+                      </div>
+                      {globalSearchResults.steps.map(({ pathway, node }) => (
+                        <button
+                          key={`${pathway.id}-${node.id}`}
+                          onClick={() => {
+                            setShowGlobalSearch(false);
+                            handleOpenPathway(pathway.id, node.id);
+                          }}
+                          className="w-full text-left p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200/80 flex items-center justify-between gap-2 transition"
+                        >
+                          <div>
+                            <span className="text-[10px] font-semibold text-emerald-700">
+                              {pathway.title}
+                            </span>
+                            <div className="text-xs sm:text-sm font-bold text-slate-900">
+                              {cleanStepTitle(node.title)}
+                            </div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-slate-400" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {globalSearchResults.modules.length > 0 && (
+                    <div className="space-y-1.5">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        Learning Modules
+                      </div>
+                      {globalSearchResults.modules.map((m) => (
+                        <button
+                          key={m.id}
+                          onClick={() => {
+                            setShowGlobalSearch(false);
+                            setAppMode('learning');
+                            setActiveModuleId(m.id);
+                            setActiveSectionIndex(0);
+                            setQuizUnlocked(false);
+                          }}
+                          className="w-full text-left p-3 rounded-xl bg-slate-50 hover:bg-sky-50 border border-slate-200/80 flex items-center justify-between gap-2 transition"
+                        >
+                          <div>
+                            <div className="text-xs sm:text-sm font-bold text-slate-900">
+                              {m.title}
+                            </div>
+                            <div className="text-xs text-slate-500">{m.summary}</div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-slate-400" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          MODAL: HCPC CPD REFLECTION CERTIFICATE GENERATOR
+          ========================================== */}
+      {showCpdModal && activeModule && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-emerald-600" />
+                <h3 className="text-base font-bold text-slate-900">
+                  HCPC CPD Reflection & Completion Record
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowCpdModal(false)}
+                className="p-1.5 rounded-lg bg-slate-100 text-slate-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500">
+              Your details stay strictly on your own device (zero PII stored in the cloud). Fill in your reflection below and print or save as PDF for your CPD portfolio.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Clinician Name
+                </label>
+                <input
+                  type="text"
+                  value={cpdClinicianName}
+                  onChange={(e) => setCpdClinicianName(e.target.value)}
+                  placeholder="e.g., Alex Morgan"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  HCPC / Professional Pin (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={cpdRegNumber}
+                  onChange={(e) => setCpdRegNumber(e.target.value)}
+                  placeholder="e.g., PA12345"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                How will this learning improve your pre-hospital practice?
+              </label>
+              <textarea
+                rows={3}
+                value={cpdReflectionText}
+                onChange={(e) => setCpdReflectionText(e.target.value)}
+                placeholder="e.g., Reinforced checking the NTSP Bedhead Sign early, removing speaking valves immediately, and using ID × 2 to size suction catheters..."
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm"
+              />
+            </div>
+
+            {/* Printable Certificate Preview Card */}
+            <div className="p-5 rounded-2xl border-2 border-emerald-600/30 bg-gradient-to-br from-emerald-50/50 to-white space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-extrabold uppercase tracking-widest text-emerald-700">
+                  PaedTraches CPD Record
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  {new Date().toLocaleDateString('en-GB')}
+                </span>
+              </div>
+              <div className="text-base font-bold text-slate-900">
+                {cpdClinicianName.trim() || 'Registered Healthcare Clinician'}
+                {cpdRegNumber.trim() && (
+                  <span className="text-xs font-normal text-slate-500 ml-2">
+                    ({cpdRegNumber.trim()})
+                  </span>
+                )}
+              </div>
+              <div className="text-xs text-slate-600">
+                Completed module: <strong>{activeModule.title}</strong> ({activeModule.duration})
+              </div>
+              {cpdReflectionText.trim() && (
+                <p className="text-xs text-slate-600 italic border-t border-emerald-200/70 pt-2">
+                  &ldquo;{cpdReflectionText.trim()}&rdquo;
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowCpdModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print / Save as PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ==========================================
           MODAL: CREATE NEW PATHWAY
@@ -5820,7 +6586,7 @@ export default function App() {
       )}
 
       {/* ==========================================
-          QUIET SINGLE-LINE CLINICAL GOVERNANCE & LEGAL FOOTER
+          QUIET SINGLE-LINE CLINICAL GOVERNANCE FOOTER (2026/27 EDITION)
           ========================================== */}
       <footer className="border-t border-slate-200/80 bg-white py-4 px-4 sm:px-6 lg:px-8 mt-12">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
@@ -5862,25 +6628,34 @@ export default function App() {
       </footer>
 
       {/* ==========================================
-          MODAL 1: ROADSIDE TOOLS
+          MODAL 1: ROADSIDE TOOLS (SIZER, GO-BAG & HOSPITAL PRE-ALERT SBAR)
           ========================================== */}
       {activeToolModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full p-6 border border-slate-200 shadow-xl space-y-5 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
               <div className="flex items-center gap-2.5">
-                {activeToolModal === 'calculator' ? (
+                {activeToolModal === 'calculator' && (
                   <>
                     <Calculator className="w-5 h-5 text-emerald-600" />
                     <h3 className="text-base font-bold text-slate-900">
                       Suction & Tube Sizing Calculator
                     </h3>
                   </>
-                ) : (
+                )}
+                {activeToolModal === 'checklist' && (
                   <>
                     <ClipboardCheck className="w-5 h-5 text-sky-600" />
                     <h3 className="text-base font-bold text-slate-900">
                       Emergency Go-Bag Checklist
+                    </h3>
+                  </>
+                )}
+                {activeToolModal === 'handover' && (
+                  <>
+                    <Radio className="w-5 h-5 text-amber-600" />
+                    <h3 className="text-base font-bold text-slate-900">
+                      Paediatric ED / ENT Pre-Alert Builder
                     </h3>
                   </>
                 )}
@@ -6001,6 +6776,130 @@ export default function App() {
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {activeToolModal === 'handover' && (
+              <div className="space-y-4">
+                <p className="text-xs text-slate-500">
+                  Generate a structured SBAR / ASHICE pre-alert summary for Paediatric ED & ENT teams (no patient identifiable details entered).
+                </p>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      NTSP Airway Status
+                    </label>
+                    <select
+                      value={handoverForm.airwayType}
+                      onChange={(e) =>
+                        setHandoverForm({ ...handoverForm, airwayType: e.target.value })
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold"
+                    >
+                      <option value="Green (Patent Upper Airway)">
+                        Green (Patent Upper Airway)
+                      </option>
+                      <option value="Red (Laryngectomy / Neck-Only)">
+                        Red (Laryngectomy / Neck-Only)
+                      </option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Child Approx Age
+                    </label>
+                    <input
+                      type="text"
+                      value={handoverForm.childAge}
+                      onChange={(e) =>
+                        setHandoverForm({ ...handoverForm, childAge: e.target.value })
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Tracheostomy Tube ID
+                    </label>
+                    <input
+                      type="text"
+                      value={handoverForm.tubeId}
+                      onChange={(e) =>
+                        setHandoverForm({ ...handoverForm, tubeId: e.target.value })
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Safe Suction Depth
+                    </label>
+                    <input
+                      type="text"
+                      value={handoverForm.suctionDepth}
+                      onChange={(e) =>
+                        setHandoverForm({ ...handoverForm, suctionDepth: e.target.value })
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    Airway Event & Interventions Performed
+                  </label>
+                  <input
+                    type="text"
+                    value={handoverForm.eventSummary}
+                    onChange={(e) =>
+                      setHandoverForm({ ...handoverForm, eventSummary: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    Current Observations & EtCO2
+                  </label>
+                  <input
+                    type="text"
+                    value={handoverForm.currentObs}
+                    onChange={(e) =>
+                      setHandoverForm({ ...handoverForm, currentObs: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                  />
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900 text-slate-100 text-xs font-mono leading-relaxed">
+                  PAED TRACHEOSTOMY PRE-ALERT • Age: {handoverForm.childAge} | Airway: {handoverForm.airwayType} | Tube: {handoverForm.tubeId} (Depth {handoverForm.suctionDepth}) | Interventions: {handoverForm.eventSummary} | Obs: {handoverForm.currentObs} | Emergency Go-Bag & Caregiver on board.
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const summaryStr = `PAED TRACHEOSTOMY PRE-ALERT • Age: ${handoverForm.childAge} | Airway: ${handoverForm.airwayType} | Tube: ${handoverForm.tubeId} (Depth ${handoverForm.suctionDepth}) | Interventions: ${handoverForm.eventSummary} | Obs: ${handoverForm.currentObs} | Emergency Go-Bag & Caregiver on board.`;
+                    const ta = document.createElement('textarea');
+                    ta.value = summaryStr;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    setHandoverCopied(true);
+                    setTimeout(() => setHandoverCopied(false), 3000);
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>
+                    {handoverCopied
+                      ? '✓ Copied Pre-Alert to Clipboard!'
+                      : 'Copy Pre-Alert Text for CAD / MDT'}
+                  </span>
+                </button>
               </div>
             )}
           </div>
