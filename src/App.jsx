@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
-import {z
+import {
   getAuth,
   signInAnonymously,
   signInWithCustomToken,
@@ -1337,7 +1337,31 @@ export default function App() {
           const data = snapshot.data();
           try {
             if (data.pathwaysJson) setPathways(JSON.parse(data.pathwaysJson));
-            if (data.modulesJson) setLearningModules(JSON.parse(data.modulesJson));
+            if (data.modulesJson) {
+              const cloudMods = JSON.parse(data.modulesJson);
+              // Merge default rich formatting (tables & bullet lists) if older cloud sections lack them
+              const mergedMods = cloudMods.map((cm) => {
+                const defaultMod = INITIAL_LEARNING_MODULES.find((im) => im.id === cm.id);
+                if (!defaultMod) return cm;
+                return {
+                  ...cm,
+                  sections: (cm.sections || []).map((cs) => {
+                    const defaultSec = defaultMod.sections.find((ds) => ds.id === cs.id);
+                    if (!defaultSec) return cs;
+                    const hasLists = /(^|\n)\s*([-*•]|\d+[.)])\s+/m.test(cs.body || '');
+                    return {
+                      ...cs,
+                      body: hasLists ? cs.body : defaultSec.body,
+                      comparisonTable:
+                        cs.comparisonTable && cs.comparisonTable.length > 0
+                          ? cs.comparisonTable
+                          : defaultSec.comparisonTable || []
+                    };
+                  })
+                };
+              });
+              setLearningModules(mergedMods);
+            }
             if (data.adminUsersJson) setAdminUsers(JSON.parse(data.adminUsersJson));
             if (data.auditLogsJson) setAuditLogs(JSON.parse(data.auditLogsJson));
             if (data.updatedAt) setLastCloudSyncAt(data.updatedAt);
@@ -4234,49 +4258,6 @@ export default function App() {
                   <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
                     {activeModule.title}
                   </h1>
-                </div>
-
-                {/* Mobile & Tablet Horizontal Section Navigator (Hidden on Desktop where sidebar shows) */}
-                <div className="lg:hidden flex items-center gap-2 overflow-x-auto pb-1.5 -mx-1 px-1">
-                  {activeModule.sections.map((s, idx) => (
-                    <button
-                      key={s.id || idx}
-                      onClick={() => {
-                        setQuizUnlocked(false);
-                        setActiveSectionIndex(idx);
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap border transition shrink-0 ${
-                        !quizUnlocked && activeSectionIndex === idx
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      {idx + 1}. {s.heading}
-                    </button>
-                  ))}
-                  <button
-                    disabled={
-                      !quizUnlocked &&
-                      activeSectionIndex < activeModule.sections.length - 1
-                    }
-                    onClick={() => {
-                      setQuizUnlocked(true);
-                      setQuizAttemptSeed((s) => s + 1);
-                      setQuizAnswers({});
-                      setQuizSubmitted(false);
-                      if (activeModule.quiz.length === 0) {
-                        markModuleCompletedInCloud(activeModule.id);
-                      }
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap border transition shrink-0 inline-flex items-center gap-1 ${
-                      quizUnlocked
-                        ? 'bg-emerald-600 text-white border-emerald-600'
-                        : 'bg-white text-slate-400 border-slate-200 disabled:opacity-50'
-                    }`}
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    <span>Quiz & CPD</span>
-                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
