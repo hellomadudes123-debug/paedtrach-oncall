@@ -81,7 +81,22 @@ import {
   AlertTriangle,
   Info,
   Printer,
-  Eye
+  Eye,
+  Target,
+  MessageSquarePlus,
+  Stethoscope,
+  RotateCw,
+  Moon,
+  Sun,
+  UserCheck,
+  FileDown,
+  Package,
+  Wrench,
+  HardDriveDownload,
+  Crosshair,
+  Compass,
+  Sparkle,
+  HeartPulse
 } from 'lucide-react';
 
 // ==========================================
@@ -174,11 +189,6 @@ const getEmbedVideoInfo = (url = '') => {
 
 // ==========================================
 // RICH TEXT FORMATTER FOR LEARNING MODULES
-// Supports:
-// - Bullet lists (- item or * item)
-// - Numbered lists (1. item)
-// - Subheadings (## Heading)
-// - Bold inline text (**bold**)
 // ==========================================
 const renderInlineBold = (text) => {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
@@ -194,7 +204,7 @@ const renderInlineBold = (text) => {
   });
 };
 
-const RichFormattedText = ({ text = '' }) => {
+const RichFormattedText = ({ text = '', largeText = false }) => {
   if (!text) return null;
   const lines = text.split('\n');
   const blocks = [];
@@ -239,13 +249,19 @@ const RichFormattedText = ({ text = '' }) => {
   flushList();
 
   return (
-    <div className="space-y-3.5 text-sm sm:text-base text-slate-600 leading-relaxed">
+    <div
+      className={`space-y-3.5 text-slate-600 leading-relaxed ${
+        largeText ? 'text-base sm:text-lg' : 'text-sm sm:text-base'
+      }`}
+    >
       {blocks.map((block) => {
         if (block.type === 'heading') {
           return (
             <h3
               key={block.key}
-              className="text-base sm:text-lg font-bold text-slate-900 pt-2"
+              className={`font-bold text-slate-900 pt-2 ${
+                largeText ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'
+              }`}
             >
               {renderInlineBold(block.content)}
             </h3>
@@ -253,10 +269,7 @@ const RichFormattedText = ({ text = '' }) => {
         }
         if (block.type === 'ul') {
           return (
-            <ul
-              key={block.key}
-              className="space-y-2 pl-1 text-slate-700"
-            >
+            <ul key={block.key} className="space-y-2 pl-1 text-slate-700">
               {block.items.map((item, i) => (
                 <li key={i} className="flex items-start gap-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-2.5 shrink-0" />
@@ -268,10 +281,7 @@ const RichFormattedText = ({ text = '' }) => {
         }
         if (block.type === 'ol') {
           return (
-            <ol
-              key={block.key}
-              className="space-y-2 pl-1 text-slate-700"
-            >
+            <ol key={block.key} className="space-y-2 pl-1 text-slate-700">
               {block.items.map((item, i) => (
                 <li key={i} className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center mt-0.5 shrink-0">
@@ -904,7 +914,27 @@ const INITIAL_LEARNING_MODULES = [
     title: 'Anatomy: Tracheostomy vs. Laryngectomy',
     duration: '6 min read',
     category: 'Airway Fundamentals',
+    targetAudience: 'ENT Trainees, Anaesthetists, Paediatricians, ED Clinicians & Paramedics',
+    facultyName: 'Paediatric Airway & Pre-Hospital Education Group',
+    facultyCredentials: 'Consultant Paediatric ENT & Specialist Pre-Hospital Faculty',
+    peerReviewedDate: '2026-02-18',
+    coiDisclosure: 'None declared — independent educational resource with zero commercial sponsorship.',
+    references: [
+      {
+        title: 'NTSP Paediatric Tracheostomy Emergency Algorithm (Green & Red)',
+        url: 'https://www.tracheostomy.org.uk/healthcare-staff/emergency-care/paediatric-emergency-algorithms'
+      },
+      {
+        title: 'Resuscitation Council UK: Paediatric Basic Life Support Guidelines',
+        url: 'https://www.resus.org.uk/library/2021-resuscitation-guidelines/paediatric-basic-life-support-guidelines'
+      }
+    ],
     summary: 'Understand the anatomical difference between a patent upper airway (Green) and a neck-only airway (Red).',
+    learningObjectives: [
+      'Differentiate between an anatomical tracheostomy (Green Pathway) and a laryngectomy / isolated neck stoma (Red Pathway).',
+      'Select the appropriate oxygenation and positive-pressure ventilation route based on the patient’s NTSP Bedhead Sign.',
+      'Demonstrate safe neutral head positioning and stoma occlusion technique during upper-airway BVM ventilation.'
+    ],
     sections: [
       {
         id: 'sec-anat-1',
@@ -918,6 +948,10 @@ const INITIAL_LEARNING_MODULES = [
           { label: 'Initial Oxygen Site', value: 'Green: Dual-Site (Face + Neck) • Red: Neck Stoma Only' },
           { label: 'Stoma Occlusion for Oral BVM', value: 'Green: Yes (with gauze) • Red: NEVER occlude stoma' }
         ],
+        flashcard: {
+          front: 'Quick Recall: What does a RED NTSP Bedhead Sign mean for oral BVM ventilation?',
+          back: 'NEVER attempt oral BVM or occlude the neck stoma. The patient has a laryngectomy or isolated neck-only airway — oxygenate and ventilate via the neck stoma ONLY.'
+        },
         images: [
           {
             id: 'img-anat-1',
@@ -932,7 +966,8 @@ const INITIAL_LEARNING_MODULES = [
             title: 'Visual Guide: Dual Airway vs. Stoma-Only Airway',
             duration: '03:45',
             url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-            description: 'Animated sagittal comparison showing airflow pathways in standard tracheostomy versus complete upper airway disconnection.'
+            description: 'Animated sagittal comparison showing airflow pathways in standard tracheostomy versus complete upper airway disconnection.',
+            transcript: '00:00 Identify NTSP Bedhead Sign colour • 01:15 Green pathway dual-site oxygen (face + neck) • 02:30 Red pathway neck-only stoma oxygenation without stoma occlusion.'
           }
         ]
       },
@@ -943,6 +978,16 @@ const INITIAL_LEARNING_MODULES = [
         body: `In almost all children with a tracheostomy, the larynx remains present above the stoma. Even if the child has subglottic stenosis or tracheomalacia, oxygen can usually pass from the mouth and nose into the lungs once a blocked tube is removed.\n\n1. Remove any speaking valve, cap, or HME filter immediately.\n2. Apply high-flow oxygen to both the mouth/nose and the tracheostomy.\n3. If the tube is removed and you ventilate via a face mask, **gently occlude the open neck stoma with sterile gauze** so positive-pressure air does not escape out of the neck.`,
         calloutType: 'warning',
         pearl: 'Avoid hyperextending an infant’s neck—keep the head in neutral alignment with a thin shoulder roll so the soft cartilage does not kink.',
+        miniCase: {
+          scenario: 'Bedside Scenario: You remove a blocked 3.5 mm tube from a 10-month-old on the Green Pathway. A spare tube will not pass, so you begin oral BVM ventilation, but the chest fails to rise and air hisses from the neck.',
+          options: [
+            'Hyperextend the infant’s neck further to open the trachea',
+            'Firmly occlude the open neck stoma with sterile gauze while ventilating via the face mask',
+            'Insert a rigid Yankauer sucker into the stoma'
+          ],
+          correctIndex: 1,
+          feedback: 'Correct! In a Green Pathway child, positive-pressure breaths delivered via the mouth/nose will escape out of an open neck stoma unless occluded with sterile gauze.'
+        },
         images: [
           {
             id: 'img-anat-2',
@@ -967,7 +1012,8 @@ const INITIAL_LEARNING_MODULES = [
             title: 'Ventilating an Open Neck Stoma with a Neonatal Mask',
             duration: '02:20',
             url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-            description: 'Demonstration of achieving an airtight seal over a paediatric neck stoma using a circular neonatal silicone mask.'
+            description: 'Demonstration of achieving an airtight seal over a paediatric neck stoma using a circular neonatal silicone mask.',
+            transcript: '00:00 Position circular neonatal mask over stoma • 01:05 Maintain neutral neck alignment • 01:45 Verify chest rise and waveform EtCO2.'
           }
         ]
       }
@@ -1010,7 +1056,23 @@ const INITIAL_LEARNING_MODULES = [
     title: 'Reading the NTSP Bedhead Sign & Tubes',
     duration: '7 min read',
     category: 'Equipment & Preparation',
+    targetAudience: 'ENT Trainees, Anaesthetists, Paediatricians, ED Clinicians & Paramedics',
+    facultyName: 'Paediatric Airway & Pre-Hospital Education Group',
+    facultyCredentials: 'Consultant Paediatric ENT & Specialist Pre-Hospital Faculty',
+    peerReviewedDate: '2026-02-18',
+    coiDisclosure: 'None declared — independent educational resource with zero commercial sponsorship.',
+    references: [
+      {
+        title: 'National Tracheostomy Safety Project: Paediatric Bedhead Signs',
+        url: 'https://www.tracheostomy.org.uk/healthcare-staff/emergency-care/paediatric-emergency-algorithms'
+      }
+    ],
     summary: 'Learn how to quickly read the bedside emergency card, identify single-lumen paediatric tubes, and remove speaking valves.',
+    learningObjectives: [
+      'Extract tube inner diameter (mm), suction catheter French size, and safe suction depth (cm) from an NTSP Bedhead Sign.',
+      'Explain why small paediatric tracheostomy tubes (2.5–5.0 mm) are single-lumen without removable inner cannulae.',
+      'Identify and safely remove speaking valves, HME filters, and sterile-water cuffs prior to emergency tube removal.'
+    ],
     sections: [
       {
         id: 'sec-bed-1',
@@ -1034,6 +1096,20 @@ const INITIAL_LEARNING_MODULES = [
         body: `Unlike adult tracheostomy tubes, neonatal and small paediatric tubes (**2.5 mm to 5.0 mm ID**) are almost always **single-lumen tubes without an inner cannula**.\n\n- **Strip All Attachments First:** Many children wear a colourful one-way speaking valve (e.g. Passy-Muir) or an HME filter on the 15 mm hub.\n- **Eliminate Hidden Obstruction:** In any respiratory distress, twist off all attachments down to the bare white 15 mm tracheostomy hub immediately.\n- **Check for Sterile Water Cuffs:** Silicone Bivona TTS cuffs are often inflated with sterile water rather than air—aspirate completely with a syringe before removing a blocked tube.`,
         calloutType: 'warning',
         pearl: 'A speaking valve is a one-way valve—it lets air in but blocks exhalation through the tube. If the upper airway swells, severe air trapping occurs unless removed.',
+        flashcard: {
+          front: 'Quick Recall: Why must a Passy-Muir speaking valve be twisted off immediately in respiratory distress?',
+          back: 'It is a one-way inspiratory valve. If the child’s upper airway narrows or swells, air enters through the valve but cannot escape, causing rapid air trapping and barotrauma.'
+        },
+        miniCase: {
+          scenario: 'Bedside Scenario: You are called to a 2-year-old with a 4.0 mm Bivona TTS tracheostomy tube who is cyanosed. A suction catheter will not pass, and you notice a small pilot balloon hanging from the flange.',
+          options: [
+            'Pull the tube out immediately without touching the pilot balloon',
+            'Aspirate the pilot balloon completely with a syringe to deflate the sterile-water cuff, reassess, and prepare to remove the tube',
+            'Inject 5 ml of air into the pilot balloon'
+          ],
+          correctIndex: 1,
+          feedback: 'Correct! Bivona TTS cuffs are filled with sterile water. Deflating the cuff may allow immediate airflow around the blocked tube and prevents tracheal trauma during tube removal.'
+        },
         images: [
           {
             id: 'img-bed-2',
@@ -1048,7 +1124,8 @@ const INITIAL_LEARNING_MODULES = [
             title: 'Equipment Walkthrough: Paediatric Tubes & One-Way Valves',
             duration: '04:30',
             url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-            description: 'Hands-on overview of uncuffed Shiley and water-cuffed Bivona TTS paediatric tubes, obturators, and speaking valves.'
+            description: 'Hands-on overview of uncuffed Shiley and water-cuffed Bivona TTS paediatric tubes, obturators, and speaking valves.',
+            transcript: '00:00 Single-lumen paediatric tube anatomy • 01:50 Sterile-water Bivona TTS cuffs • 03:10 Stripping speaking valves & HMEs.'
           }
         ]
       }
@@ -1091,7 +1168,23 @@ const INITIAL_LEARNING_MODULES = [
     title: 'Suctioning & Emergency Tube Change',
     duration: '8 min read',
     category: 'Clinical Skills',
+    targetAudience: 'ENT Trainees, Anaesthetists, Paediatricians, ED Clinicians & Paramedics',
+    facultyName: 'Paediatric Airway & Pre-Hospital Education Group',
+    facultyCredentials: 'Consultant Paediatric ENT & Specialist Pre-Hospital Faculty',
+    peerReviewedDate: '2026-02-18',
+    coiDisclosure: 'None declared — independent educational resource with zero commercial sponsorship.',
+    references: [
+      {
+        title: 'Great Ormond Street Hospital (GOSH): Tracheostomy Suctioning Clinical Guideline',
+        url: 'https://www.gosh.nhs.uk/wards-and-departments/departments/clinical-specialties/ear-nose-and-throat-ent-information-parents-and-visitors/living-tracheostomy/'
+      }
+    ],
     summary: 'Master the suction catheter sizing rule (ID × 2), safe suction depth, and the two-attempt emergency tube replacement protocol.',
+    learningObjectives: [
+      'Calculate the correct flexible suction catheter French size using the Tube ID (mm) × 2 rule.',
+      'Perform pre-measured tracheal suctioning within the safe 5–10 second time window without carinal trauma.',
+      'Execute the two-step emergency tube replacement protocol (same-size tube followed by 0.5 mm downsize) with immediate obturator removal.'
+    ],
     sections: [
       {
         id: 'sec-suc-1',
@@ -1099,6 +1192,10 @@ const INITIAL_LEARNING_MODULES = [
         body: `Double the tracheostomy tube internal diameter (mm) to find the maximum French catheter size.\n\n- **Formula:** Tube ID (mm) × 2 = Catheter Size (Fr). For example, a 4.0 mm tube requires an **8 Fr** catheter.\n- **Pre-Measured Depth:** Only advance the catheter to the child’s documented safe depth (typically 6 to 11 cm) so you do not traumatise the carina or trigger vagal bradycardia.\n- **Time Limit:** Apply suction only while withdrawing for **5 to 10 seconds** maximum.`,
         calloutType: 'warning',
         pearl: 'Never use a rigid Yankauer sucker inside a tracheostomy tube—only use flexible, centimetre-graduated suction catheters.',
+        flashcard: {
+          front: 'Quick Recall: What is the formula for sizing a paediatric suction catheter & maximum suction pass time?',
+          back: 'Tube Inner Diameter (mm) × 2 = French (Fr) catheter size (e.g., 4.0 mm → 8 Fr). Apply suction on withdrawal only for 5–10 seconds maximum.'
+        },
         images: [
           {
             id: 'img-suc-1',
@@ -1115,6 +1212,16 @@ const INITIAL_LEARNING_MODULES = [
         body: `When inserting a spare tube, the solid plastic obturator sits inside the tube to guide its curved tip smoothly through the stoma.\n\n1. Lubricate the spare tube with water-soluble gel.\n2. Slide into the stoma following a gentle downward curve.\n3. **Remove the obturator immediately** once the flange reaches the neck skin — the child cannot breathe while the obturator is inside.\n4. If the same-size tube will not slide in easily, do not force it—immediately attempt the **0.5 mm smaller downsize tube**.`,
         calloutType: 'pearl',
         pearl: 'Confirm successful tube placement using waveform capnography (EtCO2), bilateral chest rise, and smooth passage of a suction catheter.',
+        miniCase: {
+          scenario: 'Bedside Scenario: During an emergency tube change, you lubricate the same-size spare tube with the obturator inside and guide it into the stoma, but you meet firm resistance halfway in.',
+          options: [
+            'Push firmly until the flange sits flush against the skin',
+            'Stop immediately, withdraw it, and attempt insertion with the 0.5 mm smaller downsize spare tube',
+            'Leave the tube halfway in and attach the BVM over the obturator'
+          ],
+          correctIndex: 1,
+          feedback: 'Correct! Never force a tracheostomy tube into a narrowing stoma (risk of creating a false passage). Switch immediately to the 0.5 mm downsize tube, and always remove the obturator as soon as it enters.'
+        },
         images: [],
         videos: [
           {
@@ -1122,7 +1229,8 @@ const INITIAL_LEARNING_MODULES = [
             title: 'Step-by-Step: Safe Suctioning & Obturator Removal',
             duration: '05:50',
             url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-            description: 'Real-time simulation of blocked tube removal, stoma insertion using a curved motion, and immediate obturator withdrawal.'
+            description: 'Real-time simulation of blocked tube removal, stoma insertion using a curved motion, and immediate obturator withdrawal.',
+            transcript: '00:00 Prepare same-size and 0.5 mm downsize tubes • 01:40 Curved downward insertion with obturator • 02:15 Immediate obturator withdrawal • 03:30 Waveform EtCO2 confirmation.'
           }
         ]
       }
@@ -1187,6 +1295,423 @@ const EMERGENCY_BAG_CHECKLIST = [
   { id: 'eq-9', label: 'Sterile gauze swabs (to occlude stoma for oral ventilation)' }
 ];
 
+const INITIAL_TUBE_HARDWARE_GUIDE = [
+  {
+    id: 'hw-shiley-uncuffed',
+    name: 'Shiley Neonatal / Paediatric Uncuffed',
+    tag: 'Most Common Paediatric Tube',
+    tagColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    imageUrl: '',
+    cuffType: 'Uncuffed (No pilot balloon)',
+    innerCannula: 'None (Single-lumen — remove whole tube if blocked)',
+    keyVisualCue: 'Rigid white/ivory PVC shaft with soft flexible neck flange and standard 15 mm white hub.',
+    emergencyAction: 'If blocked and suction catheter will not pass, cut ties and remove the entire tube immediately.'
+  },
+  {
+    id: 'hw-bivona-tts',
+    name: 'Bivona TTS (Tight-to-Shaft) Cuffed',
+    tag: 'Sterile-Water Cuff',
+    tagColor: 'bg-sky-50 text-sky-700 border-sky-200',
+    imageUrl: '',
+    cuffType: 'Silicone cuff — inflated with STERILE WATER (not air)',
+    innerCannula: 'None (Single-lumen)',
+    keyVisualCue: 'Soft wire-reinforced silicone shaft with a clear pilot balloon & white inflation valve.',
+    emergencyAction: 'Aspirate pilot balloon completely with an empty syringe BEFORE removing a blocked tube.'
+  },
+  {
+    id: 'hw-bivona-flextend',
+    name: 'Bivona FlexTend (Extended Proximal Shaft)',
+    tag: 'Infant / Chin-Clearance Tube',
+    tagColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    imageUrl: '',
+    cuffType: 'Uncuffed or TTS Sterile-Water Cuff',
+    innerCannula: 'None (Single-lumen)',
+    keyVisualCue: 'Extra-long flexible extension tubing between the neck flange and the 15 mm BVM hub to keep circuits away from a baby’s chin.',
+    emergencyAction: 'Attach BVM directly to the extended 15 mm hub; check the extended limb for kinking under chin folds.'
+  },
+  {
+    id: 'hw-speaking-valve',
+    name: 'Passy-Muir / One-Way Speaking Valve',
+    tag: 'STRIP FIRST IN DISTRESS',
+    tagColor: 'bg-rose-50 text-rose-700 border-rose-200',
+    imageUrl: '',
+    cuffType: 'Hub Attachment (Fits onto 15 mm connector)',
+    innerCannula: 'One-way silicone diaphragm (Air IN only)',
+    keyVisualCue: 'Brightly coloured (aqua/purple/clear) low-profile cap attached to the tracheostomy hub.',
+    emergencyAction: 'TWIST OFF IMMEDIATELY in any breathing difficulty — it blocks exhalation if upper airway swells.'
+  },
+  {
+    id: 'hw-hme-filter',
+    name: 'Swedish Nose / HME Humidifier Filter',
+    tag: 'REMOVE IF WET OR CLOGGED',
+    tagColor: 'bg-amber-50 text-amber-800 border-amber-200',
+    imageUrl: '',
+    cuffType: 'Hub Attachment (T-piece or cylindrical foam filter)',
+    innerCannula: 'Hygroscopic foam / paper filter element',
+    keyVisualCue: 'Lightweight translucent T-shaped or round plastic housing with internal sponge/paper media and oxygen side-port.',
+    emergencyAction: 'Remove immediately during emergencies — sputum-soaked HME filters act like a solid cork.'
+  }
+];
+
+const TROUBLESHOOTING_MATRIX = [
+  {
+    id: 'ts-high-resistance',
+    symptom: 'High BVM Resistance / Catheter Will Not Pass',
+    urgency: 'Critical Emergency',
+    urgencyColor: 'bg-rose-50 text-rose-700 border-rose-200',
+    likelyCauses: [
+      'Inspissated mucus plug or blood clot occluding lumen',
+      'Tube tip displaced into pre-tracheal false passage or abutting posterior tracheal wall',
+      'Blocked HME filter or speaking valve still attached'
+    ],
+    immediateActions: [
+      'Strip all hub attachments (speaking valve / HME) immediately',
+      'Deflate cuff (if pilot balloon present) and re-check airflow',
+      'Remove blocked/displaced tube immediately & follow NTSP Green/Red algorithm'
+    ]
+  },
+  {
+    id: 'ts-surgical-emphysema',
+    symptom: 'Neck / Chest Crepitus (Surgical Emphysema)',
+    urgency: 'High-Risk Red Flag',
+    urgencyColor: 'bg-rose-50 text-rose-700 border-rose-200',
+    likelyCauses: [
+      'Tube displaced out of trachea into subcutaneous neck tissues',
+      'Positive-pressure BVM ventilation delivered through a displaced tube',
+      'Posterior tracheal wall injury or pneumothorax'
+    ],
+    immediateActions: [
+      'STOP ventilating through the displaced tube immediately',
+      'Remove the displaced tube and ventilate via mouth/nose (stoma occluded if Green) or neonatal mask on stoma',
+      'Auscultate both lungs for pneumothorax & urgent A&E/ENT pre-alert'
+    ]
+  },
+  {
+    id: 'ts-blood-secretions',
+    symptom: 'Blood-Stained Secretions or Fresh Stomal Bleeding',
+    urgency: 'Urgent Assessment',
+    urgencyColor: 'bg-amber-50 text-amber-800 border-amber-200',
+    likelyCauses: [
+      'Suction catheter advanced past pre-measured depth causing mucosal/carinal trauma',
+      'Inadequate humidification causing dry, friable tracheal mucosa',
+      'Rare warning sign: Tracheo-innominate artery fistula (sentinel bleed / pulsating tube)'
+    ],
+    immediateActions: [
+      'Verify suction catheter depth matches Bedhead Sign & reduce suction pressure to 80–100 mmHg',
+      'Ensure active humidification or nebulised 0.9% NaCl if dry crusting present',
+      'If brisk arterial bleeding: hyperinflate cuff (if present), apply digital pressure at suprasternal notch & blue-light transfer'
+    ]
+  },
+  {
+    id: 'ts-cuff-leak',
+    symptom: 'Audible Air Leak / Vocalisation with Inflated Cuff',
+    urgency: 'Non-Critical Check',
+    urgencyColor: 'bg-sky-50 text-sky-800 border-sky-200',
+    likelyCauses: [
+      'Partial tube displacement upward toward vocal cords',
+      'Under-inflated or punctured cuff / water evaporation in Bivona TTS cuff',
+      'High peak airway pressures during BVM ventilation'
+    ],
+    immediateActions: [
+      'Check neck flange position & neck tie tension (1-finger slack)',
+      'Check pilot balloon volume (use sterile water ONLY for Bivona TTS cuffs)',
+      'Verify adequate chest rise and square-wave EtCO2 trace'
+    ]
+  },
+  {
+    id: 'ts-granulation',
+    symptom: 'Red Fleshy Tissue or Ooze Around Stoma Edge',
+    urgency: 'Routine / Minor',
+    urgencyColor: 'bg-slate-100 text-slate-700 border-slate-200',
+    likelyCauses: [
+      'Over-granulation tissue from tube friction or moisture',
+      'Local skin irritation under wet neck ties'
+    ],
+    immediateActions: [
+      'Clean stoma gently with sterile 0.9% NaCl gauze and pat dry',
+      'Apply clean keyhole dressing (e.g., Metalline / Lyofoam) without obstructing lumen',
+      'Flag to community tracheostomy nurse / ENT team for routine silver nitrate or barrier review'
+    ]
+  }
+];
+
+const OFFLINE_CACHE_STORAGE_KEY = 'paedtrach_offline_shift_pack_v1';
+
+// ==========================================
+// INITIAL PROCEDURE SIMULATIONS (CICO + EMERGENCY TUBE CHANGE & FALSE PASSAGE)
+// ==========================================
+const INITIAL_PROCEDURE_SIMULATIONS = [
+  {
+    id: 'sim-paed-cric',
+    title: 'Paediatric Emergency Cricothyroidotomy',
+    subtitle: 'Can’t Intubate, Can’t Oxygenate (CICO) — Needle (<8 yrs) & Scalpel-Bougie-Tube',
+    badge: 'Interactive Procedure Sim',
+    diagramType: 'builtin-neck',
+    customDiagramUrl: '',
+    supportsAgeSwitch: true,
+    disclaimer:
+      'Educational anatomical & procedural simulation only. In children under 8–10 years, needle cricothyroidotomy with jet/BVM oxygenation is standard UK/DAS rescue over wide-bore surgical cricothyroidotomy due to the small, compliant cricothyroid membrane.',
+    tools: [
+      {
+        id: 'tool-hands',
+        name: 'Laryngeal Handshake',
+        short: 'Palpate',
+        desc: 'Stabilise larynx with non-dominant thumb & middle finger; palpate cricothyroid membrane with index finger.'
+      },
+      {
+        id: 'tool-marker',
+        name: 'Skin Marker / Landmark',
+        short: 'Mark CTM',
+        desc: 'Identify midline vertical neck axis and horizontal cricothyroid membrane groove below the thyroid cartilage.'
+      },
+      {
+        id: 'tool-chlorhex',
+        name: 'Chlorhexidine Prep',
+        short: 'Prep Skin',
+        desc: 'Rapidly clean anterior neck skin if time permits without delaying rescue oxygenation.'
+      },
+      {
+        id: 'tool-cannula',
+        name: '14G / 16G Cannula + Saline',
+        short: 'Needle CTM',
+        desc: 'Kink-resistant cannula attached to 5 ml syringe partially filled with 0.9% saline; advance caudally at 45°.'
+      },
+      {
+        id: 'tool-scalpel',
+        name: 'No. 10 / 20 Scalpel',
+        short: 'Scalpel',
+        desc: 'Vertical midline skin incision (older child/adolescent) followed by horizontal stab through cricothyroid membrane.'
+      },
+      {
+        id: 'tool-bougie',
+        name: 'Paediatric Bougie',
+        short: 'Bougie',
+        desc: 'Slide coudé-tip bougie gently caudally into the trachea (never force past carina).'
+      },
+      {
+        id: 'tool-tube',
+        name: 'Cuffed Tube + EtCO2',
+        short: 'Tube & EtCO2',
+        desc: 'Railroad lubricated 4.0–5.0 mm cuffed tube over bougie, remove bougie, inflate cuff, and confirm waveform EtCO2.'
+      }
+    ],
+    steps: [
+      {
+        id: 'cric-1',
+        phase: 'Preparation & Positioning',
+        title: 'Position Neck & Perform Laryngeal Handshake',
+        instruction:
+          'Place a small roll under the shoulders to expose the anterior neck, then select Palpate and tap the thyroid cartilage to immobilise the larynx.',
+        traineeTip:
+          'In infants and young children, the hyoid bone and cricoid cartilage are prominent while the thyroid notch is flat—use the Laryngeal Handshake from top down.',
+        basicNote:
+          'Exposing the neck and steadying the windpipe prevents lateral slip during emergency airway rescue.',
+        requiredTool: 'tool-hands',
+        interactionType: 'tap',
+        targetZone: { x: 250, y: 155, r: 44, label: 'Thyroid Cartilage & Larynx' },
+        demoHint: 'Select "Palpate" and tap the highlighted target over the thyroid cartilage.'
+      },
+      {
+        id: 'cric-2',
+        phase: 'Preparation & Positioning',
+        title: 'Identify & Mark the Cricothyroid Membrane',
+        instruction:
+          'Select Mark CTM and trace the midline vertical axis across the cricothyroid membrane (between the thyroid cartilage above and cricoid ring below).',
+        traineeTip:
+          'Avoid straying laterally where the anterior jugular veins and carotid sheaths lie.',
+        basicNote:
+          'The cricothyroid membrane is a small soft window just below the Adam’s apple.',
+        requiredTool: 'tool-marker',
+        interactionType: 'drag',
+        dragStart: { x: 250, y: 145 },
+        dragEnd: { x: 250, y: 215 },
+        targetZone: { x: 250, y: 182, r: 36, label: 'Cricothyroid Membrane' },
+        demoHint: 'Select "Mark CTM" and drag vertically down through the cricothyroid groove.'
+      },
+      {
+        id: 'cric-3',
+        phase: 'Preparation & Positioning',
+        title: 'Rapid Antiseptic Skin Prep',
+        instruction:
+          'Select Prep Skin and tap across the anterior neck field.',
+        traineeTip:
+          'In a true CICO arrest, do not wait 30 seconds for drying—proceed immediately to airway puncture/incision.',
+        basicNote:
+          'Quickly cleaning the skin reduces infection risk before entering the airway.',
+        requiredTool: 'tool-chlorhex',
+        interactionType: 'tap',
+        targetZone: { x: 250, y: 182, r: 46, label: 'Anterior Neck Field' },
+        demoHint: 'Select "Prep Skin" and tap the central neck surgical field.'
+      },
+      {
+        id: 'cric-4',
+        phase: 'Paediatric Needle Rescue (< 8 Years)',
+        title: '45° Caudal Needle Cricothyroidotomy & Air Aspiration',
+        instruction:
+          'For children <8–10 yrs: Select Needle CTM and tap the cricothyroid membrane to advance caudally at 45° while aspirating until air bubbles appear.',
+        traineeTip:
+          'Stop advancing the needle the instant air bubbles freely into the saline syringe to avoid perforating the posterior tracheal wall and oesophagus.',
+        basicNote:
+          'A narrow cannula is used in young children to safely deliver oxygen without damaging their delicate voice box.',
+        requiredTool: 'tool-cannula',
+        interactionType: 'tap',
+        targetZone: { x: 250, y: 182, r: 34, label: 'CTM Puncture Point (45° Caudal)' },
+        demoHint: 'Select "Needle CTM" and tap the cricothyroid membrane center.'
+      },
+      {
+        id: 'cric-5',
+        phase: 'Surgical Cricothyroidotomy (Older Child / Adolescent)',
+        title: 'Horizontal Cricothyroid Membrane Incision',
+        instruction:
+          'If surgical access is required (older child/adolescent or failed needle): Select Scalpel and incise horizontally across the lower half of the cricothyroid membrane.',
+        traineeTip:
+          'Keep the blade directed slightly caudally and hug the superior border of the cricoid cartilage to avoid the superior thyroid vessels.',
+        basicNote:
+          'A small horizontal opening is made directly into the windpipe membrane.',
+        requiredTool: 'tool-scalpel',
+        interactionType: 'drag',
+        dragStart: { x: 222, y: 182 },
+        dragEnd: { x: 278, y: 182 },
+        targetZone: { x: 250, y: 182, r: 34, label: 'Horizontal CTM Incision' },
+        demoHint: 'Select "Scalpel" and drag horizontally from left to right across the CTM.'
+      },
+      {
+        id: 'cric-6',
+        phase: 'Surgical Cricothyroidotomy (Older Child / Adolescent)',
+        title: 'Introduce Paediatric Bougie Caudally',
+        instruction:
+          'Select Bougie and guide the coudé tip gently downward into the trachea.',
+        traineeTip:
+          'Advance only 8–10 cm to avoid carinal trauma or endobronchial placement; feel for gentle tracheal ring clicks.',
+        basicNote:
+          'The flexible bougie acts as a smooth guide rail into the lungs.',
+        requiredTool: 'tool-bougie',
+        interactionType: 'drag',
+        dragStart: { x: 250, y: 182 },
+        dragEnd: { x: 250, y: 265 },
+        targetZone: { x: 250, y: 215, r: 38, label: 'Tracheal Lumen' },
+        demoHint: 'Select "Bougie" and drag downward into the trachea.'
+      },
+      {
+        id: 'cric-7',
+        phase: 'Securing & Verification',
+        title: 'Railroad Tube Over Bougie & Confirm EtCO2',
+        instruction:
+          'Select Tube & EtCO2 and tap the stoma to railroad the lubricated tube into the trachea, remove the bougie, and confirm square-wave capnography.',
+        traineeTip:
+          'Verify bilateral chest rise, square-wave EtCO2 trace, and secure the flange firmly before moving the patient.',
+        basicNote:
+          'The breathing tube is slid over the guide rail, connected to oxygen, and checked with a CO2 monitor.',
+        requiredTool: 'tool-tube',
+        interactionType: 'tap',
+        targetZone: { x: 250, y: 185, r: 38, label: 'Secure Airway Tube' },
+        demoHint: 'Select "Tube & EtCO2" and tap the airway opening to complete placement.'
+      }
+    ]
+  },
+  {
+    id: 'sim-trach-change',
+    title: 'Emergency Tracheostomy Tube Change & False Passage',
+    subtitle: 'Safe removal, curved stoma insertion with obturator, and avoiding pre-tracheal false passages',
+    badge: 'Sagittal Stoma Sim',
+    diagramType: 'builtin-sagittal',
+    customDiagramUrl: '',
+    supportsAgeSwitch: false,
+    disclaimer:
+      'Educational sagittal airway simulation. Never force a tracheostomy tube against resistance; if the same-size tube will not enter the tracheal lumen smoothly, immediately switch to the 0.5 mm smaller downsize tube.',
+    tools: [
+      {
+        id: 'tool-scissors',
+        name: 'Blunt Scissors / Tie Release',
+        short: 'Cut Ties',
+        desc: 'Release Velcro ties or cut cotton tapes safely with round-ended blunt scissors.'
+      },
+      {
+        id: 'tool-suction',
+        name: 'Flexible Suction Catheter',
+        short: 'Suction Stoma',
+        desc: 'Clear pooled secretions at the open stoma before inserting the replacement tube.'
+      },
+      {
+        id: 'tool-spare-tube',
+        name: 'Lubricated Spare Tube + Obturator',
+        short: 'Insert Tube',
+        desc: 'Insert lubricated spare tube with obturator in place using a smooth downward curve into the true tracheal lumen.'
+      },
+      {
+        id: 'tool-obturator',
+        name: 'Remove Obturator & Attach EtCO2',
+        short: 'Pull Obturator',
+        desc: 'Immediately withdraw the solid obturator once the flange sits on the skin and attach BVM + waveform EtCO2.'
+      }
+    ],
+    steps: [
+      {
+        id: 'tc-1',
+        phase: 'Removal of Blocked Tube',
+        title: 'Release Neck Ties & Withdraw Blocked Tube',
+        instruction:
+          'Select Cut Ties and tap the neck flange to release the ties and withdraw the occluded tube in a smooth downward arc.',
+        traineeTip:
+          'Ensure any cuff (e.g., Bivona TTS sterile water cuff) is fully aspirated with a syringe before withdrawing.',
+        basicNote:
+          'Removing a blocked tube immediately opens the stoma and allows upper-airway airflow in Green Pathway patients.',
+        requiredTool: 'tool-scissors',
+        interactionType: 'tap',
+        targetZone: { x: 185, y: 165, r: 42, label: 'Tracheostomy Flange & Ties' },
+        demoHint: 'Select "Cut Ties" and tap the tracheostomy flange at the anterior neck.'
+      },
+      {
+        id: 'tc-2',
+        phase: 'Stoma Preparation',
+        title: 'Suction Open Stoma & Identify True Tracheal Tract',
+        instruction:
+          'Select Suction Stoma and tap the open stoma tract to clear secretions and visualise the posterior tracheal wall.',
+        traineeTip:
+          'Notice the pre-tracheal tissue plane anterior to the trachea—inserting too steeply or forcefully creates a dangerous false passage.',
+        basicNote:
+          'Clearing secretions gives a clean view of the windpipe opening.',
+        requiredTool: 'tool-suction',
+        interactionType: 'tap',
+        targetZone: { x: 215, y: 165, r: 38, label: 'Open Tracheal Stoma' },
+        demoHint: 'Select "Suction Stoma" and tap the open stoma.'
+      },
+      {
+        id: 'tc-3',
+        phase: 'Curved Insertion',
+        title: 'Guide Spare Tube Downward Into True Tracheal Lumen',
+        instruction:
+          'Select Insert Tube and drag in a smooth downward curve from the stoma into the true tracheal lumen (avoiding the anterior false-passage plane).',
+        traineeTip:
+          'Enter perpendicular to the neck skin first, then rotate caudally as the tip enters the trachea. If resistance occurs, switch to the 0.5 mm downsize tube.',
+        basicNote:
+          'Following the natural curve of the windpipe guides the tube safely into place.',
+        requiredTool: 'tool-spare-tube',
+        interactionType: 'drag',
+        dragStart: { x: 185, y: 165 },
+        dragEnd: { x: 270, y: 245 },
+        targetZone: { x: 270, y: 245, r: 42, label: 'True Tracheal Lumen' },
+        demoHint: 'Select "Insert Tube" and drag downward into the blue tracheal lumen.'
+      },
+      {
+        id: 'tc-4',
+        phase: 'Verification',
+        title: 'Remove Obturator Immediately & Confirm Waveform EtCO2',
+        instruction:
+          'Select Pull Obturator and tap the tube hub to withdraw the solid obturator and confirm square-wave capnography.',
+        traineeTip:
+          'The child cannot breathe while the obturator remains inside. Confirm placement with EtCO2, chest rise, and easy suction catheter passage.',
+        basicNote:
+          'Removing the solid guide opens the tube so oxygen can flow into the lungs.',
+        requiredTool: 'tool-obturator',
+        interactionType: 'tap',
+        targetZone: { x: 195, y: 165, r: 42, label: '15 mm Tube Hub' },
+        demoHint: 'Select "Pull Obturator" and tap the tube hub to complete.'
+      }
+    ]
+  }
+];
+
 const cleanStepTitle = (rawTitle = '') => {
   return rawTitle.replace(/^[0-9]+[A-Za-z]?\.\s*/, '').trim();
 };
@@ -1229,9 +1754,89 @@ const ALS_DRUG_OPTIONS = [
   { id: 'glucose', label: 'Glucose 10% 2 ml/kg' }
 ];
 
+const INITIAL_FEEDBACK_LOGS = [
+  {
+    id: 'fb-sample-1',
+    moduleTitle: 'All Learning Modules (Overall Curriculum)',
+    relevanceRating: 5,
+    qualityRating: 5,
+    objectivesRating: 5,
+    overallRating: 5,
+    comments: 'Clear NTSP Green/Red differentiation and concise roadside sizing rules.',
+    submittedAt: '2026-02-20'
+  }
+];
+
 export default function App() {
   const [appMode, setAppMode] = useState('oncall');
   const [onCallSubView, setOnCallSubView] = useState('main');
+  const [learningSectionTab, setLearningSectionTab] = useState('modules'); // 'modules' | 'simulator'
+
+  // Ensure crisp 512x512 PNG Apple Touch Icon for iOS/Android Home Screen
+  useEffect(() => {
+    try {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+      if (ctx) {
+        const g = ctx.createLinearGradient(0, 0, 512, 512);
+        g.addColorStop(0, '#10b981');
+        g.addColorStop(1, '#0f766e');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 512, 512);
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.fillStyle = '#ffffff';
+        ctx.lineWidth = 28;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        ctx.beginPath();
+        ctx.roundRect(84, 152, 344, 78, 39);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.roundRect(202, 88, 108, 64, 14);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(216, 230);
+        ctx.quadraticCurveTo(216, 382, 326, 408);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(296, 230);
+        ctx.quadraticCurveTo(296, 336, 368, 354);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(144, 191, 14, 0, Math.PI * 2);
+        ctx.arc(368, 191, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        const pngDataUrl = c.toDataURL('image/png');
+        let appleLink = document.querySelector("link[rel='apple-touch-icon']");
+        if (!appleLink) {
+          appleLink = document.createElement('link');
+          appleLink.rel = 'apple-touch-icon';
+          document.head.appendChild(appleLink);
+        }
+        appleLink.href = pngDataUrl;
+
+        let iconLink = document.querySelector("link[rel='icon']");
+        if (!iconLink) {
+          iconLink = document.createElement('link');
+          iconLink.rel = 'icon';
+          document.head.appendChild(iconLink);
+        }
+        iconLink.type = 'image/png';
+        iconLink.href = pngDataUrl;
+      }
+    } catch (e) {
+      // Ignore on non-browser environments
+    }
+  }, []);
 
   // ==========================================
   // FIREBASE REAL-TIME CLOUD SYNC STATE
@@ -1243,7 +1848,10 @@ export default function App() {
 
   const [pathways, setPathways] = useState(INITIAL_PATHWAYS);
   const [learningModules, setLearningModules] = useState(INITIAL_LEARNING_MODULES);
+  const [tubeHardwareList, setTubeHardwareList] = useState(INITIAL_TUBE_HARDWARE_GUIDE);
+  const [procedureSims, setProcedureSims] = useState(INITIAL_PROCEDURE_SIMULATIONS);
   const [adminUsers, setAdminUsers] = useState(INITIAL_ADMIN_USERS);
+  const [feedbackLogs, setFeedbackLogs] = useState(INITIAL_FEEDBACK_LOGS);
   const [auditLogs, setAuditLogs] = useState([
     {
       id: 'log-init',
@@ -1259,109 +1867,69 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Dynamically generate high-res PNG Apple Touch Icon, Favicon & Web App Manifest
-  // so iOS Safari and Android Chrome display the custom PaedTraches logo on the Home Screen
-  useEffect(() => {
-    document.title = 'PaedTraches — Paediatric Tracheostomy Guide';
+  const [offlinePackSyncedAt, setOfflinePackSyncedAt] = useState(() => {
     try {
-      const iconCanvas = document.createElement('canvas');
-      iconCanvas.width = 512;
-      iconCanvas.height = 512;
-      const ctx = iconCanvas.getContext('2d');
-      if (!ctx) return;
-
-      // Emerald-to-Teal solid background (iOS requires opaque backgrounds for home screen icons)
-      const grad = ctx.createLinearGradient(0, 0, 512, 512);
-      grad.addColorStop(0, '#10b981');
-      grad.addColorStop(1, '#0f766e');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 512, 512);
-
-      // Draw PaedTraches Tracheostomy Flange & Curved Tube Emblem
-      ctx.strokeStyle = '#ffffff';
-      ctx.fillStyle = '#ffffff';
-      ctx.lineWidth = 28;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      // Neck flange plate
-      ctx.beginPath();
-      ctx.roundRect(84, 152, 344, 78, 39);
-      ctx.stroke();
-
-      // 15mm hub connector
-      ctx.beginPath();
-      ctx.roundRect(202, 88, 108, 64, 14);
-      ctx.stroke();
-
-      // Curved tracheostomy cannula
-      ctx.beginPath();
-      ctx.moveTo(216, 230);
-      ctx.quadraticCurveTo(216, 382, 326, 408);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(296, 230);
-      ctx.quadraticCurveTo(296, 336, 368, 354);
-      ctx.stroke();
-
-      // Flange tie eyelets
-      ctx.beginPath();
-      ctx.arc(144, 191, 14, 0, Math.PI * 2);
-      ctx.arc(368, 191, 14, 0, Math.PI * 2);
-      ctx.fill();
-
-      const pngDataUrl = iconCanvas.toDataURL('image/png');
-
-      // Set apple-touch-icon (iOS Home Screen)
-      let appleLink = document.querySelector("link[rel='apple-touch-icon']");
-      if (!appleLink) {
-        appleLink = document.createElement('link');
-        appleLink.rel = 'apple-touch-icon';
-        document.head.appendChild(appleLink);
+      const raw = localStorage.getItem(OFFLINE_CACHE_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed.cachedAt || null;
       }
-      appleLink.href = pngDataUrl;
-
-      // Set standard favicon
-      let favLink = document.querySelector("link[rel='icon']");
-      if (!favLink) {
-        favLink = document.createElement('link');
-        favLink.rel = 'icon';
-        document.head.appendChild(favLink);
-      }
-      favLink.type = 'image/png';
-      favLink.href = pngDataUrl;
-
-      // Inject dynamic Web App Manifest (Android Chrome Home Screen)
-      const manifestObj = {
-        name: 'PaedTraches — Paediatric Tracheostomy Guide',
-        short_name: 'PaedTraches',
-        start_url: '.',
-        display: 'standalone',
-        background_color: '#059669',
-        theme_color: '#059669',
-        icons: [
-          {
-            src: pngDataUrl,
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
-      };
-      const manifestBlob = new Blob([JSON.stringify(manifestObj)], {
-        type: 'application/manifest+json'
-      });
-      const manifestUrl = URL.createObjectURL(manifestBlob);
-      let manifestLink = document.querySelector("link[rel='manifest']");
-      if (!manifestLink) {
-        manifestLink = document.createElement('link');
-        manifestLink.rel = 'manifest';
-        document.head.appendChild(manifestLink);
-      }
-      manifestLink.href = manifestUrl;
     } catch (e) {
-      // Ignore if sandboxed
+      // ignore
+    }
+    return null;
+  });
+  const [offlineSyncToast, setOfflineSyncToast] = useState(false);
+
+  const syncOfflineShiftPack = (
+    pwList = pathways,
+    modList = learningModules,
+    hwList = tubeHardwareList,
+    showFeedback = false
+  ) => {
+    try {
+      const nowLabel = new Date().toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      localStorage.setItem(
+        OFFLINE_CACHE_STORAGE_KEY,
+        JSON.stringify({
+          cachedAt: nowLabel,
+          pathways: pwList,
+          learningModules: modList,
+          tubeHardwareList: hwList
+        })
+      );
+      setOfflinePackSyncedAt(nowLabel);
+      if (showFeedback) {
+        setOfflineSyncToast(true);
+        setTimeout(() => setOfflineSyncToast(false), 3000);
+      }
+    } catch (e) {
+      // ignore quota errors
+    }
+  };
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(OFFLINE_CACHE_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.pathways) && parsed.pathways.length > 0) {
+          setPathways(parsed.pathways);
+        }
+        if (Array.isArray(parsed.learningModules) && parsed.learningModules.length > 0) {
+          setLearningModules(parsed.learningModules);
+        }
+        if (Array.isArray(parsed.tubeHardwareList) && parsed.tubeHardwareList.length > 0) {
+          setTubeHardwareList(parsed.tubeHardwareList);
+        }
+      }
+    } catch (e) {
+      // ignore
     }
   }, []);
 
@@ -1442,15 +2010,49 @@ export default function App() {
         if (snapshot.exists()) {
           const data = snapshot.data();
           try {
-            if (data.pathwaysJson) setPathways(JSON.parse(data.pathwaysJson));
+            let latestPathways = pathways;
+            let latestModules = learningModules;
+            let latestHardware = tubeHardwareList;
+            if (data.pathwaysJson) {
+              latestPathways = JSON.parse(data.pathwaysJson);
+              setPathways(latestPathways);
+            }
+            if (data.tubeHardwareJson) {
+              latestHardware = JSON.parse(data.tubeHardwareJson);
+              setTubeHardwareList(latestHardware);
+            }
+            if (data.procedureSimsJson) {
+              const parsedSims = JSON.parse(data.procedureSimsJson);
+              if (Array.isArray(parsedSims) && parsedSims.length > 0) {
+                const hasTrachSim = parsedSims.some((s) => s.id === 'sim-trach-change');
+                setProcedureSims(
+                  hasTrachSim
+                    ? parsedSims
+                    : [...parsedSims, INITIAL_PROCEDURE_SIMULATIONS[1]]
+                );
+              }
+            }
             if (data.modulesJson) {
               const cloudMods = JSON.parse(data.modulesJson);
-              // Merge default rich formatting (tables & bullet lists) if older cloud sections lack them
               const mergedMods = cloudMods.map((cm) => {
                 const defaultMod = INITIAL_LEARNING_MODULES.find((im) => im.id === cm.id);
                 if (!defaultMod) return cm;
                 return {
                   ...cm,
+                  targetAudience: cm.targetAudience || defaultMod.targetAudience,
+                  facultyName: cm.facultyName || defaultMod.facultyName,
+                  facultyCredentials:
+                    cm.facultyCredentials || defaultMod.facultyCredentials,
+                  peerReviewedDate: cm.peerReviewedDate || defaultMod.peerReviewedDate,
+                  coiDisclosure: cm.coiDisclosure || defaultMod.coiDisclosure,
+                  references:
+                    Array.isArray(cm.references) && cm.references.length > 0
+                      ? cm.references
+                      : defaultMod.references || [],
+                  learningObjectives:
+                    Array.isArray(cm.learningObjectives) && cm.learningObjectives.length > 0
+                      ? cm.learningObjectives
+                      : defaultMod.learningObjectives || [],
                   sections: (cm.sections || []).map((cs) => {
                     const defaultSec = defaultMod.sections.find((ds) => ds.id === cs.id);
                     if (!defaultSec) return cs;
@@ -1461,14 +2063,19 @@ export default function App() {
                       comparisonTable:
                         cs.comparisonTable && cs.comparisonTable.length > 0
                           ? cs.comparisonTable
-                          : defaultSec.comparisonTable || []
+                          : defaultSec.comparisonTable || [],
+                      flashcard: cs.flashcard || defaultSec.flashcard,
+                      miniCase: cs.miniCase || defaultSec.miniCase
                     };
                   })
                 };
               });
+              latestModules = mergedMods;
               setLearningModules(mergedMods);
             }
+            syncOfflineShiftPack(latestPathways, latestModules, latestHardware, false);
             if (data.adminUsersJson) setAdminUsers(JSON.parse(data.adminUsersJson));
+            if (data.feedbackLogsJson) setFeedbackLogs(JSON.parse(data.feedbackLogsJson));
             if (data.auditLogsJson) setAuditLogs(JSON.parse(data.auditLogsJson));
             if (data.updatedAt) setLastCloudSyncAt(data.updatedAt);
             if (data.updatedBy) setLastUpdatedBy(data.updatedBy);
@@ -1480,7 +2087,10 @@ export default function App() {
           const seedPayload = {
             pathwaysJson: JSON.stringify(INITIAL_PATHWAYS),
             modulesJson: JSON.stringify(INITIAL_LEARNING_MODULES),
+            tubeHardwareJson: JSON.stringify(INITIAL_TUBE_HARDWARE_GUIDE),
+            procedureSimsJson: JSON.stringify(INITIAL_PROCEDURE_SIMULATIONS),
             adminUsersJson: JSON.stringify(INITIAL_ADMIN_USERS),
+            feedbackLogsJson: JSON.stringify(INITIAL_FEEDBACK_LOGS),
             auditLogsJson: JSON.stringify([
               {
                 id: 'log-init',
@@ -1554,7 +2164,10 @@ export default function App() {
   const publishCloudUpdate = async ({
     nextPathways = pathways,
     nextModules = learningModules,
+    nextHardware = tubeHardwareList,
+    nextSims = procedureSims,
     nextAdmins = adminUsers,
+    nextFeedbackLogs = feedbackLogs,
     actionDescription = 'Updated clinical content'
   }) => {
     const actorName = currentAdminUser?.name || 'Admin Editor';
@@ -1572,10 +2185,14 @@ export default function App() {
 
     setPathways(nextPathways);
     setLearningModules(nextModules);
+    setTubeHardwareList(nextHardware);
+    setProcedureSims(nextSims);
     setAdminUsers(nextAdmins);
+    setFeedbackLogs(nextFeedbackLogs);
     setAuditLogs(nextLogs);
     setLastCloudSyncAt(timeStr);
     setLastUpdatedBy(actorName);
+    syncOfflineShiftPack(nextPathways, nextModules, nextHardware, false);
 
     if (fbUser && db) {
       try {
@@ -1591,7 +2208,10 @@ export default function App() {
         await setDoc(contentDocRef, {
           pathwaysJson: JSON.stringify(nextPathways),
           modulesJson: JSON.stringify(nextModules),
+          tubeHardwareJson: JSON.stringify(nextHardware),
+          procedureSimsJson: JSON.stringify(nextSims),
           adminUsersJson: JSON.stringify(nextAdmins),
+          feedbackLogsJson: JSON.stringify(nextFeedbackLogs),
           auditLogsJson: JSON.stringify(nextLogs),
           updatedAt: timeStr,
           updatedBy: actorName
@@ -1611,10 +2231,24 @@ export default function App() {
   const [flowchartInspectNode, setFlowchartInspectNode] = useState(null);
   const [showPathwayRefs, setShowPathwayRefs] = useState(false);
 
-  // Roadside Tools Modal State ('calculator' | 'checklist' | 'handover' | null)
+  // Roadside Tools Modal State ('calculator' | 'checklist' | 'handover' | 'hardware' | 'troubleshoot' | null)
   const [activeToolModal, setActiveToolModal] = useState(null);
   const [selectedTubeIdSize, setSelectedTubeIdSize] = useState('4.0');
   const [bagChecked, setBagChecked] = useState({});
+  const [selectedTroubleshootId, setSelectedTroubleshootId] = useState('ts-high-resistance');
+
+  // Interactive Procedure Simulator State (With Live Telemetry Monitor & Patient Age Group)
+  const [activeSimId, setActiveSimId] = useState('sim-paed-cric');
+  const [simPersona, setSimPersona] = useState('trainee');
+  const [simAgeGroup, setSimAgeGroup] = useState('child'); // 'infant' | 'child' | 'adolescent'
+  const [simStepIndex, setSimStepIndex] = useState(0);
+  const [simCompletedSteps, setSimCompletedSteps] = useState({});
+  const [selectedSimTool, setSelectedSimTool] = useState('tool-hands');
+  const [showSimLabels, setShowSimLabels] = useState(true);
+  const [simShowMeHint, setSimShowMeHint] = useState(false);
+  const [simFeedbackBanner, setSimFeedbackBanner] = useState(null);
+  const [simDragActive, setSimDragActive] = useState(false);
+  const [simDragCurrent, setSimDragCurrent] = useState(null);
 
   // Hospital Pre-Alert / SBAR Handover Builder State
   const createEmptyHandoverForm = () => ({
@@ -1648,8 +2282,34 @@ export default function App() {
   // CPD Certificate Modal State
   const [cpdClinicianName, setCpdClinicianName] = useState('');
   const [cpdRegNumber, setCpdRegNumber] = useState('');
-  const [cpdReflectionText, setCpdReflectionText] = useState('');
+  const [cpdKeyPointsLearned, setCpdKeyPointsLearned] = useState('');
+  const [cpdPracticeChange, setCpdPracticeChange] = useState('');
   const [showCpdModal, setShowCpdModal] = useState(false);
+
+  // Separate ENT UK Standardised Course Feedback Modal State
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackSubmittedToast, setFeedbackSubmittedToast] = useState(false);
+  const [feedbackDraft, setFeedbackDraft] = useState({
+    moduleTitle: 'All Learning Modules (Overall Curriculum)',
+    relevanceRating: 5,
+    qualityRating: 5,
+    objectivesRating: 5,
+    overallRating: 5,
+    comments: ''
+  });
+
+  const openLockedFeedbackModal = (lockedTargetTitle) => {
+    setFeedbackSubmittedToast(false);
+    setFeedbackDraft({
+      moduleTitle: lockedTargetTitle,
+      relevanceRating: 5,
+      qualityRating: 5,
+      objectivesRating: 5,
+      overallRating: 5,
+      comments: ''
+    });
+    setShowFeedbackModal(true);
+  };
 
   // CPR Timer, Modals & Learning Module State
   const [showCprTimer, setShowCprTimer] = useState(false);
@@ -1666,6 +2326,14 @@ export default function App() {
   const [quizAttemptSeed, setQuizAttemptSeed] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
+
+  // Enhanced E-Learning Comfort & Interactive State
+  const [moduleNightMode, setModuleNightMode] = useState(false);
+  const [moduleLargeText, setModuleLargeText] = useState(false);
+  const [flippedFlashcards, setFlippedFlashcards] = useState({});
+  const [miniCaseAnswers, setMiniCaseAnswers] = useState({});
+  const [expandedVideoTranscripts, setExpandedVideoTranscripts] = useState({});
+  const [showFacultyGovernanceBox, setShowFacultyGovernanceBox] = useState(false);
 
   // Admin CMS State
   const [adminTab, setAdminTab] = useState('pathways');
@@ -1700,6 +2368,7 @@ export default function App() {
   });
 
   const [adminModuleId, setAdminModuleId] = useState('mod-anatomy');
+  const [newObjectiveDraft, setNewObjectiveDraft] = useState('');
   const [editingSectionId, setEditingSectionId] = useState(null);
   const [previewSectionInEditor, setPreviewSectionInEditor] = useState(false);
   const [sectionForm, setSectionForm] = useState({
@@ -1709,6 +2378,14 @@ export default function App() {
     calloutType: 'pearl',
     pearl: '',
     comparisonTable: [],
+    flashcardFront: '',
+    flashcardBack: '',
+    miniCaseScenario: '',
+    miniCaseOpt0: '',
+    miniCaseOpt1: '',
+    miniCaseOpt2: '',
+    miniCaseCorrect: 0,
+    miniCaseFeedback: '',
     images: [],
     videos: []
   });
@@ -1718,7 +2395,8 @@ export default function App() {
     title: '',
     duration: '03:00',
     url: '',
-    description: ''
+    description: '',
+    transcript: ''
   });
   const [uploadingMediaType, setUploadingMediaType] = useState(null);
   const [uploadProgressPct, setUploadProgressPct] = useState(0);
@@ -1736,6 +2414,31 @@ export default function App() {
     opt2: '',
     correct: 0,
     explanation: ''
+  });
+
+  // Tube ID Hardware Admin Editor State
+  const [editingHardwareId, setEditingHardwareId] = useState(null);
+  const [hardwareForm, setHardwareForm] = useState({
+    name: '',
+    tag: 'Paediatric Tracheostomy Tube',
+    tagColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    imageUrl: '',
+    cuffType: '',
+    innerCannula: 'None (Single-lumen)',
+    keyVisualCue: '',
+    emergencyAction: ''
+  });
+  const [uploadingHardwarePhoto, setUploadingHardwarePhoto] = useState(false);
+
+  // Admin Procedure Sim Designer State (Add / Edit / Delete Steps, Tools & Diagram Hotspots)
+  const [adminSimId, setAdminSimId] = useState('sim-paed-cric');
+  const [editingSimStepIdx, setEditingSimStepIdx] = useState(0);
+  const [uploadingSimDiagram, setUploadingSimDiagram] = useState(false);
+  const [showNewSimModal, setShowNewSimModal] = useState(false);
+  const [newSimForm, setNewSimForm] = useState({
+    title: '',
+    subtitle: '',
+    customDiagramUrl: ''
   });
 
   const [ownProfileForm, setOwnProfileForm] = useState({
@@ -1864,6 +2567,85 @@ export default function App() {
     }
   };
 
+  // ==========================================
+  // STREAMLINED ENT UK COURSE FEEDBACK HANDLER
+  // ==========================================
+  const handleSubmitCourseFeedback = async (e) => {
+    e.preventDefault();
+    const entry = {
+      id: `fb-${Date.now()}`,
+      moduleTitle: feedbackDraft.moduleTitle,
+      relevanceRating: Number(feedbackDraft.relevanceRating),
+      qualityRating: Number(feedbackDraft.qualityRating),
+      objectivesRating: Number(feedbackDraft.objectivesRating),
+      overallRating: Number(feedbackDraft.overallRating),
+      comments: feedbackDraft.comments.trim(),
+      submittedAt: new Date().toISOString().slice(0, 10)
+    };
+
+    const nextFeedbackLogs = [entry, ...feedbackLogs];
+    setFeedbackLogs(nextFeedbackLogs);
+
+    if (fbUser && db) {
+      try {
+        const contentDocRef = doc(
+          db,
+          'artifacts',
+          appId,
+          'public',
+          'data',
+          'paedtrach_cms',
+          'live_bundle'
+        );
+        await setDoc(
+          contentDocRef,
+          { feedbackLogsJson: JSON.stringify(nextFeedbackLogs) },
+          { merge: true }
+        );
+      } catch (err) {
+        // Fallback saved locally
+      }
+    }
+
+    setFeedbackSubmittedToast(true);
+    setTimeout(() => {
+      setShowFeedbackModal(false);
+      setFeedbackSubmittedToast(false);
+    }, 1500);
+  };
+
+  const handleExportFeedbackCsv = () => {
+    const headers = [
+      'Date',
+      'Target Module / Scope',
+      'Relevance to Practice (1-5)',
+      'Educational Quality (1-5)',
+      'Effectiveness Meeting Objectives (1-5)',
+      'Overall Satisfaction (1-5)',
+      'Suggestions / Training Needs'
+    ];
+    const rows = feedbackLogs.map((f) => [
+      f.submittedAt,
+      `"${(f.moduleTitle || '').replace(/"/g, '""')}"`,
+      f.relevanceRating,
+      f.qualityRating,
+      f.objectivesRating || f.overallRating || 5,
+      f.overallRating,
+      `"${(f.comments || '').replace(/"/g, '""')}"`
+    ]);
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'PaedTraches-ENTUK-Course-Feedback.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    notifyCms('Exported Course Feedback Summary CSV');
+  };
+
   const generateCpdCertificateDataUrl = () => {
     if (!activeModule) return null;
     const canvas = document.createElement('canvas');
@@ -1872,14 +2654,12 @@ export default function App() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
 
-    // Clean white & subtle emerald gradient background
     const bgGrad = ctx.createLinearGradient(0, 0, 1600, 1130);
     bgGrad.addColorStop(0, '#ffffff');
     bgGrad.addColorStop(1, '#f0fdf4');
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, 1600, 1130);
 
-    // Outer & inner decorative borders
     ctx.strokeStyle = '#059669';
     ctx.lineWidth = 10;
     ctx.strokeRect(44, 44, 1512, 1042);
@@ -1888,7 +2668,6 @@ export default function App() {
     ctx.lineWidth = 3;
     ctx.strokeRect(64, 64, 1472, 1002);
 
-    // Draw PaedTraches Emblem on Top Left
     const logoGrad = ctx.createLinearGradient(110, 105, 196, 191);
     logoGrad.addColorStop(0, '#10b981');
     logoGrad.addColorStop(1, '#0f766e');
@@ -1921,7 +2700,6 @@ export default function App() {
     ctx.arc(172, 137, 2.8, 0, Math.PI * 2);
     ctx.fill();
 
-    // Brand Header Text
     ctx.fillStyle = '#0f172a';
     ctx.font = 'bold 38px sans-serif';
     ctx.textAlign = 'left';
@@ -1931,7 +2709,6 @@ export default function App() {
     ctx.font = 'bold 20px sans-serif';
     ctx.fillText('PaedTraches.co.uk  •  Paediatric Tracheostomy Clinical Education', 216, 178);
 
-    // Top Right Badge
     ctx.fillStyle = '#ecfdf5';
     ctx.beginPath();
     ctx.roundRect(1185, 115, 300, 52, 26);
@@ -1944,7 +2721,6 @@ export default function App() {
     ctx.textAlign = 'center';
     ctx.fillText('CPD CERTIFICATE', 1335, 148);
 
-    // Divider line
     ctx.strokeStyle = '#e2e8f0';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -1952,37 +2728,33 @@ export default function App() {
     ctx.lineTo(1490, 224);
     ctx.stroke();
 
-    // Certificate Main Title
     ctx.textAlign = 'center';
     ctx.fillStyle = '#059669';
     ctx.font = 'bold 22px sans-serif';
-    ctx.fillText('CERTIFICATE OF CONTINUING PROFESSIONAL DEVELOPMENT', 800, 295);
+    ctx.fillText('CERTIFICATE OF CONTINUING PROFESSIONAL DEVELOPMENT', 800, 285);
 
     ctx.fillStyle = '#475569';
-    ctx.font = '26px sans-serif';
-    ctx.fillText('This certifies that', 800, 360);
+    ctx.font = '25px sans-serif';
+    ctx.fillText('This certifies that', 800, 342);
 
-    // Clinician Name & Registration
     const displayName = cpdClinicianName.trim() || 'Registered Healthcare Clinician';
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 54px sans-serif';
-    ctx.fillText(displayName, 800, 435);
+    ctx.font = 'bold 52px sans-serif';
+    ctx.fillText(displayName, 800, 412);
 
     if (cpdRegNumber.trim()) {
       ctx.fillStyle = '#475569';
-      ctx.font = '600 24px sans-serif';
-      ctx.fillText(`Professional Registration / Pin: ${cpdRegNumber.trim()}`, 800, 480);
+      ctx.font = '600 23px sans-serif';
+      ctx.fillText(`Professional Registration / Pin: ${cpdRegNumber.trim()}`, 800, 455);
     }
 
-    // Underline under name
     ctx.strokeStyle = '#10b981';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(420, 505);
-    ctx.lineTo(1180, 505);
+    ctx.moveTo(420, 480);
+    ctx.lineTo(1180, 480);
     ctx.stroke();
 
-    // Module Completion Statement
     const todayFormatted = new Date().toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'long',
@@ -1990,69 +2762,79 @@ export default function App() {
     });
 
     ctx.fillStyle = '#475569';
-    ctx.font = '26px sans-serif';
-    ctx.fillText('has successfully completed the clinical learning module & assessment', 800, 565);
+    ctx.font = '24px sans-serif';
+    ctx.fillText('has successfully completed the clinical learning module & 100% mastery assessment', 800, 535);
 
     ctx.fillStyle = '#065f46';
-    ctx.font = 'bold 38px sans-serif';
-    ctx.fillText(`“${activeModule.title}”`, 800, 625);
+    ctx.font = 'bold 36px sans-serif';
+    ctx.fillText(`“${activeModule.title}”`, 800, 592);
 
     ctx.fillStyle = '#334155';
-    ctx.font = '600 24px sans-serif';
+    ctx.font = '600 22px sans-serif';
     ctx.fillText(
       `via PaedTraches.co.uk  •  Completed on ${todayFormatted}  (${activeModule.duration})`,
       800,
-      675
+      638
     );
 
-    // Optional Reflection Box
-    if (cpdReflectionText.trim()) {
+    const hasReflection =
+      cpdKeyPointsLearned.trim() || cpdPracticeChange.trim();
+
+    if (hasReflection) {
       ctx.fillStyle = '#f8fafc';
       ctx.beginPath();
-      ctx.roundRect(160, 725, 1280, 175, 20);
+      ctx.roundRect(150, 680, 1300, 240, 20);
       ctx.fill();
       ctx.strokeStyle = '#cbd5e1';
       ctx.lineWidth = 2;
       ctx.stroke();
 
       ctx.fillStyle = '#059669';
-      ctx.font = 'bold 18px sans-serif';
+      ctx.font = 'bold 17px sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('CLINICIAN PRACTICE REFLECTION:', 195, 765);
+      ctx.fillText('REFLECTIVE PRACTICE JOURNAL (APPRAISAL EVIDENCE):', 185, 718);
 
-      ctx.fillStyle = '#334155';
-      ctx.font = 'italic 21px sans-serif';
-      const words = `“${cpdReflectionText.trim()}”`.split(' ');
-      let line = '';
-      let y = 805;
-      for (let i = 0; i < words.length; i++) {
-        const testLine = line + words[i] + ' ';
-        if (ctx.measureText(testLine).width > 1210 && i > 0) {
-          ctx.fillText(line.trim(), 195, y);
-          line = words[i] + ' ';
-          y += 32;
-          if (y > 875) {
-            line = line.trim() + '...';
-            break;
+      let cursorY = 755;
+      const drawWrappedText = (prefix, content) => {
+        if (!content) return;
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText(prefix, 185, cursorY);
+        cursorY += 26;
+
+        ctx.fillStyle = '#334155';
+        ctx.font = '18px sans-serif';
+        const words = content.split(' ');
+        let line = '';
+        for (let i = 0; i < words.length; i++) {
+          const testLine = line + words[i] + ' ';
+          if (ctx.measureText(testLine).width > 1230 && i > 0) {
+            ctx.fillText(line.trim(), 185, cursorY);
+            line = words[i] + ' ';
+            cursorY += 25;
+            if (cursorY > 900) break;
+          } else {
+            line = testLine;
           }
-        } else {
-          line = testLine;
         }
-      }
-      ctx.fillText(line.trim(), 195, y);
+        ctx.fillText(line.trim(), 185, cursorY);
+        cursorY += 32;
+      };
+
+      drawWrappedText('Key Points Learned:', cpdKeyPointsLearned.trim());
+      drawWrappedText('How This Will Change Clinical Practice:', cpdPracticeChange.trim());
     }
 
-    // Footer Governance Line
     ctx.textAlign = 'center';
     ctx.fillStyle = '#64748b';
-    ctx.font = '20px sans-serif';
+    ctx.font = '19px sans-serif';
     ctx.fillText(
       `PaedTraches.co.uk • Paediatric Tracheostomy Reference (${INITIAL_GOVERNANCE_META.version}) • Aligned with NTSP & Resuscitation Council UK`,
       800,
       985
     );
     ctx.fillStyle = '#94a3b8';
-    ctx.font = '18px sans-serif';
+    ctx.font = '17px sans-serif';
     ctx.fillText(
       `Certificate ID: PT-${activeModule.id.toUpperCase()}-${Date.now().toString().slice(-6)}`,
       800,
@@ -2294,7 +3076,10 @@ export default function App() {
       exportedAt: new Date().toISOString(),
       pathways,
       learningModules,
-      adminUsers
+      tubeHardwareList,
+      procedureSims,
+      adminUsers,
+      feedbackLogs
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json'
@@ -2316,7 +3101,16 @@ export default function App() {
         publishCloudUpdate({
           nextPathways: parsed.pathways,
           nextModules: parsed.learningModules,
+          nextHardware: Array.isArray(parsed.tubeHardwareList)
+            ? parsed.tubeHardwareList
+            : tubeHardwareList,
+          nextSims: Array.isArray(parsed.procedureSims)
+            ? parsed.procedureSims
+            : procedureSims,
           nextAdmins: Array.isArray(parsed.adminUsers) ? parsed.adminUsers : adminUsers,
+          nextFeedbackLogs: Array.isArray(parsed.feedbackLogs)
+            ? parsed.feedbackLogs
+            : feedbackLogs,
           actionDescription: 'Restored full content bundle from JSON backup'
         });
         setImportJsonText('');
@@ -2779,12 +3573,26 @@ export default function App() {
       calloutType: 'pearl',
       pearl: '',
       comparisonTable: [],
+      flashcardFront: '',
+      flashcardBack: '',
+      miniCaseScenario: '',
+      miniCaseOpt0: '',
+      miniCaseOpt1: '',
+      miniCaseOpt2: '',
+      miniCaseCorrect: 0,
+      miniCaseFeedback: '',
       images: [],
       videos: []
     });
     setNewTableRowDraft({ label: '', value: '' });
     setNewImageDraft({ title: '', caption: '', url: '' });
-    setNewVideoDraft({ title: '', duration: '03:00', url: '', description: '' });
+    setNewVideoDraft({
+      title: '',
+      duration: '03:00',
+      url: '',
+      description: '',
+      transcript: ''
+    });
     setPreviewSectionInEditor(false);
   };
 
@@ -2797,6 +3605,14 @@ export default function App() {
       calloutType: sec.calloutType || 'pearl',
       pearl: sec.pearl || '',
       comparisonTable: sec.comparisonTable ? [...sec.comparisonTable] : [],
+      flashcardFront: sec.flashcard?.front || '',
+      flashcardBack: sec.flashcard?.back || '',
+      miniCaseScenario: sec.miniCase?.scenario || '',
+      miniCaseOpt0: sec.miniCase?.options?.[0] || '',
+      miniCaseOpt1: sec.miniCase?.options?.[1] || '',
+      miniCaseOpt2: sec.miniCase?.options?.[2] || '',
+      miniCaseCorrect: sec.miniCase?.correctIndex ?? 0,
+      miniCaseFeedback: sec.miniCase?.feedback || '',
       images: sec.images ? [...sec.images] : [],
       videos: sec.videos ? [...sec.videos] : []
     });
@@ -2903,11 +3719,18 @@ export default function App() {
                 duration: newVideoDraft.duration.trim() || 'Video Clip',
                 url: downloadUrl,
                 description:
-                  newVideoDraft.description.trim() || 'Uploaded clinical training video.'
+                  newVideoDraft.description.trim() || 'Uploaded clinical training video.',
+                transcript: newVideoDraft.transcript.trim() || ''
               }
             ]
           }));
-          setNewVideoDraft({ title: '', duration: '03:00', url: '', description: '' });
+          setNewVideoDraft({
+            title: '',
+            duration: '03:00',
+            url: '',
+            description: '',
+            transcript: ''
+          });
           notifyCms('Video uploaded to Cloud Storage & attached to section!');
         }
         setUploadingMediaType(null);
@@ -2933,7 +3756,17 @@ export default function App() {
       title: newModuleForm.title.trim(),
       category: newModuleForm.category.trim() || 'Clinical Skills',
       duration: newModuleForm.duration.trim() || '5 min read',
+      targetAudience: 'ENT Trainees, Anaesthetists, Paediatricians, ED Clinicians & Paramedics',
+      facultyName: currentAdminUser?.name || 'Paediatric Airway & Pre-Hospital Education Group',
+      facultyCredentials: 'Consultant Paediatric ENT & Specialist Pre-Hospital Faculty',
+      peerReviewedDate: new Date().toISOString().slice(0, 10),
+      coiDisclosure: 'None declared — independent educational resource.',
+      references: [],
       summary: newModuleForm.summary.trim() || 'Educational module for paediatric tracheostomy care.',
+      learningObjectives: [
+        'Identify key clinical signs and airway priorities in this scenario.',
+        'Apply safe, evidence-based paediatric tracheostomy management aligned with NTSP standards.'
+      ],
       sections: [
         {
           id: `sec-${Date.now()}`,
@@ -2991,6 +3824,24 @@ export default function App() {
     });
   };
 
+  const handleAddModuleObjective = () => {
+    if (!newObjectiveDraft.trim()) return;
+    const updatedObjectives = [
+      ...(adminModule.learningObjectives || []),
+      newObjectiveDraft.trim()
+    ];
+    handleUpdateModuleMeta('learningObjectives', updatedObjectives);
+    setNewObjectiveDraft('');
+    notifyCms('Added Learning Objective');
+  };
+
+  const handleDeleteModuleObjective = (objIndex) => {
+    const updatedObjectives = (adminModule.learningObjectives || []).filter(
+      (_, i) => i !== objIndex
+    );
+    handleUpdateModuleMeta('learningObjectives', updatedObjectives);
+  };
+
   const handleAddImageToSectionForm = () => {
     if (!newImageDraft.title.trim() && !newImageDraft.url.trim()) return;
     const imgItem = {
@@ -3015,18 +3866,35 @@ export default function App() {
       title: newVideoDraft.title.trim(),
       duration: newVideoDraft.duration.trim() || '03:00',
       url: newVideoDraft.url.trim() || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      description: newVideoDraft.description.trim() || 'Clinical training video walkthrough.'
+      description: newVideoDraft.description.trim() || 'Clinical training video walkthrough.',
+      transcript: newVideoDraft.transcript.trim() || ''
     };
     setSectionForm((prev) => ({
       ...prev,
       videos: [...prev.videos, vidItem]
     }));
-    setNewVideoDraft({ title: '', duration: '03:00', url: '', description: '' });
+    setNewVideoDraft({
+      title: '',
+      duration: '03:00',
+      url: '',
+      description: '',
+      transcript: ''
+    });
   };
 
   const handleSaveSection = (e) => {
     e.preventDefault();
     if (!sectionForm.heading.trim()) return;
+
+    const hasFlashcard =
+      sectionForm.flashcardFront.trim() && sectionForm.flashcardBack.trim();
+    const miniCaseOpts = [
+      sectionForm.miniCaseOpt0.trim(),
+      sectionForm.miniCaseOpt1.trim(),
+      sectionForm.miniCaseOpt2.trim()
+    ].filter(Boolean);
+    const hasMiniCase =
+      sectionForm.miniCaseScenario.trim() && miniCaseOpts.length >= 2;
 
     const secObj = {
       id: editingSectionId || `sec-${Date.now()}`,
@@ -3036,6 +3904,23 @@ export default function App() {
       calloutType: sectionForm.calloutType || 'pearl',
       pearl: sectionForm.pearl.trim(),
       comparisonTable: sectionForm.comparisonTable || [],
+      flashcard: hasFlashcard
+        ? {
+            front: sectionForm.flashcardFront.trim(),
+            back: sectionForm.flashcardBack.trim()
+          }
+        : undefined,
+      miniCase: hasMiniCase
+        ? {
+            scenario: sectionForm.miniCaseScenario.trim(),
+            options: miniCaseOpts,
+            correctIndex: Math.min(
+              Number(sectionForm.miniCaseCorrect),
+              miniCaseOpts.length - 1
+            ),
+            feedback: sectionForm.miniCaseFeedback.trim()
+          }
+        : undefined,
       images: sectionForm.images,
       videos: sectionForm.videos
     };
@@ -3133,14 +4018,397 @@ export default function App() {
     });
   };
 
+  // Downloadable / Printable Pocket Reference One-Pager per Module
+  const handlePrintModulePocketGuide = (mod) => {
+    if (!mod) return;
+    const printWin = window.open('', '_blank', 'width=900,height=1000');
+    if (!printWin) return;
+
+    const objectivesHtml = (mod.learningObjectives || [])
+      .map((o) => `<li>${o}</li>`)
+      .join('');
+
+    const sectionsHtml = (mod.sections || [])
+      .map((sec, idx) => {
+        const tableHtml =
+          sec.comparisonTable && sec.comparisonTable.length > 0
+            ? `<table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:12px;">
+                ${sec.comparisonTable
+                  .map(
+                    (r) =>
+                      `<tr><td style="border:1px solid #cbd5e1;padding:6px 8px;font-weight:bold;background:#f8fafc;width:34%;">${r.label}</td><td style="border:1px solid #cbd5e1;padding:6px 8px;">${r.value}</td></tr>`
+                  )
+                  .join('')}
+              </table>`
+            : '';
+        const pearlHtml = sec.pearl
+          ? `<div style="background:#ecfdf5;border-left:4px solid #059669;padding:8px 12px;margin-top:8px;font-size:12px;color:#065f46;"><strong>Clinical Takeaway:</strong> ${sec.pearl}</div>`
+          : '';
+        return `
+          <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">
+            <h3 style="margin:0 0 6px 0;font-size:15px;color:#0f172a;">${idx + 1}. ${sec.heading}</h3>
+            <div style="font-size:12.5px;line-height:1.55;color:#334155;white-space:pre-line;">${(sec.body || '').replace(/\*\*/g, '')}</div>
+            ${tableHtml}
+            ${pearlHtml}
+          </div>
+        `;
+      })
+      .join('');
+
+    printWin.document.write(`<!DOCTYPE html>
+<html>
+  <head>
+    <title>PaedTraches.co.uk — Pocket Reference: ${mod.title}</title>
+    <style>
+      @page { size: portrait; margin: 14mm; }
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <div style="border-bottom:2px solid #059669;padding-bottom:10px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:11px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:0.06em;">PaedTraches.co.uk • Pocket Reference One-Pager</div>
+        <h1 style="margin:4px 0 0 0;font-size:20px;">${mod.title}</h1>
+      </div>
+      <div style="font-size:11px;color:#64748b;text-align:right;">
+        ${mod.category}<br/>${INITIAL_GOVERNANCE_META.version}
+      </div>
+    </div>
+    ${
+      objectivesHtml
+        ? `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#475569;margin-bottom:4px;">Learning Objectives</div>
+            <ul style="margin:0;padding-left:18px;font-size:12px;color:#334155;line-height:1.5;">${objectivesHtml}</ul>
+          </div>`
+        : ''
+    }
+    ${sectionsHtml}
+    <div style="font-size:10.5px;color:#64748b;margin-top:12px;">
+      PaedTraches.co.uk Clinical Reference Aid — Follow local NHS Trust & JRCALC guidelines. Peer reviewed ${mod.peerReviewedDate || INITIAL_GOVERNANCE_META.lastReviewed}.
+    </div>
+    <script>setTimeout(function(){ window.print(); }, 250);</script>
+  </body>
+</html>`);
+    printWin.document.close();
+  };
+
   const handleResetFactoryData = () => {
     publishCloudUpdate({
       nextPathways: INITIAL_PATHWAYS,
       nextModules: INITIAL_LEARNING_MODULES,
+      nextHardware: INITIAL_TUBE_HARDWARE_GUIDE,
+      nextSims: INITIAL_PROCEDURE_SIMULATIONS,
       nextAdmins: INITIAL_ADMIN_USERS,
-      actionDescription: 'Reset pathways and modules to factory NTSP defaults'
+      actionDescription: 'Reset pathways, modules, Tube ID & Sims to factory defaults'
     });
     notifyCms('Restored default clinical pathways & synced to Cloud');
+  };
+
+  // Tube ID Hardware Admin Handlers
+  const resetHardwareForm = () => {
+    setEditingHardwareId(null);
+    setHardwareForm({
+      name: '',
+      tag: 'Paediatric Tracheostomy Tube',
+      tagColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      imageUrl: '',
+      cuffType: '',
+      innerCannula: 'None (Single-lumen)',
+      keyVisualCue: '',
+      emergencyAction: ''
+    });
+  };
+
+  const loadHardwareIntoForm = (hw) => {
+    setEditingHardwareId(hw.id);
+    setHardwareForm({
+      name: hw.name || '',
+      tag: hw.tag || '',
+      tagColor: hw.tagColor || 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      imageUrl: hw.imageUrl || '',
+      cuffType: hw.cuffType || '',
+      innerCannula: hw.innerCannula || '',
+      keyVisualCue: hw.keyVisualCue || '',
+      emergencyAction: hw.emergencyAction || ''
+    });
+  };
+
+  const handleUploadHardwareImageFile = (file) => {
+    if (!file) return;
+    if (!storage) {
+      notifyCms('Firebase Storage is not connected. Paste an image URL instead.');
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      notifyCms('Image exceeds 15 MB limit.');
+      return;
+    }
+    setUploadingHardwarePhoto(true);
+    const safeFileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const fileRef = storageRef(
+      storage,
+      `artifacts/${appId}/public/media/hardware/${safeFileName}`
+    );
+    const uploadTask = uploadBytesResumable(fileRef, file);
+    uploadTask.on(
+      'state_changed',
+      () => {},
+      (err) => {
+        setUploadingHardwarePhoto(false);
+        notifyCms(err.message || 'Upload failed.');
+      },
+      async () => {
+        const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+        setHardwareForm((prev) => ({ ...prev, imageUrl: downloadUrl }));
+        setUploadingHardwarePhoto(false);
+        notifyCms('Tube photo uploaded! Click Save Tube Item to publish.');
+      }
+    );
+  };
+
+  const handleSaveHardwareItem = (e) => {
+    e.preventDefault();
+    if (!hardwareForm.name.trim()) return;
+    const itemObj = {
+      id: editingHardwareId || `hw-${Date.now()}`,
+      name: hardwareForm.name.trim(),
+      tag: hardwareForm.tag.trim() || 'Tracheostomy Equipment',
+      tagColor: hardwareForm.tagColor,
+      imageUrl: hardwareForm.imageUrl.trim(),
+      cuffType: hardwareForm.cuffType.trim(),
+      innerCannula: hardwareForm.innerCannula.trim(),
+      keyVisualCue: hardwareForm.keyVisualCue.trim(),
+      emergencyAction: hardwareForm.emergencyAction.trim()
+    };
+
+    const exists = tubeHardwareList.some((h) => h.id === editingHardwareId);
+    const nextHardware = exists
+      ? tubeHardwareList.map((h) => (h.id === editingHardwareId ? itemObj : h))
+      : [...tubeHardwareList, itemObj];
+
+    publishCloudUpdate({
+      nextHardware,
+      actionDescription: `Saved Tube ID item "${itemObj.name}"`
+    });
+    notifyCms(`Saved "${itemObj.name}" to Tube ID & synced to Cloud`);
+    resetHardwareForm();
+  };
+
+  const handleDeleteHardwareItem = (hwId) => {
+    if (tubeHardwareList.length <= 1) return;
+    const target = tubeHardwareList.find((h) => h.id === hwId);
+    const nextHardware = tubeHardwareList.filter((h) => h.id !== hwId);
+    publishCloudUpdate({
+      nextHardware,
+      actionDescription: `Removed Tube ID item "${target?.name || hwId}"`
+    });
+    if (editingHardwareId === hwId) resetHardwareForm();
+    notifyCms('Removed item from Tube ID');
+  };
+
+  // ==========================================
+  // FULL ADMIN PROCEDURE SIM DESIGNER HANDLERS
+  // ==========================================
+  const adminSim = useMemo(
+    () => procedureSims.find((s) => s.id === adminSimId) || procedureSims[0],
+    [procedureSims, adminSimId]
+  );
+
+  const currentAdminSimStep =
+    adminSim?.steps?.[editingSimStepIdx] || adminSim?.steps?.[0];
+
+  const handleUploadSimDiagramFile = (file) => {
+    if (!file) return;
+    if (!storage) {
+      notifyCms('Firebase Storage is not connected. Paste an image URL instead.');
+      return;
+    }
+    setUploadingSimDiagram(true);
+    const safeFileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const fileRef = storageRef(
+      storage,
+      `artifacts/${appId}/public/media/diagrams/${safeFileName}`
+    );
+    const uploadTask = uploadBytesResumable(fileRef, file);
+    uploadTask.on(
+      'state_changed',
+      () => {},
+      (err) => {
+        setUploadingSimDiagram(false);
+        notifyCms(err.message || 'Upload failed.');
+      },
+      async () => {
+        const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+        const nextSims = procedureSims.map((s) =>
+          s.id === adminSim.id
+            ? { ...s, diagramType: 'custom-image', customDiagramUrl: downloadUrl }
+            : s
+        );
+        publishCloudUpdate({
+          nextSims,
+          actionDescription: `Uploaded custom diagram for "${adminSim.title}"`
+        });
+        setUploadingSimDiagram(false);
+        notifyCms('Custom anatomical diagram uploaded & synced live!');
+      }
+    );
+  };
+
+  const handleUpdateAdminSimMeta = (field, value) => {
+    const nextSims = procedureSims.map((s) => {
+      if (s.id !== adminSim.id) return s;
+      if (field === 'customDiagramUrl') {
+        const trimmed = value.trim();
+        return {
+          ...s,
+          diagramType: trimmed ? 'custom-image' : 'builtin-neck',
+          customDiagramUrl: trimmed
+        };
+      }
+      return { ...s, [field]: value };
+    });
+    publishCloudUpdate({
+      nextSims,
+      actionDescription: `Updated Procedure Sim "${adminSim.title}"`
+    });
+  };
+
+  const handleUpdateSimStepField = (field, value) => {
+    const nextSims = procedureSims.map((s) => {
+      if (s.id !== adminSim.id) return s;
+      const updatedSteps = s.steps.map((st, idx) =>
+        idx === editingSimStepIdx ? { ...st, [field]: value } : st
+      );
+      return { ...s, steps: updatedSteps };
+    });
+    publishCloudUpdate({
+      nextSims,
+      actionDescription: `Updated step ${editingSimStepIdx + 1} in "${adminSim.title}"`
+    });
+  };
+
+  const handleAddSimStep = () => {
+    const newStepNumber = (adminSim?.steps?.length || 0) + 1;
+    const defaultToolId = adminSim?.tools?.[0]?.id || 'tool-hands';
+    const newStepObj = {
+      id: `${adminSim.id}-step-${Date.now().toString().slice(-4)}`,
+      phase: `Phase ${newStepNumber}`,
+      title: `Step ${newStepNumber}: New Procedure Action`,
+      instruction: 'Describe what the clinician should do on the anatomical diagram.',
+      traineeTip: 'Add surgical / ENT clinical caveat here.',
+      basicNote: 'Plain-language anatomical explanation.',
+      requiredTool: defaultToolId,
+      interactionType: 'tap',
+      targetZone: { x: 250, y: 170, r: 40, label: 'Target Landmark' },
+      demoHint: 'Select the required instrument and tap the highlighted circle.'
+    };
+    const nextSims = procedureSims.map((s) =>
+      s.id === adminSim.id ? { ...s, steps: [...s.steps, newStepObj] } : s
+    );
+    publishCloudUpdate({
+      nextSims,
+      actionDescription: `Added Step ${newStepNumber} to "${adminSim.title}"`
+    });
+    setEditingSimStepIdx(newStepNumber - 1);
+    notifyCms(`Added Step ${newStepNumber} — tap the diagram to place its hotspot!`);
+  };
+
+  const handleDeleteSimStep = (idxToRemove) => {
+    if (!adminSim || adminSim.steps.length <= 1) return;
+    const nextSims = procedureSims.map((s) =>
+      s.id === adminSim.id
+        ? { ...s, steps: s.steps.filter((_, i) => i !== idxToRemove) }
+        : s
+    );
+    publishCloudUpdate({
+      nextSims,
+      actionDescription: `Removed step from "${adminSim.title}"`
+    });
+    setEditingSimStepIdx(Math.max(0, idxToRemove - 1));
+    notifyCms('Removed step from simulation');
+  };
+
+  const handleSetHotspotByClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.round(((e.clientX - rect.left) / rect.width) * 500);
+    const y = Math.round(((e.clientY - rect.top) / rect.height) * 340);
+    const nextSims = procedureSims.map((s) => {
+      if (s.id !== adminSim.id) return s;
+      const updatedSteps = s.steps.map((st, idx) =>
+        idx === editingSimStepIdx
+          ? {
+              ...st,
+              targetZone: { ...st.targetZone, x, y },
+              dragStart: { x: Math.max(40, x - 35), y },
+              dragEnd: { x: Math.min(460, x + 35), y: Math.min(310, y + 40) }
+            }
+          : st
+      );
+      return { ...s, steps: updatedSteps };
+    });
+    publishCloudUpdate({
+      nextSims,
+      actionDescription: `Moved hotspot target on "${adminSim.title}" Step ${
+        editingSimStepIdx + 1
+      }`
+    });
+    notifyCms(`Placed Step ${editingSimStepIdx + 1} hotspot at (${x}, ${y})`);
+  };
+
+  const handleCreateNewSim = (e) => {
+    e.preventDefault();
+    if (!newSimForm.title.trim()) return;
+    const newId = `sim-${Date.now().toString().slice(-4)}`;
+    const defaultTools = INITIAL_PROCEDURE_SIMULATIONS[0].tools;
+    const created = {
+      id: newId,
+      title: newSimForm.title.trim(),
+      subtitle: newSimForm.subtitle.trim() || 'Custom clinical procedure walkthrough',
+      badge: 'Interactive Procedure Sim',
+      diagramType: newSimForm.customDiagramUrl.trim() ? 'custom-image' : 'builtin-neck',
+      customDiagramUrl: newSimForm.customDiagramUrl.trim(),
+      supportsAgeSwitch: false,
+      disclaimer:
+        'Educational anatomical & procedural simulation only. Follow local NHS Trust & specialist airway protocols.',
+      tools: defaultTools,
+      steps: [
+        {
+          id: `${newId}-step-1`,
+          phase: 'Step 1 • Anatomical Landmark',
+          title: 'Identify Primary Anatomical Target',
+          instruction: 'Select Palpate and tap the marked target on the diagram.',
+          traineeTip: 'Verify midline anatomical landmarks before proceeding.',
+          basicNote: 'Tap the target location on the diagram.',
+          requiredTool: defaultTools[0].id,
+          interactionType: 'tap',
+          targetZone: { x: 250, y: 170, r: 40, label: 'Primary Landmark' },
+          demoHint: 'Select "Palpate" and tap the highlighted circle.'
+        }
+      ]
+    };
+    const nextSims = [...procedureSims, created];
+    publishCloudUpdate({
+      nextSims,
+      actionDescription: `Created new Procedure Sim "${created.title}"`
+    });
+    setAdminSimId(newId);
+    setEditingSimStepIdx(0);
+    setShowNewSimModal(false);
+    setNewSimForm({ title: '', subtitle: '', customDiagramUrl: '' });
+    notifyCms(`Created Procedure Sim "${created.title}"`);
+  };
+
+  const handleDeleteSim = (simId) => {
+    if (procedureSims.length <= 1) return;
+    const target = procedureSims.find((s) => s.id === simId);
+    const remaining = procedureSims.filter((s) => s.id !== simId);
+    publishCloudUpdate({
+      nextSims: remaining,
+      actionDescription: `Deleted Procedure Sim "${target?.title || simId}"`
+    });
+    setAdminSimId(remaining[0].id);
+    setEditingSimStepIdx(0);
+    notifyCms('Deleted Procedure Sim');
   };
 
   const currentSizingRow = useMemo(
@@ -3153,7 +4421,6 @@ export default function App() {
     [learningModules, activeModuleId]
   );
 
-  // Shuffle answer options on every new quiz attempt so button locations cannot be memorised
   const shuffledQuizQuestions = useMemo(() => {
     if (!activeModule || !Array.isArray(activeModule.quiz)) return [];
     return activeModule.quiz.map((qItem) => {
@@ -3174,7 +4441,7 @@ export default function App() {
     });
   }, [activeModule, quizAttemptSeed]);
 
-  // Reusable Section Content Renderer (used both in Learner View & Live Admin Preview)
+  // Reusable Section Content Renderer
   const renderFormattedSectionContent = (sec) => {
     const layout = sec.layout || 'stacked';
     const hasMedia =
@@ -3300,6 +4567,33 @@ export default function App() {
                       </a>
                     )}
                   </div>
+
+                  {vid.transcript && (
+                    <div className="border-t border-slate-200/80 bg-white/80 px-3.5 py-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedVideoTranscripts((prev) => ({
+                            ...prev,
+                            [vid.id]: !prev[vid.id]
+                          }))
+                        }
+                        className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 flex items-center gap-1"
+                      >
+                        <FileText className="w-3 h-3" />
+                        <span>
+                          {expandedVideoTranscripts[vid.id]
+                            ? 'Hide Video Chapters & Key Notes'
+                            : 'View Video Chapters & Key Notes (Quiet Study)'}
+                        </span>
+                      </button>
+                      {expandedVideoTranscripts[vid.id] && (
+                        <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                          {vid.transcript}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -3308,22 +4602,47 @@ export default function App() {
       </div>
     );
 
+    const flashcardObj =
+      sec.flashcard ||
+      (sec.flashcardFront && sec.flashcardBack
+        ? { front: sec.flashcardFront, back: sec.flashcardBack }
+        : null);
+
+    const miniCaseObj =
+      sec.miniCase ||
+      (sec.miniCaseScenario && sec.miniCaseOpt0 && sec.miniCaseOpt1
+        ? {
+            scenario: sec.miniCaseScenario,
+            options: [sec.miniCaseOpt0, sec.miniCaseOpt1, sec.miniCaseOpt2].filter(
+              Boolean
+            ),
+            correctIndex: Number(sec.miniCaseCorrect || 0),
+            feedback: sec.miniCaseFeedback || ''
+          }
+        : null);
+
+    const secKey = sec.id || sec.heading || 'preview';
+    const isCardFlipped = !!flippedFlashcards[secKey];
+    const selectedCaseOption = miniCaseAnswers[secKey];
+
     const renderTextBlock = () => (
       <div className="space-y-4">
-        <RichFormattedText text={sec.body} />
+        <RichFormattedText text={sec.body} largeText={moduleLargeText} />
 
         {sec.comparisonTable && sec.comparisonTable.length > 0 && (
-          <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50/60">
-            <div className="divide-y divide-slate-200/80">
+          <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50/70 shadow-2xs">
+            <div className="divide-y divide-slate-200">
               {sec.comparisonTable.map((row, rIdx) => (
                 <div
                   key={rIdx}
-                  className="grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-3 px-4 py-2.5 text-xs sm:text-sm"
+                  className={`grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-3 px-4 py-3 ${
+                    moduleLargeText ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'
+                  }`}
                 >
-                  <div className="sm:col-span-4 font-bold text-slate-800">
+                  <div className="sm:col-span-4 font-bold text-slate-900">
                     {row.label}
                   </div>
-                  <div className="sm:col-span-8 text-slate-600">
+                  <div className="sm:col-span-8 text-slate-700 leading-relaxed">
                     {renderInlineBold(row.value)}
                   </div>
                 </div>
@@ -3332,9 +4651,103 @@ export default function App() {
           </div>
         )}
 
+        {flashcardObj && (
+          <button
+            type="button"
+            onClick={() =>
+              setFlippedFlashcards((prev) => ({
+                ...prev,
+                [secKey]: !prev[secKey]
+              }))
+            }
+            className={`w-full text-left p-4 rounded-2xl border-2 transition shadow-2xs space-y-1.5 ${
+              isCardFlipped
+                ? 'bg-sky-50/90 border-sky-300 text-sky-950'
+                : 'bg-slate-50 hover:bg-slate-100/80 border-dashed border-slate-300 text-slate-900'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2 text-[11px] font-extrabold uppercase tracking-wider text-sky-700">
+              <span className="flex items-center gap-1.5">
+                <RotateCw className="w-3.5 h-3.5" />
+                <span>
+                  {isCardFlipped
+                    ? 'Active Recall Answer (Tap to Flip Back)'
+                    : 'Active Recall Check — Tap to Flip Card'}
+                </span>
+              </span>
+            </div>
+            <div
+              className={`font-semibold leading-relaxed ${
+                moduleLargeText ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'
+              }`}
+            >
+              {isCardFlipped ? flashcardObj.back : flashcardObj.front}
+            </div>
+          </button>
+        )}
+
+        {miniCaseObj && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50/60 border border-indigo-200/90 space-y-3">
+            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-indigo-800">
+              <Stethoscope className="w-4 h-4 text-indigo-600 shrink-0" />
+              <span>Interactive Bedside Mini-Case</span>
+            </div>
+            <p
+              className={`font-medium text-slate-800 leading-relaxed ${
+                moduleLargeText ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'
+              }`}
+            >
+              {miniCaseObj.scenario}
+            </p>
+            <div className="space-y-2">
+              {miniCaseObj.options.map((opt, oIdx) => {
+                const isChosen = selectedCaseOption === oIdx;
+                const isRight = miniCaseObj.correctIndex === oIdx;
+                let style =
+                  'bg-white border-slate-200 text-slate-800 hover:border-indigo-300';
+                if (selectedCaseOption !== undefined) {
+                  if (isRight) {
+                    style =
+                      'bg-emerald-50 border-emerald-400 text-emerald-950 font-semibold';
+                  } else if (isChosen && !isRight) {
+                    style = 'bg-rose-50 border-rose-300 text-rose-900';
+                  }
+                }
+                return (
+                  <button
+                    key={oIdx}
+                    type="button"
+                    onClick={() =>
+                      setMiniCaseAnswers((prev) => ({
+                        ...prev,
+                        [secKey]: oIdx
+                      }))
+                    }
+                    className={`w-full text-left p-3 rounded-xl border transition flex items-center justify-between gap-2 ${
+                      moduleLargeText ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'
+                    } ${style}`}
+                  >
+                    <span>{opt}</span>
+                    {selectedCaseOption !== undefined && isRight && (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedCaseOption !== undefined && miniCaseObj.feedback && (
+              <div className="p-3 rounded-xl bg-white/90 border border-indigo-200 text-xs text-slate-700 leading-relaxed">
+                <strong>Clinical Rationale:</strong> {miniCaseObj.feedback}
+              </div>
+            )}
+          </div>
+        )}
+
         {sec.pearl && (
           <div
-            className={`p-4 rounded-2xl border text-xs sm:text-sm font-medium flex items-start gap-2.5 ${calloutStyle.bg}`}
+            className={`p-4 rounded-2xl border font-medium flex items-start gap-2.5 ${calloutStyle.bg} ${
+              moduleLargeText ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'
+            }`}
           >
             {calloutStyle.icon}
             <div>
@@ -3375,9 +4788,9 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden">
       {/* ==========================================
-          TOP NAVIGATION BAR + MOBILE SUB-ROW
+          TOP NAVIGATION BAR (TWO CLEAN HEADINGS: ON-CALL PATHWAYS & LEARNING)
           ========================================== */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between gap-3">
@@ -3419,7 +4832,7 @@ export default function App() {
             </div>
           </button>
 
-          {/* Center Segmented Control (Desktop & Tablet) */}
+          {/* Center Segmented Control: On-Call Pathways | Learning */}
           <div className="hidden sm:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/70">
             <button
               onClick={() => setAppMode('oncall')}
@@ -3442,11 +4855,11 @@ export default function App() {
               }`}
             >
               <BookOpen className="w-4 h-4 text-sky-600" />
-              <span>Learning Modules</span>
+              <span>Learning</span>
             </button>
           </div>
 
-          {/* Right Actions: Search + Save App + Admin */}
+          {/* Right Actions: Search + Offline & App + Admin */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={() => {
@@ -3463,10 +4876,10 @@ export default function App() {
             <button
               onClick={() => setShowPwaModal(true)}
               className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition flex items-center gap-1.5 text-xs font-medium"
-              title="Save App to Home Screen"
+              title="Save App & Offline Shift Cache"
             >
-              <Smartphone className="w-4 h-4" />
-              <span className="hidden lg:inline">Save App</span>
+              <Smartphone className="w-4 h-4 text-emerald-600" />
+              <span className="hidden lg:inline">Offline &amp; App</span>
             </button>
 
             <button
@@ -3493,7 +4906,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* MOBILE SECOND ROW (Phones Only): Top Sub-Bar */}
+        {/* MOBILE SECOND ROW (Phones Only): On-Call Pathways | Learning | Tube Sizer | Pre-Alert */}
         <div className="sm:hidden border-t border-slate-100 bg-slate-50/90 px-3 py-1.5 grid grid-cols-4 gap-1.5">
           <button
             onClick={() => {
@@ -3501,7 +4914,7 @@ export default function App() {
               setActivePathwayId(null);
               setOnCallSubView('main');
             }}
-            className={`py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 text-xs font-bold transition ${
+            className={`py-1.5 px-1.5 rounded-lg flex items-center justify-center gap-1 text-[11px] font-bold transition ${
               appMode === 'oncall'
                 ? 'bg-white text-emerald-700 shadow-2xs border border-slate-200/80'
                 : 'text-slate-600 hover:text-slate-900'
@@ -3513,19 +4926,19 @@ export default function App() {
 
           <button
             onClick={() => setAppMode('learning')}
-            className={`py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 text-xs font-bold transition ${
+            className={`py-1.5 px-1.5 rounded-lg flex items-center justify-center gap-1 text-[11px] font-bold transition ${
               appMode === 'learning'
                 ? 'bg-white text-sky-700 shadow-2xs border border-slate-200/80'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5 shrink-0" />
-            <span>Learn</span>
+            <span>Learning</span>
           </button>
 
           <button
             onClick={() => setActiveToolModal('calculator')}
-            className="py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 text-xs font-semibold text-slate-600 hover:bg-white hover:text-slate-900 transition"
+            className="py-1.5 px-1.5 rounded-lg flex items-center justify-center gap-1 text-[11px] font-semibold text-slate-600 hover:bg-white hover:text-slate-900 transition"
           >
             <Calculator className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span>Sizer</span>
@@ -3533,7 +4946,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveToolModal('handover')}
-            className="py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 text-xs font-semibold text-slate-600 hover:bg-white hover:text-slate-900 transition"
+            className="py-1.5 px-1.5 rounded-lg flex items-center justify-center gap-1 text-[11px] font-semibold text-slate-600 hover:bg-white hover:text-slate-900 transition"
           >
             <Radio className="w-3.5 h-3.5 text-amber-600 shrink-0" />
             <span>Pre-Alert</span>
@@ -3544,7 +4957,7 @@ export default function App() {
       {/* ==========================================
           MAIN CONTENT AREA
           ========================================== */}
-      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 overflow-x-hidden">
+      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1">
         {/* ==========================================
             1A. ON-CALL HOME VIEW
             ========================================== */}
@@ -3556,30 +4969,44 @@ export default function App() {
                   PaedTraches Clinical Guide
                 </h1>
                 <p className="text-sm sm:text-base text-slate-500">
-                  Select an emergency clinical pathway or open a roadside decision & handover aid.
+                  Select an emergency clinical pathway or open a roadside decision &amp; handover aid.
                 </p>
               </div>
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setActiveToolModal('calculator')}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold transition"
                 >
                   <Calculator className="w-4 h-4 text-emerald-600" />
                   <span>Tube Sizer</span>
                 </button>
                 <button
+                  onClick={() => setActiveToolModal('hardware')}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-semibold transition"
+                >
+                  <Package className="w-4 h-4 text-indigo-600" />
+                  <span>Tube ID</span>
+                </button>
+                <button
+                  onClick={() => setActiveToolModal('troubleshoot')}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-xs font-semibold transition"
+                >
+                  <Wrench className="w-4 h-4 text-rose-600" />
+                  <span>Airway Troubleshooting</span>
+                </button>
+                <button
                   onClick={() => setActiveToolModal('checklist')}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-semibold transition"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-semibold transition"
                 >
                   <ClipboardCheck className="w-4 h-4 text-sky-600" />
                   <span>Go-Bag Check</span>
                 </button>
                 <button
                   onClick={() => setActiveToolModal('handover')}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-semibold transition"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-semibold transition"
                 >
                   <Radio className="w-4 h-4 text-amber-600" />
-                  <span>Hospital Pre-Alert</span>
+                  <span>A&amp;E Pre-Alert</span>
                 </button>
               </div>
             </div>
@@ -3631,11 +5058,11 @@ export default function App() {
               </div>
             </div>
 
-            {/* Bottom Row on Desktop: Extra Pathways + 3 Roadside Tools */}
+            {/* Bottom Row: Extra Pathways + Roadside Tools */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pt-2">
               <div className="lg:col-span-5 space-y-3">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Secondary & Routine Care
+                  Secondary &amp; Routine Care
                 </h2>
                 <button
                   onClick={() => {
@@ -3651,14 +5078,14 @@ export default function App() {
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-slate-900 text-base">
-                          Extra Pathways & Routine Care
+                          Extra Pathways &amp; Routine Care
                         </span>
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                           {extraRoutinePathways.length} available
                         </span>
                       </div>
                       <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
-                        Routine suctioning, humidification, post-decannulation monitoring & custom pathways
+                        Routine suctioning, humidification, post-decannulation monitoring &amp; custom pathways
                       </p>
                     </div>
                   </div>
@@ -3670,55 +5097,89 @@ export default function App() {
 
               <div className="lg:col-span-7 space-y-3">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Quick Roadside Tools
+                  Quick Roadside Tools &amp; Hardware Aids
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 h-[calc(100%-1.75rem)]">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 h-[calc(100%-1.75rem)]">
                   <button
                     onClick={() => setActiveToolModal('calculator')}
-                    className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between text-left group gap-3"
+                    className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between text-left group gap-2.5"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200/60 text-emerald-600 flex items-center justify-center shrink-0">
-                      <Calculator className="w-5 h-5" />
+                    <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200/60 text-emerald-600 flex items-center justify-center shrink-0">
+                      <Calculator className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-slate-900 text-sm">
-                        Tube & Suction Sizer
+                      <div className="font-bold text-slate-900 text-xs sm:text-sm">
+                        Tube &amp; Suction Sizer
                       </div>
-                      <div className="text-xs text-slate-500 mt-0.5">
-                        Fr catheter, safe depth & downsize tube
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        Fr catheter &amp; safe depth
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveToolModal('hardware')}
+                    className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between text-left group gap-2.5"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200/60 text-indigo-600 flex items-center justify-center shrink-0">
+                      <Package className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900 text-xs sm:text-sm">
+                        Tube &amp; Valve ID
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        Shiley, Bivona TTS &amp; valves
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveToolModal('troubleshoot')}
+                    className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between text-left group gap-2.5"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200/60 text-rose-600 flex items-center justify-center shrink-0">
+                      <Wrench className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900 text-xs sm:text-sm">
+                        Airway Troubleshooting
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        High pressure, bleeding &amp; leaks
                       </div>
                     </div>
                   </button>
 
                   <button
                     onClick={() => setActiveToolModal('checklist')}
-                    className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between text-left group gap-3"
+                    className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between text-left group gap-2.5"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-200/60 text-sky-600 flex items-center justify-center shrink-0">
-                      <ClipboardCheck className="w-5 h-5" />
+                    <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-200/60 text-sky-600 flex items-center justify-center shrink-0">
+                      <ClipboardCheck className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-slate-900 text-sm">
+                      <div className="font-bold text-slate-900 text-xs sm:text-sm">
                         Go-Bag Checklist
                       </div>
-                      <div className="text-xs text-slate-500 mt-0.5">
-                        Verify essential kit prior to transport
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        Verify kit prior to transit
                       </div>
                     </div>
                   </button>
 
                   <button
                     onClick={() => setActiveToolModal('handover')}
-                    className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between text-left group gap-3"
+                    className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between text-left group gap-2.5 col-span-2 sm:col-span-2"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-600 flex items-center justify-center shrink-0">
-                      <Radio className="w-5 h-5" />
+                    <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-600 flex items-center justify-center shrink-0">
+                      <Radio className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-slate-900 text-sm">
-                        ED Pre-Alert Builder
+                      <div className="font-bold text-slate-900 text-xs sm:text-sm">
+                        A&amp;E Pre-Alert Builder
                       </div>
-                      <div className="text-xs text-slate-500 mt-0.5">
+                      <div className="text-[11px] text-slate-500 mt-0.5">
                         1-tap SBAR / ENT pre-alert summary
                       </div>
                     </div>
@@ -3746,7 +5207,7 @@ export default function App() {
 
             <div className="space-y-1">
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-                Extra Pathways & Routine Care
+                Extra Pathways &amp; Routine Care
               </h1>
               <p className="text-sm sm:text-base text-slate-500">
                 Secondary clinical pathways for routine suctioning, humidification, and post-decannulation transport.
@@ -4030,7 +5491,7 @@ export default function App() {
                             onClick={() => setActiveToolModal('handover')}
                             className="px-3.5 py-2 rounded-xl bg-emerald-700 text-white text-xs font-semibold hover:bg-emerald-800"
                           >
-                            Build ED Pre-Alert
+                            Build A&amp;E Pre-Alert
                           </button>
                           <button
                             onClick={handleRestartPathway}
@@ -4214,7 +5675,7 @@ export default function App() {
                   <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
                     <FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>
-                      NICE, NTSP & Evidence Guidelines ({(activePathway.references || []).length})
+                      NICE, NTSP &amp; Evidence Guidelines ({(activePathway.references || []).length})
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400">
@@ -4262,162 +5723,311 @@ export default function App() {
         )}
 
         {/* ==========================================
-            2. LEARNING MODULES MODE
+            2. LEARNING HUB (MODULES OR PROCEDURE SIM)
             ========================================== */}
         {appMode === 'learning' && (
           <div className="space-y-6">
-            {!activeModule ? (
-              <>
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200/80 pb-5">
-                  <div className="space-y-1">
-                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
-                      Learning Modules
-                    </h1>
-                    <p className="text-sm sm:text-base text-slate-500">
-                      Multi-section clinical guides with formatted bullet takeaways, tables, videos, and CPD reflection certificates.
-                    </p>
-                  </div>
-                  <div className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 shrink-0 self-start sm:self-auto">
-                    {completedModules.length} / {learningModules.length} Modules Completed
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {learningModules.map((mod) => {
-                    const isDone = completedModules.includes(mod.id);
-                    return (
-                      <button
-                        key={mod.id}
-                        onClick={() => {
-                          setActiveModuleId(mod.id);
-                          setActiveSectionIndex(0);
-                          setMaxReachedSectionIndex(0);
-                          setQuizUnlocked(false);
-                          setQuizAttemptSeed((s) => s + 1);
-                          setQuizAnswers({});
-                          setQuizSubmitted(false);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className="w-full text-left bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between gap-5 group"
-                      >
-                        <div className="space-y-2.5">
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                              {mod.category}
-                            </span>
-                            {isDone && (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
-                                <CheckCircle2 className="w-3.5 h-3.5" /> Completed
-                              </span>
-                            )}
-                          </div>
-                          <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition">
-                            {mod.title}
-                          </h3>
-                          <p className="text-sm text-slate-500 leading-relaxed">
-                            {mod.summary}
-                          </p>
-                        </div>
-
-                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between w-full text-xs text-slate-500 font-medium">
-                          <span>
-                            {mod.duration} • {(mod.sections || []).length} sections
-                          </span>
-                          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700" />
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between gap-2">
+            {/* Learning Sub-Navigation Switcher: Learning Modules vs. Procedure Sim */}
+            {!activeModule && (
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-2xs">
+                <div className="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200/70">
                   <button
-                    onClick={() => setActiveModuleId(null)}
-                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 py-1.5 px-3 rounded-xl hover:bg-slate-200/60 transition"
+                    type="button"
+                    onClick={() => setLearningSectionTab('modules')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${
+                      learningSectionTab === 'modules'
+                        ? 'bg-white text-slate-900 shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
                   >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Back to Modules</span>
+                    <BookOpen className="w-4 h-4 text-sky-600" />
+                    <span>Learning Modules ({learningModules.length})</span>
                   </button>
 
-                  <span className="text-xs font-semibold text-slate-500">
-                    Section {activeSectionIndex + 1} of {activeModule.sections.length}
-                  </span>
-                </div>
-
-                <div className="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden">
-                  <div
-                    className="bg-emerald-600 h-full transition-all duration-300"
-                    style={{
-                      width: `${
-                        quizUnlocked
-                          ? 100
-                          : ((activeSectionIndex + 1) / activeModule.sections.length) * 100
-                      }%`
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLearningSectionTab('simulator');
+                      setSimFeedbackBanner(null);
+                      setSimShowMeHint(false);
                     }}
-                  />
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${
+                      learningSectionTab === 'simulator'
+                        ? 'bg-white text-slate-900 shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Crosshair className="w-4 h-4 text-indigo-600" />
+                    <span>Procedure Sim ({procedureSims.length})</span>
+                  </button>
                 </div>
 
-                <div className="space-y-1">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
-                    {activeModule.category}
-                  </span>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                    {activeModule.title}
-                  </h1>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  <div className="hidden lg:block lg:col-span-4 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3 sticky top-24">
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2.5">
-                      Module Sections
+                {learningSectionTab === 'modules' && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openLockedFeedbackModal('All Learning Modules (Overall Curriculum)')
+                      }
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold transition"
+                    >
+                      <MessageSquarePlus className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Optional Feedback (All Modules)</span>
+                    </button>
+                    <div className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700">
+                      {completedModules.length} / {learningModules.length} Completed
                     </div>
-                    <div className="space-y-1.5">
-                      {activeModule.sections.map((s, idx) => {
-                        const isLocked = idx > maxReachedSectionIndex;
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 2A. LEARNING MODULES VIEW */}
+            {learningSectionTab === 'modules' && (
+              <>
+                {!activeModule ? (
+                  <>
+                    <div className="space-y-1">
+                      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
+                        Learning Modules
+                      </h1>
+                      <p className="text-sm sm:text-base text-slate-500">
+                        Structured clinical modules with explicit learning objectives, formatted bullet takeaways, videos, and CPD certificates.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                      {learningModules.map((mod) => {
+                        const isDone = completedModules.includes(mod.id);
                         return (
                           <button
-                            key={s.id || idx}
-                            disabled={isLocked}
+                            key={mod.id}
                             onClick={() => {
-                              if (isLocked) return;
+                              setActiveModuleId(mod.id);
+                              setActiveSectionIndex(0);
+                              setMaxReachedSectionIndex(0);
                               setQuizUnlocked(false);
-                              setActiveSectionIndex(idx);
+                              setQuizAttemptSeed((s) => s + 1);
+                              setQuizAnswers({});
+                              setQuizSubmitted(false);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
                             }}
-                            className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-between gap-2 ${
-                              !quizUnlocked && activeSectionIndex === idx
-                                ? 'bg-slate-900 text-white font-semibold'
-                                : isLocked
-                                ? 'text-slate-400 bg-slate-50/70 cursor-not-allowed opacity-70'
-                                : 'text-slate-600 hover:bg-slate-100'
-                            }`}
+                            className="w-full text-left bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between gap-5 group"
                           >
-                            <span className="truncate">
-                              {idx + 1}. {s.heading}
-                            </span>
-                            {isLocked ? (
-                              <Lock className="w-3 h-3 text-slate-400 shrink-0" />
-                            ) : (
-                              !quizUnlocked &&
-                              activeSectionIndex === idx && (
-                                <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-                              )
-                            )}
+                            <div className="space-y-2.5">
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                  {mod.category}
+                                </span>
+                                {isDone && (
+                                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+                                  </span>
+                                )}
+                              </div>
+                              <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition">
+                                {mod.title}
+                              </h3>
+                              <p className="text-sm text-slate-500 leading-relaxed">
+                                {mod.summary}
+                              </p>
+                            </div>
+
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between w-full text-xs text-slate-500 font-medium">
+                              <span>
+                                {mod.duration} • {(mod.sections || []).length} sections
+                              </span>
+                              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700" />
+                            </div>
                           </button>
                         );
                       })}
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    className={`space-y-6 rounded-3xl transition-colors ${
+                      moduleNightMode
+                        ? 'bg-slate-900 p-4 sm:p-6 border border-slate-800'
+                        : ''
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <button
+                        onClick={() => setActiveModuleId(null)}
+                        className={`inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold py-1.5 px-3 rounded-xl transition ${
+                          moduleNightMode
+                            ? 'text-slate-300 hover:text-white hover:bg-slate-800'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                        }`}
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span>Back to Modules</span>
+                      </button>
 
-                      <div className="pt-2 border-t border-slate-100">
-                        {(() => {
-                          const canUnlockQuiz =
-                            quizUnlocked ||
-                            maxReachedSectionIndex >= activeModule.sections.length - 1;
-                          return (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handlePrintModulePocketGuide(activeModule)}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                            moduleNightMode
+                              ? 'bg-slate-800 border-slate-700 text-emerald-400 hover:bg-slate-700'
+                              : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                          title="Download / Print 1-Page Pocket Reference Summary"
+                        >
+                          <FileDown className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="hidden sm:inline">Pocket Guide</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setModuleLargeText((prev) => !prev)}
+                          className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition ${
+                            moduleLargeText
+                              ? 'bg-emerald-600 text-white border-emerald-600'
+                              : moduleNightMode
+                              ? 'bg-slate-800 border-slate-700 text-slate-200'
+                              : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                          title="Toggle Larger Reading Text"
+                        >
+                          {moduleLargeText ? 'A-' : 'A+'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setModuleNightMode((prev) => !prev)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                            moduleNightMode
+                              ? 'bg-amber-500/20 border-amber-400/40 text-amber-300'
+                              : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                          title="Toggle Night-Shift Low-Glare Reading Mode"
+                        >
+                          {moduleNightMode ? (
+                            <>
+                              <Sun className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Day Mode</span>
+                            </>
+                          ) : (
+                            <>
+                              <Moon className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Night Shift</span>
+                            </>
+                          )}
+                        </button>
+
+                        <span
+                          className={`text-xs font-semibold pl-1 ${
+                            moduleNightMode ? 'text-slate-400' : 'text-slate-500'
+                          }`}
+                        >
+                          Section {activeSectionIndex + 1}/{activeModule.sections.length}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="bg-emerald-600 h-full transition-all duration-300"
+                        style={{
+                          width: `${
+                            quizUnlocked
+                              ? 100
+                              : ((activeSectionIndex + 1) / activeModule.sections.length) * 100
+                          }%`
+                        }}
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <span
+                        className={`text-xs font-semibold uppercase tracking-wider ${
+                          moduleNightMode ? 'text-emerald-400' : 'text-emerald-700'
+                        }`}
+                      >
+                        {activeModule.category}
+                      </span>
+                      <h1
+                        className={`text-2xl sm:text-3xl font-bold ${
+                          moduleNightMode ? 'text-white' : 'text-slate-900'
+                        }`}
+                      >
+                        {activeModule.title}
+                      </h1>
+                    </div>
+
+                    {!quizUnlocked &&
+                      activeSectionIndex === 0 &&
+                      Array.isArray(activeModule.learningObjectives) &&
+                      activeModule.learningObjectives.length > 0 && (
+                        <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-2xl p-4 sm:p-5 space-y-2.5">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-emerald-800">
+                              <Target className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <span>Module Learning Objectives</span>
+                            </div>
+                            {activeModule.targetAudience && (
+                              <span className="text-[11px] font-medium text-emerald-900/80 bg-white/80 px-2.5 py-0.5 rounded-full border border-emerald-200/70">
+                                Audience: {activeModule.targetAudience}
+                              </span>
+                            )}
+                          </div>
+                          <ul className="space-y-1.5 text-xs sm:text-sm text-emerald-950">
+                            {activeModule.learningObjectives.map((obj, oIdx) => (
+                              <li key={oIdx} className="flex items-start gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                                <span className="leading-snug">{obj}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                      <div className="hidden lg:block lg:col-span-4 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3 sticky top-24">
+                        <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2.5">
+                          Module Sections
+                        </div>
+                        <div className="space-y-1.5">
+                          {activeModule.sections.map((s, idx) => {
+                            const isSectionUnlocked = idx <= maxReachedSectionIndex;
+                            return (
+                              <button
+                                key={s.id || idx}
+                                disabled={!isSectionUnlocked}
+                                onClick={() => {
+                                  setQuizUnlocked(false);
+                                  setActiveSectionIndex(idx);
+                                }}
+                                className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-between gap-2 ${
+                                  !quizUnlocked && activeSectionIndex === idx
+                                    ? 'bg-slate-900 text-white font-semibold'
+                                    : isSectionUnlocked
+                                    ? 'text-slate-600 hover:bg-slate-100'
+                                    : 'text-slate-400 bg-slate-50/70 opacity-60 cursor-not-allowed'
+                                }`}
+                              >
+                                <span className="truncate">
+                                  {idx + 1}. {s.heading}
+                                </span>
+                                {!isSectionUnlocked ? (
+                                  <Lock className="w-3 h-3 shrink-0 text-slate-400" />
+                                ) : !quizUnlocked && activeSectionIndex === idx ? (
+                                  <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+                                ) : null}
+                              </button>
+                            );
+                          })}
+
+                          <div className="pt-2 border-t border-slate-100">
                             <button
-                              disabled={!canUnlockQuiz}
+                              disabled={
+                                !quizUnlocked &&
+                                maxReachedSectionIndex < activeModule.sections.length - 1
+                              }
                               onClick={() => {
-                                if (!canUnlockQuiz) return;
                                 setQuizUnlocked(true);
                                 setQuizAttemptSeed((s) => s + 1);
                                 setQuizAnswers({});
@@ -4429,260 +6039,1257 @@ export default function App() {
                               className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold transition flex items-center justify-between ${
                                 quizUnlocked
                                   ? 'bg-emerald-600 text-white'
-                                  : canUnlockQuiz
+                                  : maxReachedSectionIndex >= activeModule.sections.length - 1
                                   ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                                  : 'bg-slate-50 text-slate-400 cursor-not-allowed opacity-60'
+                                  : 'bg-slate-50 text-slate-400 opacity-60 cursor-not-allowed'
                               }`}
                             >
-                              <span>Knowledge Check & CPD</span>
-                              {canUnlockQuiz ? (
+                              <span>Knowledge Check &amp; CPD</span>
+                              {maxReachedSectionIndex >= activeModule.sections.length - 1 ||
+                              quizUnlocked ? (
                                 <Sparkles className="w-3.5 h-3.5" />
                               ) : (
                                 <Lock className="w-3 h-3" />
                               )}
                             </button>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="lg:col-span-8">
-                    {!quizUnlocked && activeModule.sections[activeSectionIndex] && (
-                      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
-                        <div className="space-y-2">
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
-                            Section {activeSectionIndex + 1}
                           </div>
-                          <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-                            {activeModule.sections[activeSectionIndex].heading}
-                          </h2>
                         </div>
+                      </div>
 
-                        {renderFormattedSectionContent(
-                          activeModule.sections[activeSectionIndex]
+                      <div className="lg:col-span-8">
+                        {!quizUnlocked && activeModule.sections[activeSectionIndex] && (
+                          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
+                            <div className="space-y-2">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+                                Section {activeSectionIndex + 1}
+                              </div>
+                              <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                                {activeModule.sections[activeSectionIndex].heading}
+                              </h2>
+                            </div>
+
+                            {renderFormattedSectionContent(
+                              activeModule.sections[activeSectionIndex]
+                            )}
+
+                            <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                              <button
+                                disabled={activeSectionIndex === 0}
+                                onClick={() => {
+                                  setActiveSectionIndex((i) => Math.max(0, i - 1));
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-1.5"
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                                <span>Previous</span>
+                              </button>
+
+                              {activeSectionIndex < activeModule.sections.length - 1 ? (
+                                <button
+                                  onClick={() => {
+                                    const nextIdx = activeSectionIndex + 1;
+                                    setActiveSectionIndex(nextIdx);
+                                    setMaxReachedSectionIndex((prev) =>
+                                      Math.max(prev, nextIdx)
+                                    );
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5"
+                                >
+                                  <span>Next Section</span>
+                                  <ChevronRight className="w-4 h-4" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setQuizUnlocked(true);
+                                    setQuizAttemptSeed((s) => s + 1);
+                                    setQuizAnswers({});
+                                    setQuizSubmitted(false);
+                                    if (activeModule.quiz.length === 0) {
+                                      markModuleCompletedInCloud(activeModule.id);
+                                    }
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-2"
+                                >
+                                  <Sparkles className="w-4 h-4" />
+                                  <span>Unlock Knowledge Quiz</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         )}
 
-                        <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                        {quizUnlocked && (
+                          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                              <div>
+                                <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
+                                  Self-Assessment Unlocked
+                                </span>
+                                <h2 className="text-xl font-bold text-slate-900 mt-0.5">
+                                  Knowledge Check: {activeModule.title}
+                                </h2>
+                              </div>
+                              <button
+                                onClick={() => setQuizUnlocked(false)}
+                                className="text-xs font-semibold text-slate-500 hover:text-slate-900"
+                              >
+                                Review Sections
+                              </button>
+                            </div>
+
+                            {shuffledQuizQuestions.length === 0 ? (
+                              <div className="space-y-4">
+                                <p className="text-sm text-slate-600">
+                                  Module completed! You can now generate your CPD Certificate.
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2.5">
+                                  <button
+                                    onClick={() => setShowCpdModal(true)}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold"
+                                  >
+                                    <Award className="w-4 h-4" />
+                                    <span>Generate CPD Certificate</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => openLockedFeedbackModal(activeModule.title)}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold"
+                                  >
+                                    <MessageSquarePlus className="w-4 h-4 text-emerald-600" />
+                                    <span>Optional Module Feedback</span>
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-6">
+                                {shuffledQuizQuestions.map((qItem, qIdx) => (
+                                  <div key={qIdx} className="space-y-3">
+                                    <div className="font-bold text-sm sm:text-base text-slate-900">
+                                      {qIdx + 1}. {qItem.q}
+                                    </div>
+                                    <div className="space-y-2">
+                                      {qItem.options.map((opt, optIdx) => {
+                                        const selected = quizAnswers[qIdx] === optIdx;
+                                        const isCorrect = qItem.correct === optIdx;
+                                        let btnStyle =
+                                          'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100';
+                                        if (selected) {
+                                          btnStyle =
+                                            'bg-slate-900 border-slate-900 text-white font-semibold';
+                                        }
+                                        if (quizSubmitted) {
+                                          if (isCorrect) {
+                                            btnStyle =
+                                              'bg-emerald-50 border-emerald-400 text-emerald-950 font-semibold';
+                                          } else if (selected && !isCorrect) {
+                                            btnStyle =
+                                              'bg-rose-50 border-rose-300 text-rose-900';
+                                          }
+                                        }
+                                        return (
+                                          <button
+                                            key={optIdx}
+                                            disabled={quizSubmitted}
+                                            onClick={() =>
+                                              setQuizAnswers((prev) => ({
+                                                ...prev,
+                                                [qIdx]: optIdx
+                                              }))
+                                            }
+                                            className={`w-full text-left p-3.5 rounded-xl border text-xs sm:text-sm transition flex items-center justify-between ${btnStyle}`}
+                                          >
+                                            <span>{opt}</span>
+                                            {quizSubmitted && isCorrect && (
+                                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                            )}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                    {quizSubmitted && qItem.explanation && (
+                                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
+                                        <strong>Explanation:</strong> {qItem.explanation}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+
+                                {(() => {
+                                  const correctCount = shuffledQuizQuestions.filter(
+                                    (qItem, idx) => quizAnswers[idx] === qItem.correct
+                                  ).length;
+                                  const totalQuestions = shuffledQuizQuestions.length;
+                                  const passed100 = correctCount === totalQuestions;
+
+                                  return (
+                                    <div className="pt-4 border-t border-slate-100 space-y-3">
+                                      {quizSubmitted && (
+                                        <div
+                                          className={`p-3.5 rounded-xl border text-xs sm:text-sm font-medium flex items-center justify-between gap-2 ${
+                                            passed100
+                                              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                              : 'bg-amber-50 border-amber-200 text-amber-950'
+                                          }`}
+                                        >
+                                          <span>
+                                            {passed100
+                                              ? `✓ Score: ${correctCount}/${totalQuestions} (100%) — CPD Certificate unlocked!`
+                                              : `Score: ${correctCount}/${totalQuestions} (${Math.round(
+                                                  (correctCount / totalQuestions) * 100
+                                                )}%) — 100% is required to unlock your CPD Certificate.`}
+                                          </span>
+                                        </div>
+                                      )}
+
+                                      <div className="flex flex-wrap items-center justify-between gap-3">
+                                        {quizSubmitted ? (
+                                          <>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                              {passed100 ? (
+                                                <button
+                                                  onClick={() => setShowCpdModal(true)}
+                                                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-2xs"
+                                                >
+                                                  <Award className="w-4 h-4" />
+                                                  <span>Generate CPD Certificate</span>
+                                                </button>
+                                              ) : (
+                                                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                                                  <Lock className="w-3.5 h-3.5 text-amber-600" />
+                                                  <span>Achieve 100% to unlock certificate</span>
+                                                </div>
+                                              )}
+
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  openLockedFeedbackModal(activeModule.title)
+                                                }
+                                                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold"
+                                              >
+                                                <MessageSquarePlus className="w-3.5 h-3.5 text-emerald-600" />
+                                                <span>Optional Feedback</span>
+                                              </button>
+                                            </div>
+
+                                            <button
+                                              onClick={() => {
+                                                setQuizSubmitted(false);
+                                                setQuizAnswers({});
+                                                setQuizAttemptSeed((s) => s + 1);
+                                              }}
+                                              className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs sm:text-sm font-semibold text-slate-700"
+                                            >
+                                              Retry Quiz
+                                            </button>
+                                          </>
+                                        ) : (
+                                          <button
+                                            onClick={() => {
+                                              setQuizSubmitted(true);
+                                              if (passed100) {
+                                                markModuleCompletedInCloud(activeModule.id);
+                                              }
+                                            }}
+                                            className="ml-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold"
+                                          >
+                                            Check Answers
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="mt-5 bg-white rounded-2xl border border-slate-200/90 overflow-hidden">
                           <button
-                            disabled={activeSectionIndex === 0}
-                            onClick={() => {
-                              setActiveSectionIndex((i) => Math.max(0, i - 1));
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-1.5"
+                            type="button"
+                            onClick={() => setShowFacultyGovernanceBox((prev) => !prev)}
+                            className="w-full px-4 py-3 text-left flex items-center justify-between gap-2 hover:bg-slate-50 transition"
                           >
-                            <ChevronLeft className="w-4 h-4" />
-                            <span>Previous</span>
+                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                              <UserCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <span>
+                                Faculty Attribution, Peer Review &amp; Evidence References
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400">
+                              <span>{showFacultyGovernanceBox ? 'Hide' : 'Details'}</span>
+                              {showFacultyGovernanceBox ? (
+                                <ChevronUp className="w-3.5 h-3.5" />
+                              ) : (
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              )}
+                            </div>
                           </button>
 
-                          {activeSectionIndex < activeModule.sections.length - 1 ? (
-                            <button
-                              onClick={() => {
-                                const nextIdx = activeSectionIndex + 1;
-                                setActiveSectionIndex(nextIdx);
-                                setMaxReachedSectionIndex((prev) =>
-                                  Math.max(prev, nextIdx)
-                                );
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                              }}
-                              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5"
-                            >
-                              <span>Next Section</span>
-                              <ChevronRight className="w-4 h-4" />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setMaxReachedSectionIndex(
-                                  activeModule.sections.length - 1
-                                );
-                                setQuizUnlocked(true);
-                                setQuizAttemptSeed((s) => s + 1);
-                                setQuizAnswers({});
-                                setQuizSubmitted(false);
-                                if (activeModule.quiz.length === 0) {
-                                  markModuleCompletedInCloud(activeModule.id);
-                                }
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                              }}
-                              className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-2"
-                            >
-                              <Sparkles className="w-4 h-4" />
-                              <span>Unlock Knowledge Quiz</span>
-                            </button>
+                          {showFacultyGovernanceBox && (
+                            <div className="p-4 pt-3 border-t border-slate-100 bg-slate-50/70 space-y-2.5 text-xs text-slate-600">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div>
+                                  <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                                    Authoring Faculty
+                                  </span>
+                                  <strong className="text-slate-800">
+                                    {activeModule.facultyName ||
+                                      INITIAL_GOVERNANCE_META.clinicalLead}
+                                  </strong>
+                                  {activeModule.facultyCredentials && (
+                                    <span className="block text-[11px] text-slate-500">
+                                      {activeModule.facultyCredentials}
+                                    </span>
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                                    Peer Review &amp; Governance
+                                  </span>
+                                  <strong className="text-emerald-700">
+                                    ✓ Peer Reviewed:{' '}
+                                    {activeModule.peerReviewedDate ||
+                                      INITIAL_GOVERNANCE_META.lastReviewed}
+                                  </strong>
+                                  <span className="block text-[11px] text-slate-500">
+                                    {activeModule.coiDisclosure ||
+                                      'No conflicts of interest declared.'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {Array.isArray(activeModule.references) &&
+                                activeModule.references.length > 0 && (
+                                  <div className="pt-2 border-t border-slate-200/70 space-y-1">
+                                    <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                                      Supporting Clinical Guidelines
+                                    </span>
+                                    {activeModule.references.map((r, rIdx) => (
+                                      <a
+                                        key={rIdx}
+                                        href={r.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-between gap-2 text-emerald-700 hover:underline py-0.5"
+                                      >
+                                        <span>• {r.title}</span>
+                                        <ExternalLink className="w-3 h-3 shrink-0" />
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
+                            </div>
                           )}
                         </div>
                       </div>
-                    )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
 
-                    {quizUnlocked && (
-                      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                          <div>
-                            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
-                              Self-Assessment Unlocked
-                            </span>
-                            <h2 className="text-xl font-bold text-slate-900 mt-0.5">
-                              Knowledge Check: {activeModule.title}
-                            </h2>
-                          </div>
-                          <button
-                            onClick={() => setQuizUnlocked(false)}
-                            className="text-xs font-semibold text-slate-500 hover:text-slate-900"
-                          >
-                            Review Sections
-                          </button>
-                        </div>
+            {/* 2B. INTERACTIVE PROCEDURE SIMULATOR (LIVE MONITOR + AGE GROUP + FALSE PASSAGE SIM) */}
+            {learningSectionTab === 'simulator' && (() => {
+              const activeSim =
+                procedureSims.find((s) => s.id === activeSimId) || procedureSims[0];
+              const currentSimStep = activeSim.steps[simStepIndex] || activeSim.steps[0];
+              const completedCount = Object.keys(simCompletedSteps).filter(
+                (k) => k.startsWith(`${activeSim.id}-`) && simCompletedSteps[k]
+              ).length;
+              const isStepDone = !!simCompletedSteps[`${activeSim.id}-${currentSimStep.id}`];
 
-                        {shuffledQuizQuestions.length === 0 ? (
-                          <div className="space-y-4">
-                            <p className="text-sm text-slate-600">
-                              Module completed! You can now generate your CPD Certificate.
-                            </p>
-                            <button
-                              onClick={() => setShowCpdModal(true)}
-                              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold"
+              // Live Physiological Telemetry Monitor Calculation (Suggestion 1)
+              const progressRatio =
+                activeSim.steps.length > 0
+                  ? completedCount / activeSim.steps.length
+                  : 0;
+              const isAirwaySecured =
+                completedCount === activeSim.steps.length &&
+                activeSim.steps.length > 0;
+              const monitorSpo2 = isAirwaySecured
+                ? 98
+                : Math.min(94, Math.round(76 + progressRatio * 18));
+              const monitorHr = isAirwaySecured
+                ? simAgeGroup === 'infant'
+                  ? 135
+                  : simAgeGroup === 'child'
+                  ? 112
+                  : 88
+                : simAgeGroup === 'infant'
+                ? 62
+                : 58;
+              const monitorEtco2 = isAirwaySecured
+                ? '4.9 kPa (Square-Wave)'
+                : completedCount >= Math.max(1, activeSim.steps.length - 1)
+                ? '3.2 kPa (Rising)'
+                : '0.0 kPa (Flat / Hypoxic)';
+
+              const completeCurrentSimStep = () => {
+                setSimCompletedSteps((prev) => ({
+                  ...prev,
+                  [`${activeSim.id}-${currentSimStep.id}`]: true
+                }));
+                setSimShowMeHint(false);
+                setSimFeedbackBanner({
+                  type: 'success',
+                  text: `✓ Step ${simStepIndex + 1} completed! ${
+                    simStepIndex < activeSim.steps.length - 1
+                      ? 'Tap Next or continue practising.'
+                      : 'All procedure steps completed — SpO2 & EtCO2 restored!'
+                  }`
+                });
+              };
+
+              const handleCanvasAction = (clientX, clientY, svgEl, isEnd = false) => {
+                if (!svgEl) return;
+                const rect = svgEl.getBoundingClientRect();
+                const svgX = ((clientX - rect.left) / rect.width) * 500;
+                const svgY = ((clientY - rect.top) / rect.height) * 340;
+
+                if (currentSimStep.requiredTool && selectedSimTool !== currentSimStep.requiredTool) {
+                  const reqToolObj = activeSim.tools.find(
+                    (t) => t.id === currentSimStep.requiredTool
+                  );
+                  setSimFeedbackBanner({
+                    type: 'warn',
+                    text: `Select "${reqToolObj?.short || 'the required instrument'}" from the tray below first.`
+                  });
+                  return;
+                }
+
+                if (currentSimStep.interactionType === 'tap') {
+                  const dx = svgX - currentSimStep.targetZone.x;
+                  const dy = svgY - currentSimStep.targetZone.y;
+                  const dist = Math.sqrt(dx * dx + dy * dy);
+                  if (dist <= currentSimStep.targetZone.r + 24) {
+                    completeCurrentSimStep();
+                  } else {
+                    setSimFeedbackBanner({
+                      type: 'warn',
+                      text: `Aim closer to the highlighted landmark (${currentSimStep.targetZone.label}).`
+                    });
+                  }
+                } else if (currentSimStep.interactionType === 'drag' && isEnd) {
+                  const dx = svgX - currentSimStep.dragEnd.x;
+                  const dy = svgY - currentSimStep.dragEnd.y;
+                  const dist = Math.sqrt(dx * dx + dy * dy);
+                  if (dist <= 52) {
+                    completeCurrentSimStep();
+                  } else {
+                    setSimFeedbackBanner({
+                      type: 'warn',
+                      text: `Drag smoothly along the indicated guide line to complete this step.`
+                    });
+                  }
+                }
+              };
+
+              const handleAutoDemonstrate = () => {
+                setSelectedSimTool(currentSimStep.requiredTool);
+                setSimShowMeHint(true);
+                setSimFeedbackBanner({
+                  type: 'info',
+                  text: `Demo: ${currentSimStep.demoHint}`
+                });
+              };
+
+              const handleRestartSim = () => {
+                setSimStepIndex(0);
+                setSimCompletedSteps({});
+                setSelectedSimTool(activeSim.steps[0].requiredTool);
+                setSimFeedbackBanner(null);
+                setSimShowMeHint(false);
+              };
+
+              const phases = [];
+              activeSim.steps.forEach((st, idx) => {
+                let group = phases.find((p) => p.name === st.phase);
+                if (!group) {
+                  group = { name: st.phase, items: [] };
+                  phases.push(group);
+                }
+                group.items.push({ ...st, globalIdx: idx });
+              });
+
+              const activeToolObj =
+                activeSim.tools.find((t) => t.id === selectedSimTool) || activeSim.tools[0];
+
+              return (
+                <div className="space-y-6">
+                  {/* Simulation Selector Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {procedureSims.map((sim) => {
+                      const isSelected = activeSim.id === sim.id;
+                      return (
+                        <button
+                          key={sim.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveSimId(sim.id);
+                            setSimStepIndex(0);
+                            setSelectedSimTool(sim.steps[0]?.requiredTool || 'tool-hands');
+                            setSimFeedbackBanner(null);
+                            setSimShowMeHint(false);
+                          }}
+                          className={`p-4 rounded-2xl border text-left transition flex items-center justify-between gap-3 ${
+                            isSelected
+                              ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                              : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                isSelected
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : 'bg-indigo-50 text-indigo-700'
+                              }`}
                             >
-                              <Award className="w-4 h-4" />
-                              <span>Generate CPD Certificate</span>
+                              {sim.badge}
+                            </span>
+                            <div className="text-sm sm:text-base font-bold mt-1.5 truncate">
+                              {sim.title}
+                            </div>
+                            <div
+                              className={`text-xs truncate mt-0.5 ${
+                                isSelected ? 'text-slate-300' : 'text-slate-500'
+                              }`}
+                            >
+                              {sim.subtitle}
+                            </div>
+                          </div>
+                          <ChevronRight
+                            className={`w-4 h-4 shrink-0 ${
+                              isSelected ? 'text-emerald-400' : 'text-slate-400'
+                            }`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Header + Perspective & Age Switchers */}
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+                    <div className="space-y-1">
+                      <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                        {activeSim.title}
+                      </h2>
+                      <p className="text-xs sm:text-sm text-slate-500">
+                        {completedCount} of {activeSim.steps.length} steps completed
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Suggestion 2: Age-Group Switcher */}
+                      {activeSim.supportsAgeSwitch !== false && (
+                        <div className="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                          {[
+                            { id: 'infant', label: 'Infant (<1 yr)' },
+                            { id: 'child', label: 'Child (2–6 yrs)' },
+                            { id: 'adolescent', label: 'Adolescent (>10 yrs)' }
+                          ].map((ag) => (
+                            <button
+                              key={ag.id}
+                              type="button"
+                              onClick={() => setSimAgeGroup(ag.id)}
+                              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
+                                simAgeGroup === ag.id
+                                  ? 'bg-emerald-600 text-white shadow-2xs'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              {ag.label}
                             </button>
-                          </div>
-                        ) : (
-                          <div className="space-y-6">
-                            {shuffledQuizQuestions.map((qItem, qIdx) => (
-                              <div key={qIdx} className="space-y-3">
-                                <div className="font-bold text-sm sm:text-base text-slate-900">
-                                  {qIdx + 1}. {qItem.q}
-                                </div>
-                                <div className="space-y-2">
-                                  {qItem.options.map((opt, optIdx) => {
-                                    const selected = quizAnswers[qIdx] === optIdx;
-                                    const isCorrect = qItem.correct === optIdx;
-                                    let btnStyle =
-                                      'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100';
-                                    if (selected) {
-                                      btnStyle =
-                                        'bg-slate-900 border-slate-900 text-white font-semibold';
-                                    }
-                                    if (quizSubmitted) {
-                                      if (isCorrect) {
-                                        btnStyle =
-                                          'bg-emerald-50 border-emerald-400 text-emerald-950 font-semibold';
-                                      } else if (selected && !isCorrect) {
-                                        btnStyle =
-                                          'bg-rose-50 border-rose-300 text-rose-900';
-                                      }
-                                    }
-                                    return (
-                                      <button
-                                        key={optIdx}
-                                        disabled={quizSubmitted}
-                                        onClick={() =>
-                                          setQuizAnswers((prev) => ({
-                                            ...prev,
-                                            [qIdx]: optIdx
-                                          }))
-                                        }
-                                        className={`w-full text-left p-3.5 rounded-xl border text-xs sm:text-sm transition flex items-center justify-between ${btnStyle}`}
-                                      >
-                                        <span>{opt}</span>
-                                        {quizSubmitted && isCorrect && (
-                                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                                        )}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                                {quizSubmitted && qItem.explanation && (
-                                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
-                                    <strong>Explanation:</strong> {qItem.explanation}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
+                          ))}
+                        </div>
+                      )}
 
-                            {(() => {
-                              const correctCount = shuffledQuizQuestions.filter(
-                                (qItem, idx) => quizAnswers[idx] === qItem.correct
-                              ).length;
-                              const totalQuestions = shuffledQuizQuestions.length;
-                              const passed100 = correctCount === totalQuestions;
+                      <div className="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                        <button
+                          type="button"
+                          onClick={() => setSimPersona('trainee')}
+                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                            simPersona === 'trainee'
+                              ? 'bg-white text-slate-900 shadow-2xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          ENT / Clinician
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSimPersona('overview')}
+                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                            simPersona === 'overview'
+                              ? 'bg-white text-slate-900 shadow-2xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          Overview
+                        </button>
+                      </div>
 
-                              return (
-                                <div className="pt-4 border-t border-slate-100 space-y-3">
-                                  {quizSubmitted && (
-                                    <div
-                                      className={`p-3.5 rounded-xl border text-xs sm:text-sm font-medium flex items-center justify-between gap-2 ${
-                                        passed100
-                                          ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                                          : 'bg-amber-50 border-amber-200 text-amber-950'
-                                      }`}
-                                    >
-                                      <span>
-                                        {passed100
-                                          ? `✓ Score: ${correctCount}/${totalQuestions} (100%) — CPD Certificate unlocked!`
-                                          : `Score: ${correctCount}/${totalQuestions} (${Math.round(
-                                              (correctCount / totalQuestions) * 100
-                                            )}%) — 100% is required to unlock your CPD Certificate.`}
-                                      </span>
-                                    </div>
-                                  )}
+                      {activeSim.diagramType !== 'custom-image' && (
+                        <button
+                          type="button"
+                          onClick={() => setShowSimLabels((p) => !p)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                            showSimLabels
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                              : 'bg-white border-slate-200 text-slate-600'
+                          }`}
+                        >
+                          Labels: {showSimLabels ? 'On' : 'Off'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
-                                  <div className="flex flex-wrap items-center justify-between gap-3">
-                                    {quizSubmitted ? (
-                                      <>
-                                        {passed100 ? (
-                                          <button
-                                            onClick={() => setShowCpdModal(true)}
-                                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-2xs"
-                                          >
-                                            <Award className="w-4 h-4" />
-                                            <span>Generate CPD Certificate</span>
-                                          </button>
-                                        ) : (
-                                          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                                            <Lock className="w-3.5 h-3.5 text-amber-600" />
-                                            <span>Achieve 100% to unlock certificate</span>
-                                          </div>
-                                        )}
-
-                                        <button
-                                          onClick={() => {
-                                            setQuizSubmitted(false);
-                                            setQuizAnswers({});
-                                            setQuizAttemptSeed((s) => s + 1);
-                                          }}
-                                          className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs sm:text-sm font-semibold text-slate-700"
-                                        >
-                                          Retry Quiz
-                                        </button>
-                                      </>
-                                    ) : (
-                                      <button
-                                        onClick={() => {
-                                          setQuizSubmitted(true);
-                                          if (passed100) {
-                                            markModuleCompletedInCloud(activeModule.id);
-                                          }
-                                        }}
-                                        className="ml-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold"
-                                      >
-                                        Check Answers
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </div>
+                  {/* Age-Specific Clinical Guidance Banner (Suggestion 2) */}
+                  {activeSim.supportsAgeSwitch !== false && (
+                    <div className="p-3.5 rounded-2xl bg-sky-50/80 border border-sky-200 text-xs text-sky-950 flex items-start gap-2.5">
+                      <Info className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+                      <div>
+                        {simAgeGroup === 'infant' && (
+                          <span>
+                            <strong>Infant (&lt;1 yr) Airway Note:</strong> The cricothyroid membrane is tiny (~2–3 mm) and the cricoid ring is the narrowest point. Avoid wide-bore surgical tubes; perform <strong>45° caudal needle cricothyroidotomy</strong> with low-pressure oxygenation.
+                          </span>
+                        )}
+                        {simAgeGroup === 'child' && (
+                          <span>
+                            <strong>Child (2–6 yrs) Airway Note:</strong> DAS Paediatric CICO guidelines recommend <strong>45° caudal needle cricothyroidotomy</strong> as first-line rescue in children under 8–10 years, escalating to surgical scalpel-bougie only if needle rescue fails.
+                          </span>
+                        )}
+                        {simAgeGroup === 'adolescent' && (
+                          <span>
+                            <strong>Adolescent (&gt;10 yrs) Airway Note:</strong> The cricothyroid membrane approaches adult dimensions; <strong>Scalpel-Bougie-Tube (4.0–5.0 mm cuffed tube)</strong> is the standard rapid emergency surgical airway technique.
+                          </span>
                         )}
                       </div>
-                    )}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <div className="lg:col-span-4 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                          Procedure Steps
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleRestartSim}
+                          className="text-xs font-semibold text-slate-500 hover:text-rose-600 inline-flex items-center gap-1"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Restart</span>
+                        </button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {phases.map((phase) => (
+                          <div key={phase.name} className="space-y-1.5">
+                            <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 px-1">
+                              {phase.name}
+                            </div>
+                            <div className="space-y-1">
+                              {phase.items.map((st) => {
+                                const active = st.globalIdx === simStepIndex;
+                                const done = !!simCompletedSteps[`${activeSim.id}-${st.id}`];
+                                return (
+                                  <button
+                                    key={st.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSimStepIndex(st.globalIdx);
+                                      setSelectedSimTool(st.requiredTool);
+                                      setSimFeedbackBanner(null);
+                                      setSimShowMeHint(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 rounded-xl text-xs transition flex items-center justify-between gap-2 ${
+                                      active
+                                        ? 'bg-slate-900 text-white font-semibold shadow-2xs'
+                                        : done
+                                        ? 'bg-emerald-50/80 text-emerald-900 font-medium'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                    }`}
+                                  >
+                                    <span className="truncate">
+                                      {st.globalIdx + 1}. {st.title}
+                                    </span>
+                                    {done && (
+                                      <CheckCircle2
+                                        className={`w-3.5 h-3.5 shrink-0 ${
+                                          active ? 'text-emerald-400' : 'text-emerald-600'
+                                        }`}
+                                      />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="lg:col-span-8 space-y-4">
+                      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
+                        {/* Suggestion 1: Live Physiological Telemetry Monitor Strip */}
+                        <div className="rounded-2xl bg-slate-950 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 border border-slate-800">
+                          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                            <HeartPulse
+                              className={`w-4 h-4 ${
+                                isAirwaySecured
+                                  ? 'text-emerald-400'
+                                  : 'text-rose-500 animate-pulse'
+                              }`}
+                            />
+                            <span>Live Patient Telemetry</span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
+                            <div>
+                              <span className="text-slate-400 mr-1">SpO2:</span>
+                              <span
+                                className={`font-bold ${
+                                  monitorSpo2 >= 94
+                                    ? 'text-emerald-400'
+                                    : 'text-rose-400'
+                                }`}
+                              >
+                                {monitorSpo2}%
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 mr-1">HR:</span>
+                              <span
+                                className={`font-bold ${
+                                  monitorHr >= 80
+                                    ? 'text-emerald-400'
+                                    : 'text-amber-400'
+                                }`}
+                              >
+                                {monitorHr} bpm
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 mr-1">EtCO2:</span>
+                              <span
+                                className={`font-bold ${
+                                  isAirwaySecured
+                                    ? 'text-sky-400'
+                                    : 'text-amber-400'
+                                }`}
+                              >
+                                {monitorEtco2}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <span className="text-xs font-bold text-indigo-700">
+                              Step {simStepIndex + 1} of {activeSim.steps.length} •{' '}
+                              {currentSimStep.phase}
+                            </span>
+                            <h3 className="text-lg sm:text-xl font-bold text-slate-900">
+                              {currentSimStep.title}
+                            </h3>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={handleAutoDemonstrate}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-semibold"
+                            >
+                              <Sparkle className="w-3.5 h-3.5 text-amber-600" />
+                              <span>Show Me</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={simStepIndex === 0}
+                              onClick={() => {
+                                const prevIdx = Math.max(0, simStepIndex - 1);
+                                setSimStepIndex(prevIdx);
+                                setSelectedSimTool(activeSim.steps[prevIdx].requiredTool);
+                                setSimFeedbackBanner(null);
+                                setSimShowMeHint(false);
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-semibold text-slate-700"
+                            >
+                              Back
+                            </button>
+                            <button
+                              type="button"
+                              disabled={simStepIndex >= activeSim.steps.length - 1}
+                              onClick={() => {
+                                const nextIdx = Math.min(
+                                  activeSim.steps.length - 1,
+                                  simStepIndex + 1
+                                );
+                                setSimStepIndex(nextIdx);
+                                setSelectedSimTool(activeSim.steps[nextIdx].requiredTool);
+                                setSimFeedbackBanner(null);
+                                setSimShowMeHint(false);
+                              }}
+                              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-xs font-semibold"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Interactive Anatomical Canvas (Built-In Anterior Neck, Built-In Sagittal Stoma, or Custom Uploaded Image) */}
+                        <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 select-none touch-none">
+                          <svg
+                            viewBox="0 0 500 340"
+                            className="w-full h-auto max-h-[380px] cursor-crosshair block"
+                            onPointerDown={(e) => {
+                              const svgEl = e.currentTarget;
+                              if (currentSimStep.interactionType === 'tap') {
+                                handleCanvasAction(e.clientX, e.clientY, svgEl, true);
+                              } else {
+                                setSimDragActive(true);
+                                const rect = svgEl.getBoundingClientRect();
+                                setSimDragCurrent({
+                                  x: ((e.clientX - rect.left) / rect.width) * 500,
+                                  y: ((e.clientY - rect.top) / rect.height) * 340
+                                });
+                              }
+                            }}
+                            onPointerMove={(e) => {
+                              if (!simDragActive) return;
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setSimDragCurrent({
+                                x: ((e.clientX - rect.left) / rect.width) * 500,
+                                y: ((e.clientY - rect.top) / rect.height) * 340
+                              });
+                            }}
+                            onPointerUp={(e) => {
+                              if (simDragActive) {
+                                handleCanvasAction(
+                                  e.clientX,
+                                  e.clientY,
+                                  e.currentTarget,
+                                  true
+                                );
+                                setSimDragActive(false);
+                                setSimDragCurrent(null);
+                              }
+                            }}
+                          >
+                            {activeSim.diagramType === 'custom-image' &&
+                            activeSim.customDiagramUrl ? (
+                              <image
+                                href={activeSim.customDiagramUrl}
+                                x="0"
+                                y="0"
+                                width="500"
+                                height="340"
+                                preserveAspectRatio="xMidYMid meet"
+                              />
+                            ) : activeSim.diagramType === 'builtin-sagittal' ? (
+                              <>
+                                {/* Suggestion 3: Sagittal Neck & Tracheostomy Stoma vs Pre-Tracheal False Passage */}
+                                <rect x="0" y="0" width="500" height="340" fill="#0f172a" />
+                                {/* Anterior Skin & Subcutaneous Neck Tissue */}
+                                <path
+                                  d="M 155 25 L 185 135 L 185 195 L 155 315 L 220 315 L 220 25 Z"
+                                  fill="#f6cdb8"
+                                  stroke="#d69e82"
+                                  strokeWidth="2"
+                                />
+                                {/* Pre-Tracheal False Passage Plane (Warning Zone) */}
+                                <path
+                                  d="M 205 182 L 216 285"
+                                  stroke="#f43f5e"
+                                  strokeWidth="6"
+                                  strokeDasharray="4 4"
+                                  opacity="0.75"
+                                />
+                                {/* True Tracheal Lumen */}
+                                <rect
+                                  x="232"
+                                  y="25"
+                                  width="66"
+                                  height="290"
+                                  rx="12"
+                                  fill="#1e293b"
+                                  stroke="#38bdf8"
+                                  strokeWidth="2.5"
+                                />
+                                {/* Stoma Opening Through Anterior Tracheal Wall */}
+                                <rect
+                                  x="180"
+                                  y="150"
+                                  width="60"
+                                  height="28"
+                                  fill="#1e293b"
+                                />
+                                {/* Posterior Tracheal Wall & Oesophagus */}
+                                <rect
+                                  x="306"
+                                  y="25"
+                                  width="34"
+                                  height="290"
+                                  rx="8"
+                                  fill="#475569"
+                                  opacity="0.7"
+                                />
+                                {/* Tracheal Cartilage Rings */}
+                                {[55, 85, 115, 200, 230, 260, 290].map((ry, i) => (
+                                  <rect
+                                    key={i}
+                                    x="225"
+                                    y={ry}
+                                    width="12"
+                                    height="16"
+                                    rx="4"
+                                    fill="#cbd5e1"
+                                  />
+                                ))}
+
+                                {/* Completed Tube Seated in True Tracheal Lumen */}
+                                {simCompletedSteps[`${activeSim.id}-tc-3`] && (
+                                  <path
+                                    d="M 165 164 L 225 164 Q 265 164 265 215 L 265 268"
+                                    fill="none"
+                                    stroke="#38bdf8"
+                                    strokeWidth="16"
+                                    strokeLinecap="round"
+                                  />
+                                )}
+                                {simCompletedSteps[`${activeSim.id}-tc-4`] && (
+                                  <rect
+                                    x="148"
+                                    y="152"
+                                    width="22"
+                                    height="24"
+                                    rx="4"
+                                    fill="#10b981"
+                                  />
+                                )}
+
+                                {showSimLabels && (
+                                  <g fontSize="11" fontWeight="700" fontFamily="sans-serif">
+                                    <text x="55" y="168" fill="#f8fafc">
+                                      Anterior Neck Stoma
+                                    </text>
+                                    <text x="42" y="255" fill="#fda4af">
+                                      Pre-Tracheal Plane (False Passage Risk)
+                                    </text>
+                                    <text x="355" y="110" fill="#7dd3fc">
+                                      True Tracheal Lumen
+                                    </text>
+                                    <text x="355" y="210" fill="#cbd5e1">
+                                      Posterior Wall / Oesophagus
+                                    </text>
+                                  </g>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                {/* Built-In Anterior Paediatric Neck Diagram */}
+                                <path
+                                  d="M 140 20 Q 250 75 360 20 L 385 320 L 115 320 Z"
+                                  fill="#f6cdb8"
+                                  stroke="#d69e82"
+                                  strokeWidth="2.5"
+                                />
+                                <path
+                                  d="M 155 28 Q 250 82 345 28 Q 250 62 155 28 Z"
+                                  fill="#e3ae93"
+                                  opacity="0.7"
+                                />
+                                <path
+                                  d="M 145 75 L 205 315"
+                                  stroke="#dba186"
+                                  strokeWidth="12"
+                                  strokeLinecap="round"
+                                  opacity="0.45"
+                                />
+                                <path
+                                  d="M 355 75 L 295 315"
+                                  stroke="#dba186"
+                                  strokeWidth="12"
+                                  strokeLinecap="round"
+                                  opacity="0.45"
+                                />
+                                <path
+                                  d="M 210 102 Q 250 116 290 102"
+                                  fill="none"
+                                  stroke="#94a3b8"
+                                  strokeWidth="7"
+                                  strokeLinecap="round"
+                                  opacity="0.85"
+                                />
+                                <path
+                                  d="M 212 126 L 250 134 L 288 126 L 280 168 L 250 173 L 220 168 Z"
+                                  fill="#e2e8f0"
+                                  stroke="#64748b"
+                                  strokeWidth="2.2"
+                                />
+                                <rect
+                                  x="227"
+                                  y="173"
+                                  width="46"
+                                  height="18"
+                                  rx="5"
+                                  fill="#fda4af"
+                                  stroke="#e11d48"
+                                  strokeWidth="2"
+                                />
+                                <rect
+                                  x="218"
+                                  y="192"
+                                  width="64"
+                                  height="16"
+                                  rx="7"
+                                  fill="#cbd5e1"
+                                  stroke="#475569"
+                                  strokeWidth="2"
+                                />
+                                {[214, 232, 250, 268].map((ry, i) => (
+                                  <rect
+                                    key={i}
+                                    x="224"
+                                    y={ry}
+                                    width="52"
+                                    height="12"
+                                    rx="5"
+                                    fill="#e2e8f0"
+                                    stroke="#64748b"
+                                    strokeWidth="1.6"
+                                    opacity="0.9"
+                                  />
+                                ))}
+                                <path
+                                  d="M 195 318 Q 250 292 305 318"
+                                  fill="none"
+                                  stroke="#b87a5e"
+                                  strokeWidth="4"
+                                  strokeLinecap="round"
+                                />
+
+                                {simCompletedSteps[`${activeSim.id}-cric-2`] && (
+                                  <line
+                                    x1="250"
+                                    y1="142"
+                                    x2="250"
+                                    y2="215"
+                                    stroke="#2563eb"
+                                    strokeWidth="3"
+                                    strokeDasharray="5 4"
+                                  />
+                                )}
+                                {simCompletedSteps[`${activeSim.id}-cric-5`] && (
+                                  <line
+                                    x1="230"
+                                    y1="182"
+                                    x2="270"
+                                    y2="182"
+                                    stroke="#9f1239"
+                                    strokeWidth="4.5"
+                                    strokeLinecap="round"
+                                  />
+                                )}
+                                {simCompletedSteps[`${activeSim.id}-cric-6`] && (
+                                  <path
+                                    d="M 250 182 L 250 272"
+                                    stroke="#0284c7"
+                                    strokeWidth="5"
+                                    strokeLinecap="round"
+                                  />
+                                )}
+                                {simCompletedSteps[`${activeSim.id}-cric-7`] && (
+                                  <g>
+                                    <rect
+                                      x="232"
+                                      y="168"
+                                      width="36"
+                                      height="16"
+                                      rx="4"
+                                      fill="#ffffff"
+                                      stroke="#059669"
+                                      strokeWidth="2.5"
+                                    />
+                                    <circle cx="250" cy="176" r="5" fill="#10b981" />
+                                  </g>
+                                )}
+
+                                {showSimLabels && (
+                                  <g fontSize="11" fontWeight="700" fontFamily="sans-serif">
+                                    <line x1="290" y1="102" x2="365" y2="95" stroke="#94a3b8" strokeWidth="1.2" />
+                                    <text x="370" y="99" fill="#e2e8f0">Hyoid Bone</text>
+
+                                    <line x1="288" y1="146" x2="365" y2="140" stroke="#94a3b8" strokeWidth="1.2" />
+                                    <text x="370" y="144" fill="#e2e8f0">Thyroid Cartilage</text>
+
+                                    <line x1="273" y1="182" x2="365" y2="182" stroke="#fb7185" strokeWidth="1.5" />
+                                    <text x="370" y="186" fill="#fda4af">Cricothyroid Membrane</text>
+
+                                    <line x1="282" y1="200" x2="365" y2="220" stroke="#94a3b8" strokeWidth="1.2" />
+                                    <text x="370" y="224" fill="#e2e8f0">Cricoid Cartilage</text>
+
+                                    <line x1="276" y1="250" x2="365" y2="262" stroke="#94a3b8" strokeWidth="1.2" />
+                                    <text x="370" y="266" fill="#cbd5e1">Tracheal Rings</text>
+
+                                    <text x="250" y="330" textAnchor="middle" fill="#94a3b8" fontSize="10">
+                                      Suprasternal Notch
+                                    </text>
+                                  </g>
+                                )}
+                              </>
+                            )}
+
+                            {currentSimStep.interactionType === 'drag' &&
+                              currentSimStep.dragStart &&
+                              currentSimStep.dragEnd && (
+                                <g>
+                                  <line
+                                    x1={currentSimStep.dragStart.x}
+                                    y1={currentSimStep.dragStart.y}
+                                    x2={currentSimStep.dragEnd.x}
+                                    y2={currentSimStep.dragEnd.y}
+                                    stroke="#fbbf24"
+                                    strokeWidth="4"
+                                    strokeDasharray="6 5"
+                                    strokeLinecap="round"
+                                  />
+                                  <circle
+                                    cx={currentSimStep.dragStart.x}
+                                    cy={currentSimStep.dragStart.y}
+                                    r="8"
+                                    fill="#f59e0b"
+                                  />
+                                  <circle
+                                    cx={currentSimStep.dragEnd.x}
+                                    cy={currentSimStep.dragEnd.y}
+                                    r="8"
+                                    fill="#10b981"
+                                  />
+                                </g>
+                              )}
+
+                            {simDragActive &&
+                              simDragCurrent &&
+                              currentSimStep.dragStart && (
+                                <line
+                                  x1={currentSimStep.dragStart.x}
+                                  y1={currentSimStep.dragStart.y}
+                                  x2={simDragCurrent.x}
+                                  y2={simDragCurrent.y}
+                                  stroke="#34d399"
+                                  strokeWidth="4"
+                                  strokeLinecap="round"
+                                />
+                              )}
+
+                            <circle
+                              cx={currentSimStep.targetZone.x}
+                              cy={currentSimStep.targetZone.y}
+                              r={currentSimStep.targetZone.r}
+                              fill={
+                                isStepDone
+                                  ? 'rgba(16, 185, 129, 0.25)'
+                                  : 'rgba(251, 191, 36, 0.25)'
+                              }
+                              stroke={isStepDone ? '#10b981' : '#fbbf24'}
+                              strokeWidth="2.5"
+                              strokeDasharray={simShowMeHint ? 'none' : '5 4'}
+                            />
+                          </svg>
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2">
+                          <p className="text-xs sm:text-sm font-semibold text-slate-900">
+                            {currentSimStep.instruction}
+                          </p>
+                          <p className="text-xs text-slate-600 leading-relaxed">
+                            <strong className="text-indigo-700">
+                              {simPersona === 'trainee' ? 'ENT / Surgical Pearl:' : 'Anatomical Note:'}
+                            </strong>{' '}
+                            {simPersona === 'trainee'
+                              ? currentSimStep.traineeTip
+                              : currentSimStep.basicNote}
+                          </p>
+                        </div>
+
+                        {simFeedbackBanner && (
+                          <div
+                            className={`p-3 rounded-xl border text-xs font-semibold flex items-center justify-between gap-2 ${
+                              simFeedbackBanner.type === 'success'
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                : simFeedbackBanner.type === 'warn'
+                                ? 'bg-amber-50 border-amber-200 text-amber-950'
+                                : 'bg-sky-50 border-sky-200 text-sky-950'
+                            }`}
+                          >
+                            <span>{simFeedbackBanner.text}</span>
+                            <button
+                              type="button"
+                              onClick={() => setSimFeedbackBanner(null)}
+                              className="text-slate-400 hover:text-slate-700"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                              <Compass className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>Instrument &amp; Airway Tray</span>
+                            </span>
+                            <span className="text-[11px] font-semibold text-indigo-700">
+                              Active: {activeToolObj.name}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap gap-1.5">
+                            {activeSim.tools.map((tool) => {
+                              const isSelected = selectedSimTool === tool.id;
+                              return (
+                                <button
+                                  key={tool.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedSimTool(tool.id);
+                                    setSimFeedbackBanner(null);
+                                  }}
+                                  className={`px-3 py-2 rounded-xl text-xs font-semibold border transition ${
+                                    isSelected
+                                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  {tool.short}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          <div className="p-3 rounded-xl bg-indigo-50/60 border border-indigo-200/70 text-xs text-indigo-950">
+                            <strong>{activeToolObj.name}:</strong> {activeToolObj.desc}
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="text-[11px] text-slate-500 px-1">
+                        {activeSim.disclaimer}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         )}
 
@@ -4813,6 +7420,29 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => {
+                      resetHardwareForm();
+                      setAdminTab('hardware');
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      adminTab === 'hardware'
+                        ? 'bg-white text-slate-900 shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Tube ID
+                  </button>
+                  <button
+                    onClick={() => setAdminTab('sims')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      adminTab === 'sims'
+                        ? 'bg-white text-slate-900 shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Procedure Sims
+                  </button>
+                  <button
+                    onClick={() => {
                       setOwnProfileForm({
                         name: currentAdminUser.name || '',
                         email: currentAdminUser.email || '',
@@ -4827,7 +7457,7 @@ export default function App() {
                     }`}
                   >
                     <KeyRound className="w-3.5 h-3.5" />
-                    <span>My Profile</span>
+                    <span>Profile</span>
                   </button>
                   {isSuperAdmin && (
                     <button
@@ -4852,7 +7482,7 @@ export default function App() {
                       }`}
                     >
                       <Globe className="w-3.5 h-3.5" />
-                      <span>Cloud & Legal</span>
+                      <span>Cloud &amp; Feedback</span>
                     </button>
                   )}
                 </div>
@@ -4876,6 +7506,349 @@ export default function App() {
               </div>
             )}
 
+            {/* FULL VISUAL PROCEDURE SIM DESIGNER IN ADMIN */}
+            {adminTab === 'sims' && adminSim && (
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    {procedureSims.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => {
+                          setAdminSimId(s.id);
+                          setEditingSimStepIdx(0);
+                        }}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition ${
+                          adminSim.id === s.id
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        {s.title}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowNewSimModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-2xs"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>+ New Procedure Sim</span>
+                  </button>
+                </div>
+
+                {/* Simulation Title, Subtitle & Diagram Uploader Card */}
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h2 className="text-sm font-bold text-slate-900">
+                      Simulation Overview &amp; Custom Drawn Diagram
+                    </h2>
+                    {procedureSims.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSim(adminSim.id)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete Sim</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Simulation Title
+                      </label>
+                      <input
+                        type="text"
+                        value={adminSim.title}
+                        onChange={(e) =>
+                          handleUpdateAdminSimMeta('title', e.target.value)
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Subtitle / Clinical Context
+                      </label>
+                      <input
+                        type="text"
+                        value={adminSim.subtitle}
+                        onChange={(e) =>
+                          handleUpdateAdminSimMeta('subtitle', e.target.value)
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-slate-800">
+                        Anatomical Diagram (Upload Your Drawn Image or Paste URL)
+                      </span>
+                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>
+                          {uploadingSimDiagram ? 'Uploading...' : 'Upload Drawn Diagram'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingSimDiagram}
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              handleUploadSimDiagramFile(e.target.files[0]);
+                              e.target.value = '';
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={adminSim.customDiagramUrl || ''}
+                      onChange={(e) =>
+                        handleUpdateAdminSimMeta('customDiagramUrl', e.target.value)
+                      }
+                      placeholder="Paste image URL (or leave blank to use built-in vector diagram)"
+                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Left: Steps List + Add Step + Step Editor */}
+                  <div className="lg:col-span-5 bg-white rounded-2xl p-5 border border-slate-200 space-y-4 self-start">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <h3 className="text-sm font-bold text-slate-900">
+                        Procedure Steps ({adminSim.steps.length})
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={handleAddSimStep}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>+ Add Step</span>
+                      </button>
+                    </div>
+
+                    <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                      {adminSim.steps.map((st, idx) => (
+                        <div
+                          key={st.id}
+                          className={`px-3 py-2 rounded-xl border text-xs flex items-center justify-between gap-2 transition ${
+                            editingSimStepIdx === idx
+                              ? 'bg-emerald-50 border-emerald-400 text-emerald-950 font-bold'
+                              : 'bg-slate-50 border-slate-200 text-slate-700'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setEditingSimStepIdx(idx)}
+                            className="text-left truncate flex-1"
+                          >
+                            {idx + 1}. {st.title}
+                          </button>
+                          {adminSim.steps.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSimStep(idx)}
+                              className="text-slate-400 hover:text-rose-600 shrink-0"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {currentAdminSimStep && (
+                      <div className="pt-3 border-t border-slate-100 space-y-3">
+                        <div className="text-xs font-bold uppercase tracking-wider text-indigo-700">
+                          Editing Step {editingSimStepIdx + 1} Details
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Step Title
+                          </label>
+                          <input
+                            type="text"
+                            value={currentAdminSimStep.title}
+                            onChange={(e) =>
+                              handleUpdateSimStepField('title', e.target.value)
+                            }
+                            className="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              Required Instrument
+                            </label>
+                            <select
+                              value={currentAdminSimStep.requiredTool}
+                              onChange={(e) =>
+                                handleUpdateSimStepField('requiredTool', e.target.value)
+                              }
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold"
+                            >
+                              {adminSim.tools.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.short} ({t.name})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              Gesture Type
+                            </label>
+                            <select
+                              value={currentAdminSimStep.interactionType}
+                              onChange={(e) =>
+                                handleUpdateSimStepField(
+                                  'interactionType',
+                                  e.target.value
+                                )
+                              }
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold"
+                            >
+                              <option value="tap">Tap Target</option>
+                              <option value="drag">Drag / Guide Line</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Clinician Instruction
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={currentAdminSimStep.instruction}
+                            onChange={(e) =>
+                              handleUpdateSimStepField('instruction', e.target.value)
+                            }
+                            className="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                            ENT / Surgical Pearl
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={currentAdminSimStep.traineeTip}
+                            onChange={(e) =>
+                              handleUpdateSimStepField('traineeTip', e.target.value)
+                            }
+                            className="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Interactive Click-to-Place Hotspot Canvas */}
+                  <div className="lg:col-span-7 bg-white rounded-2xl p-5 border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <h3 className="text-sm font-bold text-slate-900">
+                        Tap Anywhere on Diagram to Place Step {editingSimStepIdx + 1} Target
+                      </h3>
+                      <span className="text-xs text-emerald-700 font-semibold">
+                        Auto-syncs to Cloud
+                      </span>
+                    </div>
+
+                    <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-900">
+                      <svg
+                        viewBox="0 0 500 340"
+                        onClick={handleSetHotspotByClick}
+                        className="w-full h-auto max-h-[380px] cursor-crosshair block"
+                      >
+                        {adminSim.diagramType === 'custom-image' &&
+                        adminSim.customDiagramUrl ? (
+                          <image
+                            href={adminSim.customDiagramUrl}
+                            x="0"
+                            y="0"
+                            width="500"
+                            height="340"
+                            preserveAspectRatio="xMidYMid meet"
+                          />
+                        ) : adminSim.diagramType === 'builtin-sagittal' ? (
+                          <>
+                            <rect x="0" y="0" width="500" height="340" fill="#0f172a" />
+                            <path
+                              d="M 155 25 L 185 135 L 185 195 L 155 315 L 220 315 L 220 25 Z"
+                              fill="#f6cdb8"
+                              stroke="#d69e82"
+                              strokeWidth="2"
+                            />
+                            <rect
+                              x="232"
+                              y="25"
+                              width="66"
+                              height="290"
+                              rx="12"
+                              fill="#1e293b"
+                              stroke="#38bdf8"
+                              strokeWidth="2.5"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <path
+                              d="M 140 20 Q 250 75 360 20 L 385 320 L 115 320 Z"
+                              fill="#f6cdb8"
+                              stroke="#d69e82"
+                              strokeWidth="2.5"
+                            />
+                            <rect
+                              x="227"
+                              y="173"
+                              width="46"
+                              height="18"
+                              rx="5"
+                              fill="#fda4af"
+                              stroke="#e11d48"
+                              strokeWidth="2"
+                            />
+                          </>
+                        )}
+                        {currentAdminSimStep && (
+                          <circle
+                            cx={currentAdminSimStep.targetZone.x}
+                            cy={currentAdminSimStep.targetZone.y}
+                            r={currentAdminSimStep.targetZone.r}
+                            fill="rgba(16, 185, 129, 0.35)"
+                            stroke="#10b981"
+                            strokeWidth="3"
+                          />
+                        )}
+                      </svg>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Tip: Draw your anatomical diagram on an iPad or computer, upload it above, then click on each anatomical landmark for each step to position the interactive target circle.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* MY PROFILE TAB */}
             {adminTab === 'profile' && (
               <div className="max-w-xl mx-auto">
@@ -4886,7 +7859,7 @@ export default function App() {
                   <div className="border-b border-slate-100 pb-3">
                     <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                       <KeyRound className="w-4 h-4 text-emerald-600" />
-                      <span>Edit My Admin Profile & Password</span>
+                      <span>Edit My Admin Profile &amp; Password</span>
                     </h2>
                     <p className="text-xs text-slate-500 mt-0.5">
                       Passwords are encrypted by Google Firebase Authentication and never stored in plain text.
@@ -4919,7 +7892,7 @@ export default function App() {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Full Name & Clinical Title *
+                      Full Name &amp; Clinical Title *
                     </label>
                     <input
                       type="text"
@@ -4955,7 +7928,7 @@ export default function App() {
                       type="submit"
                       className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-2xs"
                     >
-                      Save My Details & Sync
+                      Save My Details &amp; Sync
                     </button>
                   </div>
                 </form>
@@ -5044,7 +8017,7 @@ export default function App() {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Full Name & Title *
+                      Full Name &amp; Title *
                     </label>
                     <input
                       type="text"
@@ -5127,6 +8100,65 @@ export default function App() {
 
             {adminTab === 'publish' && (
               <div className="space-y-6">
+                <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <MessageSquarePlus className="w-4 h-4 text-emerald-600" />
+                        <span>
+                          Learner Course Feedback Log ({feedbackLogs.length} entries)
+                        </span>
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Anonymous evaluation scores (Relevance, Educational Quality &amp; Learning Objectives) ready for ENT UK 3-month quality review.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleExportFeedbackCsv}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-2xs"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Export Feedback CSV</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {feedbackLogs.map((fb) => (
+                      <div
+                        key={fb.id}
+                        className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                      >
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-slate-900">
+                            {fb.moduleTitle}{' '}
+                            <span className="font-normal text-slate-400">
+                              ({fb.submittedAt})
+                            </span>
+                          </div>
+                          {fb.comments && (
+                            <p className="text-slate-600 italic">&ldquo;{fb.comments}&rdquo;</p>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5 shrink-0 font-semibold">
+                          <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
+                            Rel: {fb.relevanceRating}/5
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
+                            Qual: {fb.qualityRating}/5
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
+                            Obj: {fb.objectivesRating || fb.overallRating}/5
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800">
+                            Overall: {fb.overallRating}/5
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-5">
                   <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
                     <div className="flex items-start gap-3">
@@ -5141,44 +8173,6 @@ export default function App() {
                           Follow these 3 steps to make your app a public website that paramedics can save to their phone home screen and embed on Google Sites.
                         </p>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                        Step 1 • Cloud Database
-                      </span>
-                      <h3 className="text-sm font-bold text-slate-900">
-                        Create Free Firebase Project
-                      </h3>
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        Go to <strong>console.firebase.google.com</strong>, create a free project, enable <strong>Firestore Database</strong> + <strong>Anonymous Auth</strong>, and paste your config JSON below so edits sync live across all devices.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800">
-                        Step 2 • Free Web Hosting
-                      </span>
-                      <h3 className="text-sm font-bold text-slate-900">
-                        Host on Vercel or Netlify
-                      </h3>
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        Deploy this `App.jsx` in a free <strong>Vite + React</strong> template on <strong>Vercel.com</strong> or <strong>Netlify.com</strong>. You will immediately get a secure `https://your-app.vercel.app` URL that works as an installable mobile PWA.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900">
-                        Step 3 • Google Sites
-                      </span>
-                      <h3 className="text-sm font-bold text-slate-900">
-                        Embed in Google Sites
-                      </h3>
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        Open your <strong>Google Sites</strong> editor, click <strong>Insert → Embed → By URL</strong>, paste your live `https://` link, and choose <strong>Full Page Embed</strong>.
-                      </p>
                     </div>
                   </div>
 
@@ -5272,7 +8266,7 @@ export default function App() {
                       type="submit"
                       className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
                     >
-                      Restore & Sync to Cloud
+                      Restore &amp; Sync to Cloud
                     </button>
                   </div>
                 </form>
@@ -5491,7 +8485,7 @@ export default function App() {
 
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
                       <div className="text-xs font-bold text-slate-800">
-                        Decision Question & Next Step Links
+                        Decision Question &amp; Next Step Links
                       </div>
 
                       <div>
@@ -5597,13 +8591,10 @@ export default function App() {
                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                       <FileText className="w-4 h-4 text-emerald-600" />
                       <span>
-                        Bottom Guideline & NICE Reference Links for "{adminPathway.title}" (
+                        Bottom Guideline &amp; NICE Reference Links for "{adminPathway.title}" (
                         {(adminPathway.references || []).length})
                       </span>
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      These links appear in a compact collapsible drawer at the bottom of this pathway so they never clutter the emergency view.
-                    </p>
                   </div>
 
                   {(adminPathway.references || []).length > 0 && (
@@ -5676,7 +8667,272 @@ export default function App() {
               </div>
             )}
 
-            {/* ENHANCED LEARNING MODULES EDITOR WITH RICH FORMATTING, TABLES, CALLOUTS & LIVE PREVIEW */}
+            {/* TUBE ID HARDWARE GALLERY ADMIN EDITOR */}
+            {adminTab === 'hardware' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-5 bg-white rounded-2xl p-5 border border-slate-200 space-y-3 self-start">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h2 className="text-sm font-bold text-slate-900">
+                      Tube &amp; Valve Items ({tubeHardwareList.length})
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={resetHardwareForm}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>New Item</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {tubeHardwareList.map((hw) => (
+                      <div
+                        key={hw.id}
+                        className={`p-3 rounded-xl border transition flex items-start justify-between gap-2.5 ${
+                          editingHardwareId === hw.id
+                            ? 'bg-emerald-50/50 border-emerald-400'
+                            : 'bg-slate-50/60 border-slate-200/80'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          {hw.imageUrl ? (
+                            <img
+                              src={hw.imageUrl}
+                              alt={hw.name}
+                              className="w-12 h-12 rounded-lg object-cover border border-slate-200 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-slate-200/70 flex items-center justify-center text-slate-400 shrink-0">
+                              <ImageIcon className="w-5 h-5" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                              {hw.name}
+                            </div>
+                            <div className="text-[11px] text-slate-500 truncate">
+                              {hw.tag}
+                            </div>
+                            <div className="text-[10px] font-semibold text-emerald-700 mt-0.5">
+                              {hw.imageUrl ? '✓ Photo attached' : 'No photo yet'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => loadHardwareIntoForm(hw)}
+                            className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-600"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          {tubeHardwareList.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteHardwareItem(hw.id)}
+                              className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-rose-50 text-slate-500 hover:text-rose-600"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <form
+                  onSubmit={handleSaveHardwareItem}
+                  className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-4"
+                >
+                  <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
+                    {editingHardwareId
+                      ? 'Edit Tube / Hardware Item & Photo'
+                      : 'Add New Tube / Valve to Tube ID'}
+                  </h2>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Tube / Attachment Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={hardwareForm.name}
+                        onChange={(e) =>
+                          setHardwareForm({ ...hardwareForm, name: e.target.value })
+                        }
+                        placeholder="e.g., Bivona TTS Sterile-Water Cuffed"
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Highlight Badge Label
+                      </label>
+                      <input
+                        type="text"
+                        value={hardwareForm.tag}
+                        onChange={(e) =>
+                          setHardwareForm({ ...hardwareForm, tag: e.target.value })
+                        }
+                        placeholder="e.g., Sterile-Water Cuff"
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <ImageIcon className="w-4 h-4 text-emerald-600" />
+                        <span>Reference Photo (Appears in Tube ID)</span>
+                      </label>
+                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>
+                          {uploadingHardwarePhoto ? 'Uploading...' : 'Upload Photo'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingHardwarePhoto}
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              handleUploadHardwareImageFile(e.target.files[0]);
+                              e.target.value = '';
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={hardwareForm.imageUrl}
+                      onChange={(e) =>
+                        setHardwareForm({ ...hardwareForm, imageUrl: e.target.value })
+                      }
+                      placeholder="Or paste direct image URL (https://...)"
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs"
+                    />
+
+                    {hardwareForm.imageUrl && (
+                      <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-white">
+                        <img
+                          src={hardwareForm.imageUrl}
+                          alt="Preview"
+                          className="w-full max-h-48 object-contain bg-slate-100"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setHardwareForm({ ...hardwareForm, imageUrl: '' })
+                          }
+                          className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-slate-900/80 text-white text-[11px] font-semibold"
+                        >
+                          Remove Photo
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Cuff / Valve Type
+                      </label>
+                      <input
+                        type="text"
+                        value={hardwareForm.cuffType}
+                        onChange={(e) =>
+                          setHardwareForm({ ...hardwareForm, cuffType: e.target.value })
+                        }
+                        placeholder="e.g., Uncuffed (No pilot balloon)"
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Inner Cannula Status
+                      </label>
+                      <input
+                        type="text"
+                        value={hardwareForm.innerCannula}
+                        onChange={(e) =>
+                          setHardwareForm({
+                            ...hardwareForm,
+                            innerCannula: e.target.value
+                          })
+                        }
+                        placeholder="e.g., None (Single-lumen)"
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Key Visual Identification Cue
+                    </label>
+                    <input
+                      type="text"
+                      value={hardwareForm.keyVisualCue}
+                      onChange={(e) =>
+                        setHardwareForm({
+                          ...hardwareForm,
+                          keyVisualCue: e.target.value
+                        })
+                      }
+                      placeholder="e.g., Clear pilot balloon with white inflation valve..."
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Emergency Roadside Action
+                    </label>
+                    <input
+                      type="text"
+                      value={hardwareForm.emergencyAction}
+                      onChange={(e) =>
+                        setHardwareForm({
+                          ...hardwareForm,
+                          emergencyAction: e.target.value
+                        })
+                      }
+                      placeholder="e.g., Aspirate pilot balloon completely before removing tube..."
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    {editingHardwareId && (
+                      <button
+                        type="button"
+                        onClick={resetHardwareForm}
+                        className="px-4 py-2 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold"
+                    >
+                      {editingHardwareId ? 'Update Tube Item & Sync' : 'Save Tube Item & Sync'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* ENHANCED LEARNING MODULES EDITOR */}
             {adminTab === 'modules' && adminModule && (
               <div className="space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -5711,7 +8967,7 @@ export default function App() {
                 <div className="bg-white rounded-2xl p-5 border border-slate-200 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h2 className="text-sm font-bold text-slate-900">
-                      Module Overview & Details
+                      Module Overview, Faculty Attribution &amp; Learning Objectives
                     </h2>
                     {learningModules.length > 1 && (
                       <button
@@ -5760,16 +9016,124 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Module Summary
-                    </label>
-                    <input
-                      type="text"
-                      value={adminModule.summary}
-                      onChange={(e) => handleUpdateModuleMeta('summary', e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Module Summary
+                      </label>
+                      <input
+                        type="text"
+                        value={adminModule.summary}
+                        onChange={(e) => handleUpdateModuleMeta('summary', e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Target Clinical Audience (ENT UK CPD Requirement)
+                      </label>
+                      <input
+                        type="text"
+                        value={adminModule.targetAudience || ''}
+                        onChange={(e) =>
+                          handleUpdateModuleMeta('targetAudience', e.target.value)
+                        }
+                        placeholder="e.g., ENT Trainees, Anaesthetists, Paediatricians & Paramedics"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Author / Faculty Name
+                      </label>
+                      <input
+                        type="text"
+                        value={adminModule.facultyName || ''}
+                        onChange={(e) =>
+                          handleUpdateModuleMeta('facultyName', e.target.value)
+                        }
+                        placeholder="e.g., Paediatric Airway Education Group"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Faculty Credentials / Role
+                      </label>
+                      <input
+                        type="text"
+                        value={adminModule.facultyCredentials || ''}
+                        onChange={(e) =>
+                          handleUpdateModuleMeta('facultyCredentials', e.target.value)
+                        }
+                        placeholder="e.g., Consultant ENT & Specialist Paramedic"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Conflict of Interest Disclosure
+                      </label>
+                      <input
+                        type="text"
+                        value={adminModule.coiDisclosure || ''}
+                        onChange={(e) =>
+                          handleUpdateModuleMeta('coiDisclosure', e.target.value)
+                        }
+                        placeholder="None declared"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Learning Objectives Manager */}
+                  <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200/80 space-y-2.5">
+                    <div className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                      <Target className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>
+                        Module Learning Objectives ({(adminModule.learningObjectives || []).length} — Min. 2 required for ENT UK CPD)
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {(adminModule.learningObjectives || []).map((obj, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white border border-emerald-200/70 text-xs"
+                        >
+                          <span className="text-slate-800">
+                            {idx + 1}. {obj}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteModuleObjective(idx)}
+                            className="text-slate-400 hover:text-rose-600 shrink-0"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newObjectiveDraft}
+                        onChange={(e) => setNewObjectiveDraft(e.target.value)}
+                        placeholder="Add measurable learning objective (e.g., Demonstrate safe stoma occlusion during oral BVM...)"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white border border-emerald-200 text-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddModuleObjective}
+                        className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shrink-0"
+                      >
+                        + Add Objective
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -5911,7 +9275,7 @@ export default function App() {
 
                           <div className="sm:col-span-5">
                             <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              Text & Media Flow Layout
+                              Text &amp; Media Flow Layout
                             </label>
                             <select
                               value={sectionForm.layout}
@@ -5927,18 +9291,16 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Formatting Toolbar + Body Text */}
                         <div>
                           <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                             <label className="block text-xs font-semibold text-slate-700">
-                              Section Content (Supports Bullet Points, Numbered Lists & Bold)
+                              Section Content (Supports Bullet Points, Numbered Lists &amp; Bold)
                             </label>
                             <div className="flex items-center gap-1">
                               <button
                                 type="button"
                                 onClick={() => insertFormattingToken('bullet')}
                                 className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold inline-flex items-center gap-1"
-                                title="Insert Bullet Point"
                               >
                                 <List className="w-3 h-3" />
                                 <span>Bullet</span>
@@ -5947,7 +9309,6 @@ export default function App() {
                                 type="button"
                                 onClick={() => insertFormattingToken('numbered')}
                                 className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold inline-flex items-center gap-1"
-                                title="Insert Numbered Step"
                               >
                                 <ListOrdered className="w-3 h-3" />
                                 <span>Numbered</span>
@@ -5956,7 +9317,6 @@ export default function App() {
                                 type="button"
                                 onClick={() => insertFormattingToken('heading')}
                                 className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold inline-flex items-center gap-1"
-                                title="Insert Subheading"
                               >
                                 <Heading2 className="w-3 h-3" />
                                 <span>Subheading</span>
@@ -5965,7 +9325,6 @@ export default function App() {
                                 type="button"
                                 onClick={() => insertFormattingToken('bold')}
                                 className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold inline-flex items-center gap-1"
-                                title="Insert Bold Text"
                               >
                                 <Bold className="w-3 h-3" />
                                 <span>Bold</span>
@@ -5983,7 +9342,6 @@ export default function App() {
                           />
                         </div>
 
-                        {/* Quick Reference Comparison Table Builder */}
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
                           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                             <Table className="w-3.5 h-3.5 text-emerald-600" />
@@ -6057,7 +9415,6 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Callout Banner */}
                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                           <div className="sm:col-span-4">
                             <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -6094,12 +9451,129 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Photos Manager */}
+                        <div className="p-4 rounded-xl bg-sky-50/50 border border-sky-200/80 space-y-2.5">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-sky-900">
+                            <RotateCw className="w-3.5 h-3.5 text-sky-600" />
+                            <span>Active Recall Flip-Flashcard (Optional)</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              value={sectionForm.flashcardFront}
+                              onChange={(e) =>
+                                setSectionForm({
+                                  ...sectionForm,
+                                  flashcardFront: e.target.value
+                                })
+                              }
+                              placeholder="Card Front (Question / Prompt)"
+                              className="px-3 py-1.5 rounded-lg bg-white border border-sky-200 text-xs"
+                            />
+                            <input
+                              type="text"
+                              value={sectionForm.flashcardBack}
+                              onChange={(e) =>
+                                setSectionForm({
+                                  ...sectionForm,
+                                  flashcardBack: e.target.value
+                                })
+                              }
+                              placeholder="Card Back (Clinical Answer)"
+                              className="px-3 py-1.5 rounded-lg bg-white border border-sky-200 text-xs"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-200/80 space-y-2.5">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-900">
+                            <Stethoscope className="w-3.5 h-3.5 text-indigo-600" />
+                            <span>Interactive Bedside Mini-Case Scenario (Optional)</span>
+                          </div>
+                          <textarea
+                            rows={2}
+                            value={sectionForm.miniCaseScenario}
+                            onChange={(e) =>
+                              setSectionForm({
+                                ...sectionForm,
+                                miniCaseScenario: e.target.value
+                              })
+                            }
+                            placeholder="Describe a brief bedside scenario..."
+                            className="w-full px-3 py-1.5 rounded-lg bg-white border border-indigo-200 text-xs"
+                          />
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <input
+                              type="text"
+                              value={sectionForm.miniCaseOpt0}
+                              onChange={(e) =>
+                                setSectionForm({
+                                  ...sectionForm,
+                                  miniCaseOpt0: e.target.value
+                                })
+                              }
+                              placeholder="Choice 1"
+                              className="px-3 py-1.5 rounded-lg bg-white border border-indigo-200 text-xs"
+                            />
+                            <input
+                              type="text"
+                              value={sectionForm.miniCaseOpt1}
+                              onChange={(e) =>
+                                setSectionForm({
+                                  ...sectionForm,
+                                  miniCaseOpt1: e.target.value
+                                })
+                              }
+                              placeholder="Choice 2"
+                              className="px-3 py-1.5 rounded-lg bg-white border border-indigo-200 text-xs"
+                            />
+                            <input
+                              type="text"
+                              value={sectionForm.miniCaseOpt2}
+                              onChange={(e) =>
+                                setSectionForm({
+                                  ...sectionForm,
+                                  miniCaseOpt2: e.target.value
+                                })
+                              }
+                              placeholder="Choice 3 (Optional)"
+                              className="px-3 py-1.5 rounded-lg bg-white border border-indigo-200 text-xs"
+                            />
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <select
+                              value={sectionForm.miniCaseCorrect}
+                              onChange={(e) =>
+                                setSectionForm({
+                                  ...sectionForm,
+                                  miniCaseCorrect: Number(e.target.value)
+                                })
+                              }
+                              className="px-3 py-1.5 rounded-lg bg-white border border-indigo-200 text-xs font-semibold"
+                            >
+                              <option value={0}>Correct: Choice 1</option>
+                              <option value={1}>Correct: Choice 2</option>
+                              <option value={2}>Correct: Choice 3</option>
+                            </select>
+                            <input
+                              type="text"
+                              value={sectionForm.miniCaseFeedback}
+                              onChange={(e) =>
+                                setSectionForm({
+                                  ...sectionForm,
+                                  miniCaseFeedback: e.target.value
+                                })
+                              }
+                              placeholder="Clinical rationale shown after selection..."
+                              className="sm:col-span-2 px-3 py-1.5 rounded-lg bg-white border border-indigo-200 text-xs"
+                            />
+                          </div>
+                        </div>
+
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
                           <div className="flex items-center justify-between">
                             <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                               <ImageIcon className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Photos & Diagrams ({sectionForm.images.length})</span>
+                              <span>Photos &amp; Diagrams ({sectionForm.images.length})</span>
                             </div>
 
                             <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer">
@@ -6191,7 +9665,6 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Videos Manager */}
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
                           <div className="flex items-center justify-between">
                             <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -6286,6 +9759,18 @@ export default function App() {
                               </button>
                             </div>
                           </div>
+                          <input
+                            type="text"
+                            value={newVideoDraft.transcript}
+                            onChange={(e) =>
+                              setNewVideoDraft({
+                                ...newVideoDraft,
+                                transcript: e.target.value
+                              })
+                            }
+                            placeholder="Optional video chapters / transcript notes..."
+                            className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs"
+                          />
                         </div>
                       </>
                     )}
@@ -6428,7 +9913,7 @@ export default function App() {
                         type="submit"
                         className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
                       >
-                        + Add Question & Sync
+                        + Add Question &amp; Sync
                       </button>
                     </div>
                   </form>
@@ -6438,6 +9923,93 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* ==========================================
+          MODAL: CREATE NEW CUSTOM DIAGRAM SIM
+          ========================================== */}
+      {showNewSimModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <form
+            onSubmit={handleCreateNewSim}
+            className="bg-white rounded-2xl max-w-md w-full p-6 border border-slate-200 shadow-xl space-y-4"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900">
+                Create New Procedure Sim
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowNewSimModal(false)}
+                className="p-1.5 rounded-lg bg-slate-100 text-slate-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Procedure Title *
+              </label>
+              <input
+                type="text"
+                required
+                value={newSimForm.title}
+                onChange={(e) =>
+                  setNewSimForm({ ...newSimForm, title: e.target.value })
+                }
+                placeholder="e.g., Paediatric Bronchoscopy Foreign Body Retrieval"
+                className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Short Subtitle
+              </label>
+              <input
+                type="text"
+                value={newSimForm.subtitle}
+                onChange={(e) =>
+                  setNewSimForm({ ...newSimForm, subtitle: e.target.value })
+                }
+                placeholder="e.g., Step-by-step anatomical walkthrough"
+                className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Custom Diagram Image URL (Optional — you can also upload after creating)
+              </label>
+              <input
+                type="text"
+                value={newSimForm.customDiagramUrl}
+                onChange={(e) =>
+                  setNewSimForm({ ...newSimForm, customDiagramUrl: e.target.value })
+                }
+                placeholder="https://..."
+                className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowNewSimModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
+              >
+                Create Procedure Sim
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* ==========================================
           MODAL: INSTANT GLOBAL CLINICAL SEARCH (CTRL/CMD + K)
@@ -6558,6 +10130,7 @@ export default function App() {
                           onClick={() => {
                             setShowGlobalSearch(false);
                             setAppMode('learning');
+                            setLearningSectionTab('modules');
                             setActiveModuleId(m.id);
                             setActiveSectionIndex(0);
                             setMaxReachedSectionIndex(0);
@@ -6605,7 +10178,7 @@ export default function App() {
             </div>
 
             <p className="text-xs text-slate-500">
-              Your details stay strictly on your own device (zero PII stored in the cloud). Enter your name and reflection below, then download or print/save as PDF.
+              Your details stay strictly on your own device (zero PII stored in the cloud). Enter your name and optional appraisal reflection below, then download or save as PDF.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -6629,26 +10202,39 @@ export default function App() {
                   type="text"
                   value={cpdRegNumber}
                   onChange={(e) => setCpdRegNumber(e.target.value)}
-                  placeholder="e.g., PA12345"
+                  placeholder="e.g., PA12345 / GMC / NMC"
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Practice Reflection (Optional — included on certificate)
-              </label>
-              <textarea
-                rows={2}
-                value={cpdReflectionText}
-                onChange={(e) => setCpdReflectionText(e.target.value)}
-                placeholder="e.g., Reinforced checking the NTSP Bedhead Sign early, removing speaking valves immediately, and using ID × 2 to size suction catheters..."
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Key Points Learned (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={cpdKeyPointsLearned}
+                  onChange={(e) => setCpdKeyPointsLearned(e.target.value)}
+                  placeholder="e.g., NTSP Green vs Red oxygenation routes and removing speaking valves first..."
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  How Will This Change Practice? (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={cpdPracticeChange}
+                  onChange={(e) => setCpdPracticeChange(e.target.value)}
+                  placeholder="e.g., Check Bedhead Sign within 15s and size suction catheters using ID × 2..."
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                />
+              </div>
             </div>
 
-            {/* Official Certificate Preview Card with Logo & PaedTraches.co.uk */}
             <div className="p-5 sm:p-6 rounded-2xl border-2 border-emerald-600/40 bg-gradient-to-br from-white via-emerald-50/30 to-emerald-50/70 shadow-xs space-y-4">
               <div className="flex items-center justify-between gap-2 border-b border-emerald-200/70 pb-3">
                 <div className="flex items-center gap-2.5">
@@ -6680,7 +10266,7 @@ export default function App() {
                   </div>
                 )}
                 <div className="text-[11px] font-medium text-slate-500 pt-1">
-                  has completed the clinical learning module
+                  has completed the clinical learning module &amp; 100% assessment
                 </div>
                 <div className="text-sm sm:text-base font-bold text-emerald-800">
                   &ldquo;{activeModule.title}&rdquo;
@@ -6696,12 +10282,21 @@ export default function App() {
                 </div>
               </div>
 
-              {cpdReflectionText.trim() && (
-                <div className="p-3 rounded-xl bg-white/80 border border-emerald-200/70 text-xs text-slate-600 italic">
-                  <span className="not-italic font-bold text-emerald-800 block text-[10px] uppercase tracking-wider mb-0.5">
-                    Practice Reflection:
+              {(cpdKeyPointsLearned.trim() || cpdPracticeChange.trim()) && (
+                <div className="p-3 rounded-xl bg-white/80 border border-emerald-200/70 text-xs text-slate-600 space-y-1">
+                  <span className="font-bold text-emerald-800 block text-[10px] uppercase tracking-wider">
+                    Reflective Practice Journal:
                   </span>
-                  &ldquo;{cpdReflectionText.trim()}&rdquo;
+                  {cpdKeyPointsLearned.trim() && (
+                    <p>
+                      <strong>Key Points:</strong> {cpdKeyPointsLearned.trim()}
+                    </p>
+                  )}
+                  {cpdPracticeChange.trim() && (
+                    <p>
+                      <strong>Practice Impact:</strong> {cpdPracticeChange.trim()}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -6732,6 +10327,193 @@ export default function App() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          MODAL: STREAMLINED ENT UK COURSE FEEDBACK FORM
+          ========================================== */}
+      {showFeedbackModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <form
+            onSubmit={handleSubmitCourseFeedback}
+            className="bg-white rounded-2xl max-w-md w-full p-6 border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <MessageSquarePlus className="w-5 h-5 text-emerald-600" />
+                <h3 className="text-base font-bold text-slate-900">
+                  Optional Course Evaluation
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFeedbackModal(false)}
+                className="p-1.5 rounded-lg bg-slate-100 text-slate-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {feedbackSubmittedToast ? (
+              <div className="p-6 text-center space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                <div className="text-sm font-bold text-slate-900">
+                  Thank you for your feedback!
+                </div>
+                <p className="text-xs text-slate-500">
+                  Your anonymous evaluation helps improve PaedTraches.co.uk clinical education.
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs text-slate-500">
+                  Anonymous quality feedback aligned with ENT UK CPD evaluation standards (zero personal details collected).
+                </p>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Feedback For (Locked)
+                    </span>
+                    <span className="text-xs font-bold text-slate-900 block truncate mt-0.5">
+                      {feedbackDraft.moduleTitle}
+                    </span>
+                  </div>
+                  <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      1. Relevance to your clinical practice (1 = Poor, 5 = Excellent)
+                    </label>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {[1, 2, 3, 4, 5].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() =>
+                            setFeedbackDraft({ ...feedbackDraft, relevanceRating: num })
+                          }
+                          className={`py-2 rounded-xl text-xs font-bold border transition ${
+                            feedbackDraft.relevanceRating === num
+                              ? 'bg-emerald-600 text-white border-emerald-600'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      2. Educational quality &amp; clarity of content (1 = Poor, 5 = Excellent)
+                    </label>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {[1, 2, 3, 4, 5].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() =>
+                            setFeedbackDraft({ ...feedbackDraft, qualityRating: num })
+                          }
+                          className={`py-2 rounded-xl text-xs font-bold border transition ${
+                            feedbackDraft.qualityRating === num
+                              ? 'bg-emerald-600 text-white border-emerald-600'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      3. Effectiveness in meeting stated learning objectives (1–5)
+                    </label>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {[1, 2, 3, 4, 5].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() =>
+                            setFeedbackDraft({ ...feedbackDraft, objectivesRating: num })
+                          }
+                          className={`py-2 rounded-xl text-xs font-bold border transition ${
+                            feedbackDraft.objectivesRating === num
+                              ? 'bg-emerald-600 text-white border-emerald-600'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      4. Overall satisfaction with this educational resource (1–5)
+                    </label>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {[1, 2, 3, 4, 5].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() =>
+                            setFeedbackDraft({ ...feedbackDraft, overallRating: num })
+                          }
+                          className={`py-2 rounded-xl text-xs font-bold border transition ${
+                            feedbackDraft.overallRating === num
+                              ? 'bg-emerald-600 text-white border-emerald-600'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      5. Suggestions for improvement or further training needs (Optional)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={feedbackDraft.comments}
+                      onChange={(e) =>
+                        setFeedbackDraft({ ...feedbackDraft, comments: e.target.value })
+                      }
+                      placeholder="Any topics, videos, or improvements you would find helpful..."
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowFeedbackModal(false)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
+                  >
+                    Submit Feedback
+                  </button>
+                </div>
+              </>
+            )}
+          </form>
         </div>
       )}
 
@@ -6840,10 +10622,6 @@ export default function App() {
               />
             </div>
 
-            <p className="text-[11px] text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-200">
-              Note: Your new pathway will automatically start with the mandatory clinical governance step ("Confirm Local Guidance & Bedhead Sign").
-            </p>
-
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
@@ -6942,7 +10720,7 @@ export default function App() {
                 onChange={(e) =>
                   setNewModuleForm({ ...newModuleForm, summary: e.target.value })
                 }
-                placeholder="What will paramedics learn in this module?"
+                placeholder="What will clinicians learn in this module?"
                 className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm"
               />
             </div>
@@ -6967,14 +10745,27 @@ export default function App() {
       )}
 
       {/* ==========================================
-          QUIET SINGLE-LINE CLINICAL GOVERNANCE FOOTER (2026/27 EDITION)
+          CLINICAL GOVERNANCE, COPYRIGHT, FEEDBACK & PRIVACY FOOTER
           ========================================== */}
       <footer className="border-t border-slate-200/80 bg-white py-4 px-4 sm:px-6 lg:px-8 mt-12">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
-          <span>
-            PaedTraches clinical reference aid ({INITIAL_GOVERNANCE_META.version}) — follow local Ambulance Trust & JRCALC guidelines.
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+          <span className="text-center md:text-left">
+            © {new Date().getFullYear()} PaedTraches.co.uk ({INITIAL_GOVERNANCE_META.version}) — Original educational modules &amp; tools © PaedTraches; third-party clinical frameworks &amp; external links remain the property of their respective owners.
           </span>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center justify-center gap-3 shrink-0">
+            <button
+              onClick={() =>
+                openLockedFeedbackModal(
+                  appMode === 'learning' && learningSectionTab === 'modules' && activeModule
+                    ? activeModule.title
+                    : 'All Learning Modules (Overall Curriculum)'
+                )
+              }
+              className="font-semibold text-emerald-700 hover:text-emerald-900 underline underline-offset-2"
+            >
+              Course Feedback
+            </button>
+            <span>•</span>
             <button
               onClick={() => {
                 setLegalModalTab('disclaimer');
@@ -6982,7 +10773,17 @@ export default function App() {
               }}
               className="font-semibold text-slate-700 hover:text-slate-900 underline underline-offset-2"
             >
-              Clinical Governance
+              Governance
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => {
+                setLegalModalTab('copyright');
+                setShowGovernanceModal(true);
+              }}
+              className="font-semibold text-slate-700 hover:text-slate-900 underline underline-offset-2"
+            >
+              Copyright &amp; IP
             </button>
             <span>•</span>
             <button
@@ -6992,7 +10793,7 @@ export default function App() {
               }}
               className="font-semibold text-slate-700 hover:text-slate-900 underline underline-offset-2"
             >
-              Terms & Privacy
+              Terms &amp; Privacy
             </button>
             <span>•</span>
             <button
@@ -7002,14 +10803,14 @@ export default function App() {
               }}
               className="font-semibold text-slate-700 hover:text-slate-900 underline underline-offset-2"
             >
-              MHRA / SaMD Notice
+              MHRA Notice
             </button>
           </div>
         </div>
       </footer>
 
       {/* ==========================================
-          MODAL 1: ROADSIDE TOOLS (SIZER, GO-BAG & HOSPITAL PRE-ALERT SBAR)
+          MODAL 1: ROADSIDE TOOLS (SIZER, HARDWARE ID, TROUBLESHOOT, GO-BAG & SBAR)
           ========================================== */}
       {activeToolModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -7020,7 +10821,23 @@ export default function App() {
                   <>
                     <Calculator className="w-5 h-5 text-emerald-600" />
                     <h3 className="text-base font-bold text-slate-900">
-                      Suction & Tube Sizing Calculator
+                      Suction &amp; Tube Sizing Calculator
+                    </h3>
+                  </>
+                )}
+                {activeToolModal === 'hardware' && (
+                  <>
+                    <Package className="w-5 h-5 text-indigo-600" />
+                    <h3 className="text-base font-bold text-slate-900">
+                      Paediatric Tube &amp; Hardware Identifier
+                    </h3>
+                  </>
+                )}
+                {activeToolModal === 'troubleshoot' && (
+                  <>
+                    <Wrench className="w-5 h-5 text-rose-600" />
+                    <h3 className="text-base font-bold text-slate-900">
+                      Airway Troubleshooting Matrix
                     </h3>
                   </>
                 )}
@@ -7036,7 +10853,7 @@ export default function App() {
                   <>
                     <Radio className="w-5 h-5 text-amber-600" />
                     <h3 className="text-base font-bold text-slate-900">
-                      Paediatric ED / ENT Pre-Alert Builder
+                      Paediatric A&amp;E / ENT Pre-Alert Builder
                     </h3>
                   </>
                 )}
@@ -7048,6 +10865,132 @@ export default function App() {
                 <X className="w-4 h-4" />
               </button>
             </div>
+
+            {activeToolModal === 'hardware' && (
+              <div className="space-y-3.5">
+                <p className="text-xs text-slate-500">
+                  Rapid bedside identification of common paediatric tracheostomy tubes, sterile-water cuffs, and hub attachments.
+                </p>
+                <div className="space-y-3">
+                  {tubeHardwareList.map((hw) => (
+                    <div
+                      key={hw.id}
+                      className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/90 space-y-2.5"
+                    >
+                      <div className="flex items-start justify-between gap-2 flex-wrap">
+                        <h4 className="text-sm font-bold text-slate-900">{hw.name}</h4>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${hw.tagColor}`}
+                        >
+                          {hw.tag}
+                        </span>
+                      </div>
+                      {hw.imageUrl && (
+                        <div className="rounded-xl overflow-hidden border border-slate-200 bg-white">
+                          <img
+                            src={hw.imageUrl}
+                            alt={hw.name}
+                            className="w-full max-h-48 object-contain bg-slate-100"
+                          />
+                        </div>
+                      )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                        <div className="p-2 rounded-xl bg-white border border-slate-200/70">
+                          <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                            Cuff / Valve Type
+                          </span>
+                          <span className="font-semibold text-slate-800">{hw.cuffType}</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-white border border-slate-200/70">
+                          <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                            Inner Cannula
+                          </span>
+                          <span className="font-semibold text-slate-800">
+                            {hw.innerCannula}
+                          </span>
+                        </div>
+                      </div>
+                      {hw.keyVisualCue && (
+                        <p className="text-xs text-slate-600 leading-relaxed">
+                          <strong>Visual Cue:</strong> {hw.keyVisualCue}
+                        </p>
+                      )}
+                      {hw.emergencyAction && (
+                        <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-xs text-emerald-950 font-medium">
+                          <strong>Roadside Action:</strong> {hw.emergencyAction}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeToolModal === 'troubleshoot' && (() => {
+              const activeIssue =
+                TROUBLESHOOTING_MATRIX.find((t) => t.id === selectedTroubleshootId) ||
+                TROUBLESHOOTING_MATRIX[0];
+
+              return (
+                <div className="space-y-4">
+                  <p className="text-xs text-slate-500">
+                    Select a presenting clinical sign or bedside problem for immediate causes and safe actions.
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {TROUBLESHOOTING_MATRIX.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setSelectedTroubleshootId(item.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition text-left ${
+                          selectedTroubleshootId === item.id
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {item.symptom.split('/')[0].trim()}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5">
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <h4 className="text-sm sm:text-base font-bold text-slate-900">
+                        {activeIssue.symptom}
+                      </h4>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${activeIssue.urgencyColor}`}
+                      >
+                        {activeIssue.urgency}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        Likely Clinical Causes
+                      </div>
+                      <ul className="space-y-1 text-xs text-slate-700 list-disc pl-4">
+                        {activeIssue.likelyCauses.map((c, idx) => (
+                          <li key={idx}>{c}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 space-y-1.5">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                        Immediate Safe Actions
+                      </div>
+                      <ol className="space-y-1.5 text-xs text-slate-800 font-medium list-decimal pl-4">
+                        {activeIssue.immediateActions.map((act, idx) => (
+                          <li key={idx}>{act}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {activeToolModal === 'calculator' && (
               <div className="space-y-5">
@@ -7252,7 +11195,6 @@ export default function App() {
                     </button>
                   </div>
 
-                  {/* Airway & Tube Details */}
                   <div className="grid grid-cols-2 gap-2.5">
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-600 mb-1">
@@ -7327,7 +11269,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Separate Airway Event Input */}
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-600 mb-1">
                       Airway Event / Presentation
@@ -7343,7 +11284,6 @@ export default function App() {
                     />
                   </div>
 
-                  {/* Common Interventions Tick-Boxes */}
                   <div className="space-y-2">
                     <label className="block text-[11px] font-semibold text-slate-600">
                       Interventions Performed (Tick all that apply)
@@ -7397,7 +11337,6 @@ export default function App() {
                     />
                   </div>
 
-                  {/* Separate Observation Boxes */}
                   <div className="space-y-1.5">
                     <label className="block text-[11px] font-semibold text-slate-600">
                       Current Observations
@@ -7501,10 +11440,9 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Travelling With Tick-Boxes */}
                   <div className="space-y-2">
                     <label className="block text-[11px] font-semibold text-slate-600">
-                      Travelling With & Equipment On Board
+                      Travelling With &amp; Equipment On Board
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                       {TRAVELLING_WITH_OPTIONS.map((item) => {
@@ -7555,7 +11493,6 @@ export default function App() {
                     />
                   </div>
 
-                  {/* Optional Expandable CPR & Paediatric ALS Drugs Section */}
                   <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50/70">
                     <button
                       type="button"
@@ -7563,7 +11500,7 @@ export default function App() {
                       className="w-full px-3.5 py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-100/70 transition"
                     >
                       <span className="text-xs font-semibold text-slate-700 flex items-center gap-2">
-                        <span>CPR / Resuscitation & ALS Drugs (Optional)</span>
+                        <span>CPR / Resuscitation &amp; ALS Drugs (Optional)</span>
                         {(handoverForm.cprPerformed || givenDrugsList.length > 0) && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">
                             Active
@@ -7630,10 +11567,9 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* Paediatric ALS Drugs Tick-Boxes + Doses Counter */}
                         <div className="space-y-1.5 pt-1 border-t border-slate-100">
                           <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            Paediatric ALS Drugs Given (Tick & enter doses)
+                            Paediatric ALS Drugs Given (Tick &amp; enter doses)
                           </span>
                           <div className="space-y-1.5">
                             {ALS_DRUG_OPTIONS.map((drug) => {
@@ -7715,7 +11651,6 @@ export default function App() {
                     )}
                   </div>
 
-                  {/* Aesthetic Structured Pre-Alert Summary Card */}
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/80 overflow-hidden shadow-2xs">
                     <div
                       className={`px-4 py-2.5 flex items-center justify-between border-b ${
@@ -7827,7 +11762,7 @@ export default function App() {
                               <div className="space-y-0.5 pl-1">
                                 {givenDrugsList.map((drugLine, idx) => (
                                   <div key={idx} className="text-rose-900">
-                                    • {drugLine}
+                                    - {drugLine}
                                   </div>
                                 ))}
                               </div>
@@ -7839,7 +11774,7 @@ export default function App() {
                       {travellingList.length > 0 && (
                         <div className="p-3 rounded-xl bg-white border border-slate-200/80">
                           <div className="text-[10px] font-semibold uppercase text-slate-400 mb-1.5">
-                            Travelling With & Equipment
+                            Travelling With &amp; Equipment
                           </div>
                           <div className="flex flex-wrap gap-1.5">
                             {travellingList.map((item) => (
@@ -7947,7 +11882,7 @@ export default function App() {
       )}
 
       {/* ==========================================
-          MODAL 3: SAVE TO HOME SCREEN (PWA)
+          MODAL 3: SAVE TO HOME SCREEN & OFFLINE SHIFT PACK (PWA)
           ========================================== */}
       {showPwaModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
@@ -7956,7 +11891,7 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-emerald-600" />
                 <h3 className="text-base font-bold text-slate-900">
-                  Save PaedTraches to Phone
+                  Save App &amp; Offline Shift Pack
                 </h3>
               </div>
               <button
@@ -7967,9 +11902,38 @@ export default function App() {
               </button>
             </div>
 
+            <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
+                  <HardDriveDownload className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Offline Dead-Zone Shift Cache</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-emerald-700 border border-emerald-200">
+                  {pathways.length} Pathways • {learningModules.length} Modules
+                </span>
+              </div>
+              <p className="text-xs text-emerald-900/80 leading-relaxed">
+                {offlinePackSyncedAt
+                  ? `✓ All pathways, sizing tables, hardware guides, and modules are cached on this device (Last synced: ${offlinePackSyncedAt}).`
+                  : 'Cache all pathways and reference tables onto your device before starting a shift in low-signal areas.'}
+              </p>
+              <button
+                type="button"
+                onClick={() => syncOfflineShiftPack(pathways, learningModules, tubeHardwareList, true)}
+                className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs"
+              >
+                <HardDriveDownload className="w-3.5 h-3.5" />
+                <span>
+                  {offlineSyncToast
+                    ? '✓ Offline Shift Pack Updated!'
+                    : 'Sync Latest Offline Shift Pack Now'}
+                </span>
+              </button>
+            </div>
+
             <div className="space-y-3 text-xs sm:text-sm text-slate-600 leading-relaxed">
               <p>
-                Add <strong>PaedTraches</strong> to your phone’s home screen for one-tap access and offline availability of all emergency pathways.
+                Add <strong>PaedTraches</strong> to your phone’s home screen for one-tap roadside access with the custom green tracheostomy app icon:
               </p>
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                 <div className="font-semibold text-slate-900">iOS (Safari):</div>
@@ -7994,7 +11958,7 @@ export default function App() {
       )}
 
       {/* ==========================================
-          MODAL 4: UK CLINICAL GOVERNANCE, TERMS & PRIVACY HUB
+          MODAL 4: UK CLINICAL GOVERNANCE, COPYRIGHT, TERMS & PRIVACY HUB
           ========================================== */}
       {showGovernanceModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
@@ -8003,7 +11967,7 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <Scale className="w-5 h-5 text-emerald-600" />
                 <h3 className="text-base font-bold text-slate-900">
-                  Legal, Clinical Governance & UK Regulatory Compliance
+                  Legal, Copyright, Clinical Governance &amp; UK Compliance
                 </h3>
               </div>
               <button
@@ -8026,6 +11990,16 @@ export default function App() {
                 Clinical Disclaimer
               </button>
               <button
+                onClick={() => setLegalModalTab('copyright')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  legalModalTab === 'copyright'
+                    ? 'bg-white text-slate-900 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Copyright &amp; IP
+              </button>
+              <button
                 onClick={() => setLegalModalTab('mhra')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                   legalModalTab === 'mhra'
@@ -8043,17 +12017,7 @@ export default function App() {
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Terms & Conditions
-              </button>
-              <button
-                onClick={() => setLegalModalTab('privacy')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  legalModalTab === 'privacy'
-                    ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                UK GDPR & Privacy
+                Terms &amp; UK GDPR
               </button>
             </div>
 
@@ -8073,13 +12037,30 @@ export default function App() {
                     </div>
                   </div>
                   <p>
-                    <strong>1. Scope & Intended Audience:</strong> PaedTraches is an open-access educational and rapid visual reference tool designed specifically for UK registered paramedics (HCPC), pre-hospital clinicians, and emergency care responders.
+                    <strong>1. Scope &amp; Intended Audience:</strong> PaedTraches.co.uk is an open-access educational and rapid visual reference tool designed for UK registered paramedics (HCPC), ENT trainees, anaesthetists, paediatricians, emergency department clinicians, and pre-hospital responders.
                   </p>
                   <p>
-                    <strong>2. Primacy of Local Trust & JRCALC Guidelines:</strong> This platform reproduces established national principles from the National Tracheostomy Safety Project (NTSP) and Resuscitation Council UK. It does <strong>not</strong> replace clinical judgement, individualised patient Bedhead Signs, or your employing NHS Ambulance Trust and JRCALC Clinical Practice Guidelines.
+                    <strong>2. Primacy of Local Trust &amp; JRCALC Guidelines:</strong> This platform reproduces established national principles from the National Tracheostomy Safety Project (NTSP) and Resuscitation Council UK. It does <strong>not</strong> replace clinical judgement, individualised patient Bedhead Signs, or your employing NHS Trust and JRCALC Clinical Practice Guidelines.
                   </p>
                   <p>
-                    <strong>3. Medication & Equipment Verification:</strong> It is the sole responsibility of the attending clinician to verify equipment sizing, suction pressures, and drug dosages prior to administration.
+                    <strong>3. Medication &amp; Equipment Verification:</strong> It is the sole responsibility of the attending clinician to verify equipment sizing, suction pressures, and drug dosages prior to administration.
+                  </p>
+                </div>
+              )}
+
+              {legalModalTab === 'copyright' && (
+                <div className="space-y-3">
+                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs font-medium">
+                    <strong>Copyright &amp; Intellectual Property Notice — PaedTraches.co.uk:</strong>
+                  </div>
+                  <p>
+                    <strong>1. Original Content Owned by PaedTraches:</strong> The majority of content on this website—including the custom interactive step-by-step decision engine, original educational module prose, learning objectives, assessment questions, Pre-Alert handover builder, software interface, and PaedTraches branding—is the original copyright of <strong>PaedTraches.co.uk</strong>. Individual healthcare professionals may use and print materials (including CPD certificates) for personal study and non-commercial clinical education.
+                  </p>
+                  <p>
+                    <strong>2. Third-Party Clinical Frameworks &amp; External Materials (Caveat):</strong> Not all referenced frameworks, external media, or linked resources are owned by PaedTraches. Algorithm colour-coding (Green / Red pathways) and foundational airway emergency sequences are adapted from open-access national guidance published by the <strong>National Tracheostomy Safety Project (NTSP)</strong> and <strong>Resuscitation Council UK</strong>.
+                  </p>
+                  <p>
+                    <strong>3. External Links &amp; Illustrative Media:</strong> Linked clinical guidelines (such as NICE, GOSH, and DAS) and third-party photographs or embedded educational videos remain the copyright and intellectual property of their respective authors, NHS Trusts, and publishers.
                   </p>
                 </div>
               )}
@@ -8087,17 +12068,17 @@ export default function App() {
               {legalModalTab === 'mhra' && (
                 <div className="space-y-3">
                   <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs font-medium">
-                    <strong>UK Medical Devices Regulations 2002 (as amended) & MHRA Guidance Notice:</strong>
+                    <strong>UK Medical Devices Regulations 2002 (as amended) &amp; MHRA Guidance Notice:</strong>
                   </div>
                   <p>
                     In accordance with UK Medicines and Healthcare products Regulatory Agency (MHRA) guidance on <em>Software and AI as a Medical Device (SaMD)</em>:
                   </p>
                   <ul className="list-disc pl-5 space-y-1.5">
                     <li>
-                      <strong>Electronic Reference & Flowchart Visualisation:</strong> Paper or digital flowcharts that digitise published clinical pathways (such as NTSP Green/Red algorithms) where the healthcare professional retains full visibility of every step are classified as clinical reference material rather than a medical device.
+                      <strong>Electronic Reference &amp; Flowchart Visualisation:</strong> Digital flowcharts that digitise published clinical pathways (such as NTSP Green/Red algorithms) where the healthcare professional retains full visibility of every step are classified as clinical reference material rather than a medical device.
                     </li>
                     <li>
-                      <strong>Transparent Lookup Table (Suction Sizer):</strong> The Suction & Tube Sizer displays a transparent, standard lookup table (`Catheter Fr = Tube ID mm × 2`) and always instructs clinicians to defer to the patient’s pre-measured Bedhead Sign depth.
+                      <strong>Transparent Lookup Table (Suction Sizer):</strong> The Suction &amp; Tube Sizer displays a transparent, standard lookup table (`Catheter Fr = Tube ID mm × 2`) and always instructs clinicians to defer to the patient’s pre-measured Bedhead Sign depth.
                     </li>
                     <li>
                       <strong>DCB0129 / DCB0160 Clinical Risk Management:</strong> Any NHS Trust or organisation embedding this tool into formal operational workflows should log it within their local Clinical Safety Case Report under DCB0160.
@@ -8109,27 +12090,13 @@ export default function App() {
               {legalModalTab === 'terms' && (
                 <div className="space-y-3">
                   <p>
-                    <strong>1. Acceptance of Terms:</strong> By accessing or saving PaedTraches, you acknowledge that the platform is provided free of charge on an &ldquo;as-is&rdquo; educational basis.
+                    <strong>1. Acceptance of Terms:</strong> By accessing or saving PaedTraches.co.uk, you acknowledge that the platform is provided free of charge on an &ldquo;as-is&rdquo; educational basis. To the fullest extent permitted by UK law, the authors and clinical editors accept no liability for clinical outcomes arising from reliance on this educational reference.
                   </p>
                   <p>
-                    <strong>2. Limitation of Liability:</strong> To the fullest extent permitted by UK law, the authors, clinical editors, and contributors accept no liability for any clinical outcome, loss, or damage arising from reliance on the information contained within this application.
+                    <strong>2. Zero Patient Identifiable Data (Caldicott &amp; UK GDPR Compliant):</strong> This application never requests, processes, or stores any patient identifiable information (PII) or clinical incident records.
                   </p>
                   <p>
-                    <strong>3. Intellectual Property & Attribution:</strong> Pathway colour-coding and algorithm structures take inspiration from the open-access safety frameworks published by the National Tracheostomy Safety Project (NTSP) and Resuscitation Council UK. External links to NICE and NHS Trust guidelines remain the property of their respective publishers.
-                  </p>
-                </div>
-              )}
-
-              {legalModalTab === 'privacy' && (
-                <div className="space-y-3">
-                  <p>
-                    <strong>1. Zero Patient Identifiable Data (Caldicott & UK GDPR Compliant):</strong> This application never requests, processes, or stores any patient identifiable information (PII) or clinical incident records.
-                  </p>
-                  <p>
-                    <strong>2. Open Access for Clinicians:</strong> Paramedics and learners do not need to register an account or provide personal data (such as names or emails) to use the On-Call pathways or Learning Modules.
-                  </p>
-                  <p>
-                    <strong>3. Functional Storage Only:</strong> In accordance with the UK Privacy and Electronic Communications Regulations (PECR), this app uses strictly necessary functional storage to cache emergency pathways for offline roadside use and to remember anonymous module completion status on your device. No advertising or third-party tracking cookies are used.
+                    <strong>3. Clinician Privacy &amp; Functional Storage:</strong> Clinicians do not need to create an account or submit personal data to use the pathways, learning modules, or CPD certificate generator (names typed onto certificates remain strictly in your local browser memory). In accordance with UK PECR, strictly necessary local storage is used only to cache emergency pathways for offline use and remember anonymous module completion status.
                   </p>
                 </div>
               )}
@@ -8140,7 +12107,7 @@ export default function App() {
                 onClick={() => setShowGovernanceModal(false)}
                 className="w-full py-2.5 rounded-xl bg-slate-900 text-white font-semibold text-xs sm:text-sm"
               >
-                Acknowledge & Close
+                Acknowledge &amp; Close
               </button>
             </div>
           </div>
