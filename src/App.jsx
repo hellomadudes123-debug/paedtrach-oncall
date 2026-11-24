@@ -94,9 +94,9 @@ import {
   Wrench,
   HardDriveDownload,
   Crosshair,
-  Compass,
-  Sparkle,
-  HeartPulse
+  HeartPulse,
+  BookMarked,
+  Compass
 } from 'lucide-react';
 
 // ==========================================
@@ -1507,105 +1507,132 @@ const INITIAL_PROCEDURE_SIMULATIONS = [
         basicNote:
           'Exposing the neck and steadying the windpipe prevents lateral slip during emergency airway rescue.',
         requiredTool: 'tool-hands',
-        interactionType: 'tap',
+        ageGroups: ['all'],
+        interactionType: 'hold',
         targetZone: { x: 250, y: 155, r: 44, label: 'Thyroid Cartilage & Larynx' },
-        demoHint: 'Select "Palpate" and tap the highlighted target over the thyroid cartilage.'
+        demoHint: 'Select "Palpate", then press and hold on the thyroid cartilage to stabilise the larynx.'
       },
       {
         id: 'cric-2',
         phase: 'Preparation & Positioning',
         title: 'Identify & Mark the Cricothyroid Membrane',
         instruction:
-          'Select Mark CTM and trace the midline vertical axis across the cricothyroid membrane (between the thyroid cartilage above and cricoid ring below).',
+          'Select Mark CTM and draw a vertical midline mark across the cricothyroid membrane (between thyroid cartilage above and cricoid ring below).',
         traineeTip:
           'Avoid straying laterally where the anterior jugular veins and carotid sheaths lie.',
         basicNote:
           'The cricothyroid membrane is a small soft window just below the Adam’s apple.',
         requiredTool: 'tool-marker',
-        interactionType: 'drag',
+        ageGroups: ['all'],
+        interactionType: 'draw',
         dragStart: { x: 250, y: 145 },
         dragEnd: { x: 250, y: 215 },
         targetZone: { x: 250, y: 182, r: 36, label: 'Cricothyroid Membrane' },
-        demoHint: 'Select "Mark CTM" and drag vertically down through the cricothyroid groove.'
+        demoHint: 'Draw a continuous line with the Skin Marker down across the cricothyroid groove.'
       },
       {
         id: 'cric-3',
         phase: 'Preparation & Positioning',
-        title: 'Rapid Antiseptic Skin Prep',
+        title: 'Scrub & Prep Anterior Neck Field',
         instruction:
-          'Select Prep Skin and tap across the anterior neck field.',
+          'Select Prep Skin and scrub back-and-forth over the anterior neck to coat the surgical field with antiseptic.',
         traineeTip:
-          'In a true CICO arrest, do not wait 30 seconds for drying—proceed immediately to airway puncture/incision.',
+          'In a true CICO arrest, do not wait 30 seconds for drying—proceed immediately to airway puncture/incision once prepped.',
         basicNote:
-          'Quickly cleaning the skin reduces infection risk before entering the airway.',
+          'Coating the skin with antiseptic reduces infection risk before entering the airway.',
         requiredTool: 'tool-chlorhex',
-        interactionType: 'tap',
-        targetZone: { x: 250, y: 182, r: 46, label: 'Anterior Neck Field' },
-        demoHint: 'Select "Prep Skin" and tap the central neck surgical field.'
+        ageGroups: ['all'],
+        interactionType: 'paint',
+        targetZone: { x: 250, y: 182, r: 52, label: 'Anterior Neck Field' },
+        demoHint: 'Brush Prep Skin across the highlighted neck area until coverage reaches 100%.'
       },
       {
         id: 'cric-4',
         phase: 'Paediatric Needle Rescue (< 8 Years)',
         title: '45° Caudal Needle Cricothyroidotomy & Air Aspiration',
         instruction:
-          'For children <8–10 yrs: Select Needle CTM and tap the cricothyroid membrane to advance caudally at 45° while aspirating until air bubbles appear.',
+          'Select Needle CTM and push the 14G/16G cannula downward along the tracheal axis at 45° until air bubbles freely into the saline syringe.',
         traineeTip:
           'Stop advancing the needle the instant air bubbles freely into the saline syringe to avoid perforating the posterior tracheal wall and oesophagus.',
         basicNote:
           'A narrow cannula is used in young children to safely deliver oxygen without damaging their delicate voice box.',
         requiredTool: 'tool-cannula',
-        interactionType: 'tap',
-        targetZone: { x: 250, y: 182, r: 34, label: 'CTM Puncture Point (45° Caudal)' },
-        demoHint: 'Select "Needle CTM" and tap the cricothyroid membrane center.'
+        ageGroups: ['infant', 'child'],
+        interactionType: 'advance',
+        dragStart: { x: 250, y: 176 },
+        dragEnd: { x: 250, y: 245 },
+        targetZone: { x: 250, y: 182, r: 36, label: 'CTM Puncture & Caudal Advance' },
+        demoHint: 'Press on the cricothyroid membrane and push downward along the airway guide.'
+      },
+      {
+        id: 'cric-4b',
+        phase: 'Needle Oxygenation & Verification (< 8 Years)',
+        title: 'Stabilise Cannula Hub & Deliver Low-Pressure Oxygenation',
+        instruction:
+          'Select Tube & EtCO2 and press onto the cannula hub to lock the oxygen adapter and confirm chest rise.',
+        traineeTip:
+          'Hold the cannula flange continuously against the skin—paediatric cannulae kink easily if released. Allow adequate expiratory time (1:4 I:E ratio) to prevent barotrauma.',
+        basicNote:
+          'Oxygen is delivered carefully through the narrow cannula while watching the chest rise and fall.',
+        requiredTool: 'tool-tube',
+        ageGroups: ['infant', 'child'],
+        interactionType: 'hold',
+        targetZone: { x: 250, y: 182, r: 36, label: 'Cannula Oxygen Connection' },
+        demoHint: 'Press and hold Tube & EtCO2 onto the cannula hub to connect oxygen.'
       },
       {
         id: 'cric-5',
-        phase: 'Surgical Cricothyroidotomy (Older Child / Adolescent)',
+        phase: 'Surgical Cricothyroidotomy (Adolescent > 10 Years)',
         title: 'Horizontal Cricothyroid Membrane Incision',
         instruction:
-          'If surgical access is required (older child/adolescent or failed needle): Select Scalpel and incise horizontally across the lower half of the cricothyroid membrane.',
+          'Select Scalpel and draw a clean horizontal incision across the lower half of the cricothyroid membrane.',
         traineeTip:
           'Keep the blade directed slightly caudally and hug the superior border of the cricoid cartilage to avoid the superior thyroid vessels.',
         basicNote:
           'A small horizontal opening is made directly into the windpipe membrane.',
         requiredTool: 'tool-scalpel',
-        interactionType: 'drag',
+        ageGroups: ['adolescent'],
+        interactionType: 'draw',
         dragStart: { x: 222, y: 182 },
         dragEnd: { x: 278, y: 182 },
         targetZone: { x: 250, y: 182, r: 34, label: 'Horizontal CTM Incision' },
-        demoHint: 'Select "Scalpel" and drag horizontally from left to right across the CTM.'
+        demoHint: 'Draw the Scalpel horizontally from left to right across the CTM.'
       },
       {
         id: 'cric-6',
-        phase: 'Surgical Cricothyroidotomy (Older Child / Adolescent)',
-        title: 'Introduce Paediatric Bougie Caudally',
+        phase: 'Surgical Cricothyroidotomy (Adolescent > 10 Years)',
+        title: 'Advance Paediatric Bougie Caudally',
         instruction:
-          'Select Bougie and guide the coudé tip gently downward into the trachea.',
+          'Select Bougie and push it smoothly downward along the tracheal lumen to 8–10 cm.',
         traineeTip:
           'Advance only 8–10 cm to avoid carinal trauma or endobronchial placement; feel for gentle tracheal ring clicks.',
         basicNote:
           'The flexible bougie acts as a smooth guide rail into the lungs.',
         requiredTool: 'tool-bougie',
-        interactionType: 'drag',
+        ageGroups: ['adolescent'],
+        interactionType: 'advance',
         dragStart: { x: 250, y: 182 },
-        dragEnd: { x: 250, y: 265 },
-        targetZone: { x: 250, y: 215, r: 38, label: 'Tracheal Lumen' },
-        demoHint: 'Select "Bougie" and drag downward into the trachea.'
+        dragEnd: { x: 250, y: 270 },
+        targetZone: { x: 250, y: 185, r: 36, label: 'Advance Bougie Into Trachea' },
+        demoHint: 'Press at the CTM incision and slide the Bougie downward into the trachea.'
       },
       {
         id: 'cric-7',
-        phase: 'Securing & Verification',
+        phase: 'Securing & Verification (Adolescent > 10 Years)',
         title: 'Railroad Tube Over Bougie & Confirm EtCO2',
         instruction:
-          'Select Tube & EtCO2 and tap the stoma to railroad the lubricated tube into the trachea, remove the bougie, and confirm square-wave capnography.',
+          'Select Tube & EtCO2 and slide the lubricated cuffed tube downward over the bougie into the trachea.',
         traineeTip:
           'Verify bilateral chest rise, square-wave EtCO2 trace, and secure the flange firmly before moving the patient.',
         basicNote:
           'The breathing tube is slid over the guide rail, connected to oxygen, and checked with a CO2 monitor.',
         requiredTool: 'tool-tube',
-        interactionType: 'tap',
-        targetZone: { x: 250, y: 185, r: 38, label: 'Secure Airway Tube' },
-        demoHint: 'Select "Tube & EtCO2" and tap the airway opening to complete placement.'
+        ageGroups: ['adolescent'],
+        interactionType: 'advance',
+        dragStart: { x: 250, y: 175 },
+        dragEnd: { x: 250, y: 255 },
+        targetZone: { x: 250, y: 185, r: 38, label: 'Railroad Tube Into Trachea' },
+        demoHint: 'Press at the airway opening and push the Tube downward into position.'
       }
     ]
   },
@@ -1651,69 +1678,269 @@ const INITIAL_PROCEDURE_SIMULATIONS = [
         phase: 'Removal of Blocked Tube',
         title: 'Release Neck Ties & Withdraw Blocked Tube',
         instruction:
-          'Select Cut Ties and tap the neck flange to release the ties and withdraw the occluded tube in a smooth downward arc.',
+          'Select Cut Ties and slice across the neck flange ties to free and withdraw the occluded tube.',
         traineeTip:
           'Ensure any cuff (e.g., Bivona TTS sterile water cuff) is fully aspirated with a syringe before withdrawing.',
         basicNote:
           'Removing a blocked tube immediately opens the stoma and allows upper-airway airflow in Green Pathway patients.',
         requiredTool: 'tool-scissors',
-        interactionType: 'tap',
+        ageGroups: ['all'],
+        interactionType: 'draw',
+        dragStart: { x: 175, y: 140 },
+        dragEnd: { x: 175, y: 192 },
         targetZone: { x: 185, y: 165, r: 42, label: 'Tracheostomy Flange & Ties' },
-        demoHint: 'Select "Cut Ties" and tap the tracheostomy flange at the anterior neck.'
+        demoHint: 'Draw Cut Ties vertically across the neck ties to release the tube.'
       },
       {
         id: 'tc-2',
         phase: 'Stoma Preparation',
-        title: 'Suction Open Stoma & Identify True Tracheal Tract',
+        title: 'Suction Open Stoma & Clear Secretions',
         instruction:
-          'Select Suction Stoma and tap the open stoma tract to clear secretions and visualise the posterior tracheal wall.',
+          'Select Suction Stoma and sweep across the stoma opening to clear pooled secretions.',
         traineeTip:
           'Notice the pre-tracheal tissue plane anterior to the trachea—inserting too steeply or forcefully creates a dangerous false passage.',
         basicNote:
           'Clearing secretions gives a clean view of the windpipe opening.',
         requiredTool: 'tool-suction',
-        interactionType: 'tap',
-        targetZone: { x: 215, y: 165, r: 38, label: 'Open Tracheal Stoma' },
-        demoHint: 'Select "Suction Stoma" and tap the open stoma.'
+        ageGroups: ['all'],
+        interactionType: 'paint',
+        targetZone: { x: 210, y: 165, r: 40, label: 'Open Tracheal Stoma' },
+        demoHint: 'Sweep Suction Stoma over the stoma opening until cleared to 100%.'
       },
       {
         id: 'tc-3',
         phase: 'Curved Insertion',
-        title: 'Guide Spare Tube Downward Into True Tracheal Lumen',
+        title: 'Push Spare Tube Downward Into True Tracheal Lumen',
         instruction:
-          'Select Insert Tube and drag in a smooth downward curve from the stoma into the true tracheal lumen (avoiding the anterior false-passage plane).',
+          'Select Insert Tube, start at the anterior stoma, and push the curved tube smoothly downward into the blue tracheal lumen.',
         traineeTip:
           'Enter perpendicular to the neck skin first, then rotate caudally as the tip enters the trachea. If resistance occurs, switch to the 0.5 mm downsize tube.',
         basicNote:
           'Following the natural curve of the windpipe guides the tube safely into place.',
         requiredTool: 'tool-spare-tube',
-        interactionType: 'drag',
-        dragStart: { x: 185, y: 165 },
-        dragEnd: { x: 270, y: 245 },
-        targetZone: { x: 270, y: 245, r: 42, label: 'True Tracheal Lumen' },
-        demoHint: 'Select "Insert Tube" and drag downward into the blue tracheal lumen.'
+        ageGroups: ['all'],
+        interactionType: 'advance',
+        dragStart: { x: 175, y: 164 },
+        dragEnd: { x: 265, y: 260 },
+        targetZone: { x: 185, y: 165, r: 42, label: 'Push Tube Into Tracheal Lumen' },
+        demoHint: 'Press at the stoma opening and push the tube downward along the blue airway curve.'
       },
       {
         id: 'tc-4',
         phase: 'Verification',
-        title: 'Remove Obturator Immediately & Confirm Waveform EtCO2',
+        title: 'Withdraw Obturator & Confirm Waveform EtCO2',
         instruction:
-          'Select Pull Obturator and tap the tube hub to withdraw the solid obturator and confirm square-wave capnography.',
+          'Select Pull Obturator and pull outward from the tube hub to remove the solid obturator and confirm EtCO2.',
         traineeTip:
           'The child cannot breathe while the obturator remains inside. Confirm placement with EtCO2, chest rise, and easy suction catheter passage.',
         basicNote:
           'Removing the solid guide opens the tube so oxygen can flow into the lungs.',
         requiredTool: 'tool-obturator',
-        interactionType: 'tap',
-        targetZone: { x: 195, y: 165, r: 42, label: '15 mm Tube Hub' },
-        demoHint: 'Select "Pull Obturator" and tap the tube hub to complete.'
+        ageGroups: ['all'],
+        interactionType: 'advance',
+        dragStart: { x: 195, y: 165 },
+        dragEnd: { x: 120, y: 165 },
+        targetZone: { x: 195, y: 165, r: 42, label: 'Withdraw Obturator From Hub' },
+        demoHint: 'Press at the tube hub and pull outward to the left to remove the obturator.'
       }
     ]
   }
 ];
 
-const cleanStepTitle = (rawTitle = '') => {
-  return rawTitle.replace(/^[0-9]+[A-Za-z]?\.\s*/, '').trim();
+const renderSimToolGlyph = (toolId = '', className = 'w-4 h-4') => {
+  if (toolId.includes('scalpel')) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2.2">
+        <path d="M4 20L14 10M14 10L19 5L21 7L16 12L14 10Z" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (toolId.includes('cannula')) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2.2">
+        <path d="M3 21L10 14M10 14L17 7M14 4L20 10M17 7L21 3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (toolId.includes('bougie')) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2.4">
+        <path d="M5 19C9 15 13 9 18 5L20 6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (toolId.includes('tube') || toolId.includes('obturator')) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2.2">
+        <path d="M6 5H12V9H6V5ZM9 9V14C9 17.5 11.5 19.5 16 20" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (toolId.includes('scissors')) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2.2">
+        <circle cx="6" cy="7" r="2.5" />
+        <circle cx="6" cy="17" r="2.5" />
+        <path d="M8.5 8.5L20 18M8.5 15.5L20 6" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (toolId.includes('marker')) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2.2">
+        <path d="M4 20L8 19L19 8L16 5L5 16L4 20Z" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  return <Stethoscope className={className} />;
+};
+
+// ==========================================
+// SLEEK PRECISION TOOL CURSORS FOR SIMULATOR CANVAS
+// Tip of every tool sits directly at (0,0) for surgical precision
+// ==========================================
+const renderSvgCanvasToolCursor = (toolId = '', label = '') => {
+  if (toolId.includes('hands')) {
+    return (
+      <g>
+        <path
+          d="M 0 0 C 2 0 3 2 3 5 L 3 9 L 5 7 C 7 6 8 8 7 10 L 3 17 C 1 20 -3 21 -6 19 C -9 17 -10 13 -8 9 L -4 2 C -3 0 -1 0 0 0 Z"
+          fill="#fde68a"
+          stroke="#0f172a"
+          strokeWidth="1.4"
+          strokeLinejoin="round"
+        />
+        <circle cx="0" cy="0" r="2.2" fill="#f59e0b" />
+      </g>
+    );
+  }
+  if (toolId.includes('marker')) {
+    return (
+      <g>
+        <polygon points="0,0 5,-3 3,-5" fill="#2563eb" />
+        <path
+          d="M 3 -5 L 18 -20 L 22 -16 L 7 -1 Z"
+          fill="#3b82f6"
+          stroke="#0f172a"
+          strokeWidth="1.3"
+          strokeLinejoin="round"
+        />
+        <path d="M 18 -20 L 21 -23 L 25 -19 L 22 -16 Z" fill="#1e293b" />
+        <circle cx="0" cy="0" r="1.8" fill="#1d4ed8" />
+      </g>
+    );
+  }
+  if (toolId.includes('chlorhex')) {
+    return (
+      <g>
+        <rect
+          x="-4"
+          y="-4"
+          width="11"
+          height="7"
+          rx="2.5"
+          transform="rotate(-45 0 0)"
+          fill="#fb7185"
+          stroke="#881337"
+          strokeWidth="1.3"
+        />
+        <line x1="5" y1="-5" x2="18" y2="-18" stroke="#e2e8f0" strokeWidth="2.4" strokeLinecap="round" />
+      </g>
+    );
+  }
+  if (toolId.includes('cannula')) {
+    return (
+      <g>
+        <line x1="0" y1="0" x2="9" y2="-9" stroke="#e2e8f0" strokeWidth="1.6" strokeLinecap="round" />
+        <rect
+          x="8"
+          y="-13"
+          width="14"
+          height="6"
+          rx="1.5"
+          transform="rotate(-45 12 -12)"
+          fill="rgba(56, 189, 248, 0.85)"
+          stroke="#0369a1"
+          strokeWidth="1.2"
+        />
+        <line x1="18" y1="-18" x2="24" y2="-24" stroke="#bae6fd" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="0" cy="0" r="1.5" fill="#38bdf8" />
+      </g>
+    );
+  }
+  if (toolId.includes('scalpel')) {
+    return (
+      <g>
+        <path
+          d="M 0 0 L 8 -4 L 6 -8 L 0 0 Z"
+          fill="#f8fafc"
+          stroke="#0f172a"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M 7 -6 L 21 -20 L 23 -18 L 9 -4 Z"
+          fill="#334155"
+          stroke="#0f172a"
+          strokeWidth="1.1"
+        />
+        <circle cx="0" cy="0" r="1.5" fill="#f43f5e" />
+      </g>
+    );
+  }
+  if (toolId.includes('bougie')) {
+    return (
+      <g>
+        <path
+          d="M 0 0 L 3 -4 C 9 -10 15 -16 22 -23"
+          fill="none"
+          stroke="#38bdf8"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx="0" cy="0" r="1.8" fill="#0284c7" />
+      </g>
+    );
+  }
+  if (toolId.includes('scissors')) {
+    return (
+      <g>
+        <line x1="0" y1="-2" x2="14" y2="-11" stroke="#e2e8f0" strokeWidth="1.8" strokeLinecap="round" />
+        <line x1="0" y1="2" x2="14" y2="-5" stroke="#cbd5e1" strokeWidth="1.8" strokeLinecap="round" />
+        <circle cx="17" cy="-13" r="3" fill="none" stroke="#94a3b8" strokeWidth="1.6" />
+        <circle cx="17" cy="-4" r="3" fill="none" stroke="#94a3b8" strokeWidth="1.6" />
+      </g>
+    );
+  }
+  if (toolId.includes('suction')) {
+    return (
+      <g>
+        <path
+          d="M 0 0 Q 8 -6 20 -20"
+          fill="none"
+          stroke="#34d399"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+        />
+        <circle cx="0" cy="0" r="2" fill="#10b981" />
+      </g>
+    );
+  }
+  return (
+    <g>
+      <path
+        d="M 0 0 C 0 -6 4 -10 11 -11 L 11 -15 L 17 -15 L 17 -7 L 11 -7 L 11 -11"
+        fill="none"
+        stroke="#34d399"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="0" cy="0" r="2" fill="#10b981" />
+      <title>{label}</title>
+    </g>
+  );
 };
 
 const formatTime = (totalSec) => {
@@ -1766,6 +1993,10 @@ const INITIAL_FEEDBACK_LOGS = [
     submittedAt: '2026-02-20'
   }
 ];
+
+const cleanStepTitle = (rawTitle = '') => {
+  return String(rawTitle || '').replace(/^[0-9]+[A-Za-z]?\.\s*/, '').trim();
+};
 
 export default function App() {
   const [appMode, setAppMode] = useState('oncall');
@@ -2234,21 +2465,36 @@ export default function App() {
   // Roadside Tools Modal State ('calculator' | 'checklist' | 'handover' | 'hardware' | 'troubleshoot' | null)
   const [activeToolModal, setActiveToolModal] = useState(null);
   const [selectedTubeIdSize, setSelectedTubeIdSize] = useState('4.0');
-  const [bagChecked, setBagChecked] = useState({});
   const [selectedTroubleshootId, setSelectedTroubleshootId] = useState('ts-high-resistance');
-
-  // Interactive Procedure Simulator State (With Live Telemetry Monitor & Patient Age Group)
+  const [bagChecked, setBagChecked] = useState({});
+  // Interactive Procedure Simulator State (With Live Telemetry Monitor, Age-Filtered Steps & Draggable Tools)
   const [activeSimId, setActiveSimId] = useState('sim-paed-cric');
-  const [simPersona, setSimPersona] = useState('trainee');
+  const [simViewMode, setSimViewMode] = useState('interactive'); // 'interactive' | 'overview'
   const [simAgeGroup, setSimAgeGroup] = useState('child'); // 'infant' | 'child' | 'adolescent'
   const [simStepIndex, setSimStepIndex] = useState(0);
   const [simCompletedSteps, setSimCompletedSteps] = useState({});
   const [selectedSimTool, setSelectedSimTool] = useState('tool-hands');
+  const [draggingTrayTool, setDraggingTrayTool] = useState(null);
+  const simCursorOverlayRef = React.useRef(null);
+  const simSvgRef = React.useRef(null);
+  const simStrokeRef = React.useRef([]);
+  const simPaintedRef = React.useRef({});
+  const simProgressRef = React.useRef(0);
+  const simDragActiveRef = React.useRef(false);
+  const simLastFrameRef = React.useRef(0);
+  const simLivePolylineRef = React.useRef(null);
+  const simLiveAdvanceLineRef = React.useRef(null);
+  const simLiveProgressTextRef = React.useRef(null);
   const [showSimLabels, setShowSimLabels] = useState(true);
   const [simShowMeHint, setSimShowMeHint] = useState(false);
   const [simFeedbackBanner, setSimFeedbackBanner] = useState(null);
   const [simDragActive, setSimDragActive] = useState(false);
   const [simDragCurrent, setSimDragCurrent] = useState(null);
+  const [simStrokePoints, setSimStrokePoints] = useState([]);
+  const [simPaintedCells, setSimPaintedCells] = useState({});
+  const [simActionProgress, setSimActionProgress] = useState(0); // 0 to 100 live progress
+  const [simDisclaimerAccepted, setSimDisclaimerAccepted] = useState(false);
+  const [simDeclarationChecked, setSimDeclarationChecked] = useState(false);
 
   // Hospital Pre-Alert / SBAR Handover Builder State
   const createEmptyHandoverForm = () => ({
@@ -4209,6 +4455,101 @@ export default function App() {
   // ==========================================
   // FULL ADMIN PROCEDURE SIM DESIGNER HANDLERS
   // ==========================================
+  const activeSim = useMemo(
+    () => procedureSims.find((s) => s.id === activeSimId) || procedureSims[0],
+    [procedureSims, activeSimId]
+  );
+
+  const visibleSimSteps = useMemo(() => {
+    if (!activeSim) return [];
+    if (activeSim.supportsAgeSwitch === false) return activeSim.steps || [];
+    const filtered = (activeSim.steps || []).filter((st) => {
+      const groups =
+        Array.isArray(st.ageGroups) && st.ageGroups.length > 0
+          ? st.ageGroups
+          : ['all'];
+      return groups.includes('all') || groups.includes(simAgeGroup);
+    });
+    return filtered.length > 0 ? filtered : activeSim.steps || [];
+  }, [activeSim, simAgeGroup]);
+
+  // Auto-reset simulation progress cleanly whenever the user switches patient age group
+  const handleSimAgeGroupChange = (newAgeId) => {
+    setSimAgeGroup(newAgeId);
+    setSimStepIndex(0);
+    setSimCompletedSteps({});
+    simDragActiveRef.current = false;
+    simStrokeRef.current = [];
+    simPaintedRef.current = {};
+    simProgressRef.current = 0;
+    if (simLivePolylineRef.current) simLivePolylineRef.current.setAttribute('points', '');
+    if (simLiveProgressTextRef.current) simLiveProgressTextRef.current.textContent = '0%';
+    setSimDragActive(false);
+    setSimDragCurrent(null);
+    setSimStrokePoints([]);
+    setSimPaintedCells({});
+    setSimActionProgress(0);
+    setSimFeedbackBanner(null);
+    setSimShowMeHint(false);
+
+    const nextSteps = (activeSim?.steps || []).filter((st) => {
+      const groups =
+        Array.isArray(st.ageGroups) && st.ageGroups.length > 0
+          ? st.ageGroups
+          : ['all'];
+      return groups.includes('all') || groups.includes(newAgeId);
+    });
+    if (nextSteps[0]?.requiredTool) {
+      setSelectedSimTool(nextSteps[0].requiredTool);
+    }
+  };
+
+  // Top-level hold timer for 'hold' steps in Procedure Sim (keeps hook order stable)
+  useEffect(() => {
+    if (appMode !== 'learning' || learningSectionTab !== 'simulator') return;
+    if (!simDisclaimerAccepted) return;
+    if (!simDragActive || !activeSim || visibleSimSteps.length === 0) return;
+
+    const safeIdx = Math.min(simStepIndex, Math.max(0, visibleSimSteps.length - 1));
+    const stepObj = visibleSimSteps[safeIdx] || visibleSimSteps[0];
+    if (!stepObj || (stepObj.interactionType || 'tap') !== 'hold') return;
+
+    const stepKey = `${activeSim.id}-${stepObj.id}`;
+    if (simCompletedSteps[stepKey]) return;
+
+    const timer = setInterval(() => {
+      setSimActionProgress((prev) => {
+        const next = Math.min(100, prev + 5);
+        if (next >= 100) {
+          clearInterval(timer);
+          setSimCompletedSteps((p) => ({ ...p, [stepKey]: true }));
+          setSimShowMeHint(false);
+          setSimDragActive(false);
+          setSimFeedbackBanner({
+            type: 'success',
+            text: `✓ Step ${safeIdx + 1} completed! ${
+              safeIdx < visibleSimSteps.length - 1
+                ? 'Tap Next to continue.'
+                : 'All procedure steps completed — SpO2 & EtCO2 restored!'
+            }`
+          });
+        }
+        return next;
+      });
+    }, 80);
+
+    return () => clearInterval(timer);
+  }, [
+    appMode,
+    learningSectionTab,
+    simDisclaimerAccepted,
+    simDragActive,
+    activeSim,
+    visibleSimSteps,
+    simStepIndex,
+    simCompletedSteps
+  ]);
+
   const adminSim = useMemo(
     () => procedureSims.find((s) => s.id === adminSimId) || procedureSims[0],
     [procedureSims, adminSimId]
@@ -4294,13 +4635,14 @@ export default function App() {
       id: `${adminSim.id}-step-${Date.now().toString().slice(-4)}`,
       phase: `Phase ${newStepNumber}`,
       title: `Step ${newStepNumber}: New Procedure Action`,
-      instruction: 'Describe what the clinician should do on the anatomical diagram.',
+      instruction: 'Drag or tap the required instrument onto the anatomical diagram.',
       traineeTip: 'Add surgical / ENT clinical caveat here.',
       basicNote: 'Plain-language anatomical explanation.',
       requiredTool: defaultToolId,
+      ageGroups: ['all'],
       interactionType: 'tap',
       targetZone: { x: 250, y: 170, r: 40, label: 'Target Landmark' },
-      demoHint: 'Select the required instrument and tap the highlighted circle.'
+      demoHint: 'Drag or tap the required instrument onto the highlighted circle.'
     };
     const nextSims = procedureSims.map((s) =>
       s.id === adminSim.id ? { ...s, steps: [...s.steps, newStepObj] } : s
@@ -6251,6 +6593,7 @@ export default function App() {
                                             <div className="flex flex-wrap items-center gap-2">
                                               {passed100 ? (
                                                 <button
+                                                  type="button"
                                                   onClick={() => setShowCpdModal(true)}
                                                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-2xs"
                                                 >
@@ -6269,14 +6612,15 @@ export default function App() {
                                                 onClick={() =>
                                                   openLockedFeedbackModal(activeModule.title)
                                                 }
-                                                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold"
+                                                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold"
                                               >
                                                 <MessageSquarePlus className="w-3.5 h-3.5 text-emerald-600" />
-                                                <span>Optional Feedback</span>
+                                                <span>Module Feedback</span>
                                               </button>
                                             </div>
 
                                             <button
+                                              type="button"
                                               onClick={() => {
                                                 setQuizSubmitted(false);
                                                 setQuizAnswers({});
@@ -6289,6 +6633,7 @@ export default function App() {
                                           </>
                                         ) : (
                                           <button
+                                            type="button"
                                             onClick={() => {
                                               setQuizSubmitted(true);
                                               if (passed100) {
@@ -6309,6 +6654,7 @@ export default function App() {
                           </div>
                         )}
 
+                        {/* Faculty Attribution & Evidence References Box */}
                         <div className="mt-5 bg-white rounded-2xl border border-slate-200/90 overflow-hidden">
                           <button
                             type="button"
@@ -6394,24 +6740,93 @@ export default function App() {
               </>
             )}
 
-            {/* 2B. INTERACTIVE PROCEDURE SIMULATOR (LIVE MONITOR + AGE GROUP + FALSE PASSAGE SIM) */}
-            {learningSectionTab === 'simulator' && (() => {
-              const activeSim =
-                procedureSims.find((s) => s.id === activeSimId) || procedureSims[0];
-              const currentSimStep = activeSim.steps[simStepIndex] || activeSim.steps[0];
-              const completedCount = Object.keys(simCompletedSteps).filter(
-                (k) => k.startsWith(`${activeSim.id}-`) && simCompletedSteps[k]
-              ).length;
-              const isStepDone = !!simCompletedSteps[`${activeSim.id}-${currentSimStep.id}`];
+            {/* 2B. INTERACTIVE PROCEDURE SIMULATOR (HANDS-ON PAINT / DRAW / ADVANCE / HOLD + LIVE TELEMETRY) */}
+            {learningSectionTab === 'simulator' && activeSim && !simDisclaimerAccepted && (
+              <div className="max-w-2xl mx-auto bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-5">
+                <div className="flex items-start gap-3.5 border-b border-slate-100 pb-4">
+                  <div className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0">
+                    <ShieldAlert className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-700">
+                      Mandatory Clinical &amp; Educational Declaration
+                    </span>
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">
+                      Before Entering Procedure Sim
+                    </h2>
+                  </div>
+                </div>
 
-              // Live Physiological Telemetry Monitor Calculation (Suggestion 1)
+                <div className="space-y-3 text-xs sm:text-sm text-slate-600 leading-relaxed bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">
+                  <p>
+                    <strong>1. Purely Educational Purpose:</strong> This interactive procedure simulator is designed solely as a visual and cognitive familiarisation aid. It <strong>does not replace</strong> formal hands-on clinical training, manikin simulation, supervised practice, or airway competency sign-off.
+                  </p>
+                  <p>
+                    <strong>2. Evolving Clinical Guidelines:</strong> Every effort has been made to ensure anatomical landmarks and procedural steps reflect current UK standards (DAS, NTSP &amp; Resuscitation Council UK) as accurately as possible; however, national and local protocols may be updated over time.
+                  </p>
+                  <p>
+                    <strong>3. Real-World Emergency Practice:</strong> In a genuine clinical emergency, always assess the patient directly, check their individualised Bedhead Sign / care plan, and follow current local NHS Trust, JRCALC, and specialist airway guidelines.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSimDeclarationChecked((prev) => !prev)}
+                  className={`w-full text-left p-4 rounded-2xl border transition flex items-start gap-3 ${
+                    simDeclarationChecked
+                      ? 'bg-emerald-50/70 border-emerald-300 text-emerald-950'
+                      : 'bg-white border-slate-200 hover:border-slate-300 text-slate-800'
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-md flex items-center justify-center mt-0.5 shrink-0 border transition ${
+                      simDeclarationChecked
+                        ? 'bg-emerald-600 border-emerald-600 text-white'
+                        : 'bg-white border-slate-300'
+                    }`}
+                  >
+                    {simDeclarationChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+                  <span className="text-xs sm:text-sm font-semibold leading-snug">
+                    I understand and agree that this simulator is purely educational, does not replace formal practical training, and that I will always verify and follow current local guidelines in a real emergency.
+                  </span>
+                </button>
+
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    disabled={!simDeclarationChecked}
+                    onClick={() => setSimDisclaimerAccepted(true)}
+                    className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-semibold shadow-2xs transition flex items-center gap-2"
+                  >
+                    <span>Acknowledge &amp; Enter Procedure Sim</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {learningSectionTab === 'simulator' && activeSim && simDisclaimerAccepted && (() => {
+              const safeStepIndex = Math.min(
+                simStepIndex,
+                Math.max(0, visibleSimSteps.length - 1)
+              );
+              const currentSimStep =
+                visibleSimSteps[safeStepIndex] || visibleSimSteps[0];
+
+              const completedCount = visibleSimSteps.filter(
+                (st) => !!simCompletedSteps[`${activeSim.id}-${st.id}`]
+              ).length;
+              const isStepDone =
+                !!simCompletedSteps[`${activeSim.id}-${currentSimStep.id}`];
+
               const progressRatio =
-                activeSim.steps.length > 0
-                  ? completedCount / activeSim.steps.length
+                visibleSimSteps.length > 0
+                  ? completedCount / visibleSimSteps.length
                   : 0;
               const isAirwaySecured =
-                completedCount === activeSim.steps.length &&
-                activeSim.steps.length > 0;
+                completedCount === visibleSimSteps.length &&
+                visibleSimSteps.length > 0;
               const monitorSpo2 = isAirwaySecured
                 ? 98
                 : Math.min(94, Math.round(76 + progressRatio * 18));
@@ -6426,67 +6841,351 @@ export default function App() {
                 : 58;
               const monitorEtco2 = isAirwaySecured
                 ? '4.9 kPa (Square-Wave)'
-                : completedCount >= Math.max(1, activeSim.steps.length - 1)
+                : completedCount >= Math.max(1, visibleSimSteps.length - 1)
                 ? '3.2 kPa (Rising)'
                 : '0.0 kPa (Flat / Hypoxic)';
 
               const completeCurrentSimStep = () => {
+                simDragActiveRef.current = false;
+                simProgressRef.current = 100;
                 setSimCompletedSteps((prev) => ({
                   ...prev,
                   [`${activeSim.id}-${currentSimStep.id}`]: true
                 }));
                 setSimShowMeHint(false);
+                setSimActionProgress(100);
+                setSimDragActive(false);
                 setSimFeedbackBanner({
                   type: 'success',
-                  text: `✓ Step ${simStepIndex + 1} completed! ${
-                    simStepIndex < activeSim.steps.length - 1
-                      ? 'Tap Next or continue practising.'
+                  text: `✓ Step ${safeStepIndex + 1} completed! ${
+                    safeStepIndex < visibleSimSteps.length - 1
+                      ? 'Tap Next to continue.'
                       : 'All procedure steps completed — SpO2 & EtCO2 restored!'
                   }`
                 });
               };
 
-              const handleCanvasAction = (clientX, clientY, svgEl, isEnd = false) => {
-                if (!svgEl) return;
+              const getSvgPointFromClient = (clientX, clientY) => {
+                const svgEl = simSvgRef.current;
+                if (!svgEl) return { x: 0, y: 0, localX: 0, localY: 0 };
                 const rect = svgEl.getBoundingClientRect();
-                const svgX = ((clientX - rect.left) / rect.width) * 500;
-                const svgY = ((clientY - rect.top) / rect.height) * 340;
+                const localX = clientX - rect.left;
+                const localY = clientY - rect.top;
+                const safeW = rect.width || 1;
+                const safeH = rect.height || 1;
+                return {
+                  x: (localX / safeW) * 500,
+                  y: (localY / safeH) * 340,
+                  localX,
+                  localY
+                };
+              };
 
-                if (currentSimStep.requiredTool && selectedSimTool !== currentSimStep.requiredTool) {
+              const moveCursorOverlay = (localX, localY, visible = true) => {
+                if (!simCursorOverlayRef.current) return;
+                simCursorOverlayRef.current.style.opacity = visible ? '1' : '0';
+                simCursorOverlayRef.current.style.transform = `translate3d(${localX}px, ${localY}px, 0)`;
+              };
+
+              const resetStepGestureBuffers = () => {
+                simDragActiveRef.current = false;
+                simStrokeRef.current = [];
+                simPaintedRef.current = {};
+                simProgressRef.current = 0;
+                if (simLivePolylineRef.current) {
+                  simLivePolylineRef.current.setAttribute('points', '');
+                }
+                if (simLiveAdvanceLineRef.current && currentSimStep?.dragStart) {
+                  simLiveAdvanceLineRef.current.setAttribute('x2', String(currentSimStep.dragStart.x));
+                  simLiveAdvanceLineRef.current.setAttribute('y2', String(currentSimStep.dragStart.y));
+                }
+                if (simLiveProgressTextRef.current) {
+                  simLiveProgressTextRef.current.textContent = '0%';
+                }
+                setSimDragActive(false);
+                setSimDragCurrent(null);
+                setSimStrokePoints([]);
+                setSimPaintedCells({});
+                setSimActionProgress(0);
+              };
+
+              const handleResetCurrentStepOnly = () => {
+                setSimCompletedSteps((prev) => {
+                  const copy = { ...prev };
+                  delete copy[`${activeSim.id}-${currentSimStep.id}`];
+                  return copy;
+                });
+                setSimFeedbackBanner(null);
+                setSimShowMeHint(false);
+                resetStepGestureBuffers();
+              };
+
+              const getActionModeLabel = (type) => {
+                if (type === 'paint') return 'Scrub / Coat Area';
+                if (type === 'draw') return 'Trace / Incise Line';
+                if (type === 'advance') return 'Push / Advance Along Tract';
+                if (type === 'hold') return 'Press & Hold to Stabilise';
+                return 'Tap Target';
+              };
+
+              const recordPaintCoverageAt = (pt) => {
+                const tz = currentSimStep.targetZone;
+                const distToZone = Math.hypot(pt.x - tz.x, pt.y - tz.y);
+                if (distToZone > tz.r + 12) return;
+
+                const cellSize = 14;
+                const gx = Math.floor((pt.x - (tz.x - tz.r)) / cellSize);
+                const gy = Math.floor((pt.y - (tz.y - tz.r)) / cellSize);
+                const cellKey = `${gx},${gy}`;
+
+                if (simPaintedRef.current[cellKey]) return;
+                simPaintedRef.current[cellKey] = true;
+
+                const uniqueCellsCount = Object.keys(simPaintedRef.current).length;
+                const requiredCells = Math.max(
+                  14,
+                  Math.round(((Math.PI * tz.r * tz.r) / (cellSize * cellSize)) * 0.68)
+                );
+                const rawPct = Math.min(
+                  100,
+                  Math.round((uniqueCellsCount / requiredCells) * 100)
+                );
+                const smoothPct = Math.min(
+                  100,
+                  Math.max(simProgressRef.current, Math.min(rawPct, simProgressRef.current + 12))
+                );
+                if (smoothPct !== simProgressRef.current) {
+                  simProgressRef.current = smoothPct;
+                  if (simLiveProgressTextRef.current) {
+                    simLiveProgressTextRef.current.textContent = `${smoothPct}%`;
+                  }
+                  if (smoothPct >= 100) {
+                    completeCurrentSimStep();
+                  }
+                }
+              };
+
+              const handleInteractivePointerDown = (e) => {
+                if (e.currentTarget.setPointerCapture) {
+                  try {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                  } catch (_) {
+                    // ignore if unsupported
+                  }
+                }
+                const pt = getSvgPointFromClient(e.clientX, e.clientY);
+                moveCursorOverlay(pt.localX, pt.localY, true);
+
+                if (isStepDone) return;
+
+                if (
+                  currentSimStep.requiredTool &&
+                  selectedSimTool !== currentSimStep.requiredTool
+                ) {
                   const reqToolObj = activeSim.tools.find(
                     (t) => t.id === currentSimStep.requiredTool
                   );
                   setSimFeedbackBanner({
                     type: 'warn',
-                    text: `Select "${reqToolObj?.short || 'the required instrument'}" from the tray below first.`
+                    text: `Select "${reqToolObj?.short || 'the required tool'}" from the Instrument Tray first.`
                   });
                   return;
                 }
 
-                if (currentSimStep.interactionType === 'tap') {
-                  const dx = svgX - currentSimStep.targetZone.x;
-                  const dy = svgY - currentSimStep.targetZone.y;
-                  const dist = Math.sqrt(dx * dx + dy * dy);
-                  if (dist <= currentSimStep.targetZone.r + 24) {
+                const mode = currentSimStep.interactionType || 'tap';
+
+                if (mode === 'tap') {
+                  const dx = pt.x - currentSimStep.targetZone.x;
+                  const dy = pt.y - currentSimStep.targetZone.y;
+                  if (Math.hypot(dx, dy) <= currentSimStep.targetZone.r + 24) {
                     completeCurrentSimStep();
                   } else {
                     setSimFeedbackBanner({
                       type: 'warn',
-                      text: `Aim closer to the highlighted landmark (${currentSimStep.targetZone.label}).`
+                      text: `Aim closer to ${currentSimStep.targetZone.label}.`
                     });
                   }
-                } else if (currentSimStep.interactionType === 'drag' && isEnd) {
-                  const dx = svgX - currentSimStep.dragEnd.x;
-                  const dy = svgY - currentSimStep.dragEnd.y;
-                  const dist = Math.sqrt(dx * dx + dy * dy);
-                  if (dist <= 52) {
-                    completeCurrentSimStep();
+                  return;
+                }
+
+                if (mode === 'hold') {
+                  const dx = pt.x - currentSimStep.targetZone.x;
+                  const dy = pt.y - currentSimStep.targetZone.y;
+                  if (Math.hypot(dx, dy) <= currentSimStep.targetZone.r + 24) {
+                    simDragActiveRef.current = true;
+                    setSimDragActive(true);
+                    const startPct = Math.max(simProgressRef.current, 10);
+                    simProgressRef.current = startPct;
+                    setSimActionProgress(startPct);
                   } else {
                     setSimFeedbackBanner({
                       type: 'warn',
-                      text: `Drag smoothly along the indicated guide line to complete this step.`
+                      text: `Press directly on ${currentSimStep.targetZone.label} and hold steady until 100%.`
                     });
                   }
+                  return;
+                }
+
+                if (mode === 'paint') {
+                  simDragActiveRef.current = true;
+                  setSimDragActive(true);
+                  simStrokeRef.current = [{ x: pt.x, y: pt.y }];
+                  if (simLivePolylineRef.current) {
+                    simLivePolylineRef.current.setAttribute('points', `${pt.x},${pt.y}`);
+                  }
+                  recordPaintCoverageAt(pt);
+                  return;
+                }
+
+                if (mode === 'draw' || mode === 'drag') {
+                  if (currentSimStep.dragStart) {
+                    const distFromStart = Math.hypot(
+                      pt.x - currentSimStep.dragStart.x,
+                      pt.y - currentSimStep.dragStart.y
+                    );
+                    if (distFromStart > 30) {
+                      setSimFeedbackBanner({
+                        type: 'warn',
+                        text: 'Start directly on the orange start dot and trace smoothly to the green end dot.'
+                      });
+                      return;
+                    }
+                  }
+                  simDragActiveRef.current = true;
+                  setSimDragActive(true);
+                  simStrokeRef.current = [{ x: pt.x, y: pt.y }];
+                  if (simLivePolylineRef.current) {
+                    simLivePolylineRef.current.setAttribute('points', `${pt.x},${pt.y}`);
+                  }
+                  return;
+                }
+
+                if (mode === 'advance') {
+                  const startPt = currentSimStep.dragStart || currentSimStep.targetZone;
+                  const distFromStart = Math.hypot(pt.x - startPt.x, pt.y - startPt.y);
+                  if (distFromStart <= 32) {
+                    simDragActiveRef.current = true;
+                    setSimDragActive(true);
+                    simStrokeRef.current = [{ x: pt.x, y: pt.y }];
+                  } else {
+                    setSimFeedbackBanner({
+                      type: 'warn',
+                      text: `Start at the orange entry dot (${currentSimStep.targetZone.label}) and slide smoothly to the green depth marker.`
+                    });
+                  }
+                }
+              };
+
+              const handleInteractivePointerMove = (e) => {
+                const pt = getSvgPointFromClient(e.clientX, e.clientY);
+                moveCursorOverlay(pt.localX, pt.localY, true);
+
+                if (!simDragActiveRef.current || isStepDone) return;
+
+                const mode = currentSimStep.interactionType || 'tap';
+                if (simStrokeRef.current.length > 140) {
+                  simStrokeRef.current.shift();
+                }
+                simStrokeRef.current.push({ x: pt.x, y: pt.y });
+
+                if (simLivePolylineRef.current && (mode === 'paint' || mode === 'draw' || mode === 'drag')) {
+                  simLivePolylineRef.current.setAttribute(
+                    'points',
+                    simStrokeRef.current.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+                  );
+                }
+
+                if (mode === 'paint') {
+                  recordPaintCoverageAt(pt);
+                  return;
+                }
+
+                if (mode === 'draw' || mode === 'drag') {
+                  if (currentSimStep.dragStart && currentSimStep.dragEnd) {
+                    const vx = currentSimStep.dragEnd.x - currentSimStep.dragStart.x;
+                    const vy = currentSimStep.dragEnd.y - currentSimStep.dragStart.y;
+                    const lenSq = vx * vx + vy * vy || 1;
+                    const proj = Math.max(
+                      0,
+                      Math.min(
+                        1,
+                        ((pt.x - currentSimStep.dragStart.x) * vx +
+                          (pt.y - currentSimStep.dragStart.y) * vy) /
+                          lenSq
+                      )
+                    );
+                    const rawPct = Math.round(proj * 100);
+                    const nextPct = Math.min(
+                      100,
+                      Math.max(simProgressRef.current, Math.min(rawPct, simProgressRef.current + 18))
+                    );
+                    if (nextPct !== simProgressRef.current) {
+                      simProgressRef.current = nextPct;
+                      if (simLiveProgressTextRef.current) {
+                        simLiveProgressTextRef.current.textContent = `${nextPct}%`;
+                      }
+                      if (nextPct >= 96) {
+                        setSimStrokePoints([...simStrokeRef.current]);
+                        completeCurrentSimStep();
+                      }
+                    }
+                  }
+                  return;
+                }
+
+                if (mode === 'advance') {
+                  const startPt = currentSimStep.dragStart || currentSimStep.targetZone;
+                  const endPt = currentSimStep.dragEnd || {
+                    x: startPt.x,
+                    y: startPt.y + 65
+                  };
+                  const vx = endPt.x - startPt.x;
+                  const vy = endPt.y - startPt.y;
+                  const lenSq = vx * vx + vy * vy || 1;
+                  const proj = Math.max(
+                    0,
+                    Math.min(
+                      1,
+                      ((pt.x - startPt.x) * vx + (pt.y - startPt.y) * vy) / lenSq
+                    )
+                  );
+                  const rawPct = Math.round(proj * 100);
+                  const nextPct = Math.min(
+                    100,
+                    Math.max(simProgressRef.current, Math.min(rawPct, simProgressRef.current + 18))
+                  );
+                  if (nextPct !== simProgressRef.current) {
+                    simProgressRef.current = nextPct;
+                    if (simLiveProgressTextRef.current) {
+                      simLiveProgressTextRef.current.textContent = `${nextPct}%`;
+                    }
+                    if (simLiveAdvanceLineRef.current) {
+                      const curX = startPt.x + ((endPt.x - startPt.x) * nextPct) / 100;
+                      const curY = startPt.y + ((endPt.y - startPt.y) * nextPct) / 100;
+                      simLiveAdvanceLineRef.current.setAttribute('x2', curX.toFixed(1));
+                      simLiveAdvanceLineRef.current.setAttribute('y2', curY.toFixed(1));
+                      simLiveAdvanceLineRef.current.setAttribute('opacity', '1');
+                    }
+                    if (nextPct >= 96) {
+                      completeCurrentSimStep();
+                    }
+                  }
+                }
+              };
+
+              const handleInteractivePointerUp = (e) => {
+                if (e?.currentTarget?.releasePointerCapture && e?.pointerId !== undefined) {
+                  try {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                  } catch (_) {
+                    // ignore if not captured
+                  }
+                }
+                if (simDragActiveRef.current) {
+                  simDragActiveRef.current = false;
+                  setSimDragActive(false);
+                  setSimActionProgress(simProgressRef.current);
+                  setSimStrokePoints([...simStrokeRef.current]);
                 }
               };
 
@@ -6502,13 +7201,16 @@ export default function App() {
               const handleRestartSim = () => {
                 setSimStepIndex(0);
                 setSimCompletedSteps({});
-                setSelectedSimTool(activeSim.steps[0].requiredTool);
+                setSelectedSimTool(visibleSimSteps[0]?.requiredTool || 'tool-hands');
                 setSimFeedbackBanner(null);
                 setSimShowMeHint(false);
+                setSimStrokePoints([]);
+                setSimPaintedCells({});
+                setSimActionProgress(0);
               };
 
               const phases = [];
-              activeSim.steps.forEach((st, idx) => {
+              visibleSimSteps.forEach((st, idx) => {
                 let group = phases.find((p) => p.name === st.phase);
                 if (!group) {
                   group = { name: st.phase, items: [] };
@@ -6536,6 +7238,9 @@ export default function App() {
                             setSelectedSimTool(sim.steps[0]?.requiredTool || 'tool-hands');
                             setSimFeedbackBanner(null);
                             setSimShowMeHint(false);
+                            setSimStrokePoints([]);
+                            setSimPaintedCells({});
+                            setSimActionProgress(0);
                           }}
                           className={`p-4 rounded-2xl border text-left transition flex items-center justify-between gap-3 ${
                             isSelected
@@ -6574,19 +7279,20 @@ export default function App() {
                     })}
                   </div>
 
-                  {/* Header + Perspective & Age Switchers */}
+                  {/* Header + Mode Switcher & Age Switcher */}
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
                     <div className="space-y-1">
                       <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
                         {activeSim.title}
                       </h2>
                       <p className="text-xs sm:text-sm text-slate-500">
-                        {completedCount} of {activeSim.steps.length} steps completed
+                        {simViewMode === 'overview'
+                          ? `Complete ${visibleSimSteps.length}-step anatomical & surgical walkthrough`
+                          : `${completedCount} of ${visibleSimSteps.length} steps completed`}
                       </p>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      {/* Suggestion 2: Age-Group Switcher */}
                       {activeSim.supportsAgeSwitch !== false && (
                         <div className="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200">
                           {[
@@ -6597,7 +7303,7 @@ export default function App() {
                             <button
                               key={ag.id}
                               type="button"
-                              onClick={() => setSimAgeGroup(ag.id)}
+                              onClick={() => handleSimAgeGroupChange(ag.id)}
                               className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
                                 simAgeGroup === ag.id
                                   ? 'bg-emerald-600 text-white shadow-2xs'
@@ -6613,25 +7319,26 @@ export default function App() {
                       <div className="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200">
                         <button
                           type="button"
-                          onClick={() => setSimPersona('trainee')}
+                          onClick={() => setSimViewMode('interactive')}
                           className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                            simPersona === 'trainee'
+                            simViewMode === 'interactive'
                               ? 'bg-white text-slate-900 shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
-                          ENT / Clinician
+                          Interactive Practice
                         </button>
                         <button
                           type="button"
-                          onClick={() => setSimPersona('overview')}
-                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                            simPersona === 'overview'
+                          onClick={() => setSimViewMode('overview')}
+                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 ${
+                            simViewMode === 'overview'
                               ? 'bg-white text-slate-900 shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
-                          Overview
+                          <BookMarked className="w-3.5 h-3.5 text-indigo-600" />
+                          <span>Full Overview</span>
                         </button>
                       </div>
 
@@ -6651,642 +7358,859 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Age-Specific Clinical Guidance Banner (Suggestion 2) */}
+                  {/* Age-Specific Clinical Guidance Banner */}
                   {activeSim.supportsAgeSwitch !== false && (
                     <div className="p-3.5 rounded-2xl bg-sky-50/80 border border-sky-200 text-xs text-sky-950 flex items-start gap-2.5">
                       <Info className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
                       <div>
                         {simAgeGroup === 'infant' && (
                           <span>
-                            <strong>Infant (&lt;1 yr) Airway Note:</strong> The cricothyroid membrane is tiny (~2–3 mm) and the cricoid ring is the narrowest point. Avoid wide-bore surgical tubes; perform <strong>45° caudal needle cricothyroidotomy</strong> with low-pressure oxygenation.
+                            <strong>Infant (&lt;1 yr) Pathway Active ({visibleSimSteps.length} steps):</strong> The cricothyroid membrane is ~2–3 mm and the cricoid ring is the narrowest point. Steps are tailored to <strong>45° caudal needle cricothyroidotomy</strong> with low-pressure oxygenation.
                           </span>
                         )}
                         {simAgeGroup === 'child' && (
                           <span>
-                            <strong>Child (2–6 yrs) Airway Note:</strong> DAS Paediatric CICO guidelines recommend <strong>45° caudal needle cricothyroidotomy</strong> as first-line rescue in children under 8–10 years, escalating to surgical scalpel-bougie only if needle rescue fails.
+                            <strong>Child (2–6 yrs) Pathway Active ({visibleSimSteps.length} steps):</strong> DAS Paediatric CICO guidelines recommend <strong>45° caudal needle cricothyroidotomy</strong> as first-line rescue in children under 8–10 years.
                           </span>
                         )}
                         {simAgeGroup === 'adolescent' && (
                           <span>
-                            <strong>Adolescent (&gt;10 yrs) Airway Note:</strong> The cricothyroid membrane approaches adult dimensions; <strong>Scalpel-Bougie-Tube (4.0–5.0 mm cuffed tube)</strong> is the standard rapid emergency surgical airway technique.
+                            <strong>Adolescent (&gt;10 yrs) Pathway Active ({visibleSimSteps.length} steps):</strong> The cricothyroid membrane approaches adult dimensions; steps switch automatically to <strong>Surgical Scalpel–Bougie–Tube</strong> rescue.
                           </span>
                         )}
                       </div>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                    <div className="lg:col-span-4 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-4">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                          Procedure Steps
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleRestartSim}
-                          className="text-xs font-semibold text-slate-500 hover:text-rose-600 inline-flex items-center gap-1"
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                          <span>Restart</span>
-                        </button>
-                      </div>
-
-                      <div className="space-y-4">
-                        {phases.map((phase) => (
-                          <div key={phase.name} className="space-y-1.5">
-                            <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 px-1">
-                              {phase.name}
-                            </div>
-                            <div className="space-y-1">
-                              {phase.items.map((st) => {
-                                const active = st.globalIdx === simStepIndex;
-                                const done = !!simCompletedSteps[`${activeSim.id}-${st.id}`];
-                                return (
-                                  <button
-                                    key={st.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setSimStepIndex(st.globalIdx);
-                                      setSelectedSimTool(st.requiredTool);
-                                      setSimFeedbackBanner(null);
-                                      setSimShowMeHint(false);
-                                    }}
-                                    className={`w-full text-left px-3 py-2 rounded-xl text-xs transition flex items-center justify-between gap-2 ${
-                                      active
-                                        ? 'bg-slate-900 text-white font-semibold shadow-2xs'
-                                        : done
-                                        ? 'bg-emerald-50/80 text-emerald-900 font-medium'
-                                        : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                  >
-                                    <span className="truncate">
-                                      {st.globalIdx + 1}. {st.title}
-                                    </span>
-                                    {done && (
-                                      <CheckCircle2
-                                        className={`w-3.5 h-3.5 shrink-0 ${
-                                          active ? 'text-emerald-400' : 'text-emerald-600'
-                                        }`}
-                                      />
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="lg:col-span-8 space-y-4">
-                      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
-                        {/* Suggestion 1: Live Physiological Telemetry Monitor Strip */}
-                        <div className="rounded-2xl bg-slate-950 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 border border-slate-800">
-                          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                            <HeartPulse
-                              className={`w-4 h-4 ${
-                                isAirwaySecured
-                                  ? 'text-emerald-400'
-                                  : 'text-rose-500 animate-pulse'
-                              }`}
-                            />
-                            <span>Live Patient Telemetry</span>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
-                            <div>
-                              <span className="text-slate-400 mr-1">SpO2:</span>
-                              <span
-                                className={`font-bold ${
-                                  monitorSpo2 >= 94
-                                    ? 'text-emerald-400'
-                                    : 'text-rose-400'
-                                }`}
-                              >
-                                {monitorSpo2}%
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 mr-1">HR:</span>
-                              <span
-                                className={`font-bold ${
-                                  monitorHr >= 80
-                                    ? 'text-emerald-400'
-                                    : 'text-amber-400'
-                                }`}
-                              >
-                                {monitorHr} bpm
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 mr-1">EtCO2:</span>
-                              <span
-                                className={`font-bold ${
-                                  isAirwaySecured
-                                    ? 'text-sky-400'
-                                    : 'text-amber-400'
-                                }`}
-                              >
-                                {monitorEtco2}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div>
-                            <span className="text-xs font-bold text-indigo-700">
-                              Step {simStepIndex + 1} of {activeSim.steps.length} •{' '}
-                              {currentSimStep.phase}
-                            </span>
-                            <h3 className="text-lg sm:text-xl font-bold text-slate-900">
-                              {currentSimStep.title}
-                            </h3>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={handleAutoDemonstrate}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-semibold"
-                            >
-                              <Sparkle className="w-3.5 h-3.5 text-amber-600" />
-                              <span>Show Me</span>
-                            </button>
-                            <button
-                              type="button"
-                              disabled={simStepIndex === 0}
-                              onClick={() => {
-                                const prevIdx = Math.max(0, simStepIndex - 1);
-                                setSimStepIndex(prevIdx);
-                                setSelectedSimTool(activeSim.steps[prevIdx].requiredTool);
-                                setSimFeedbackBanner(null);
-                                setSimShowMeHint(false);
-                              }}
-                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-semibold text-slate-700"
-                            >
-                              Back
-                            </button>
-                            <button
-                              type="button"
-                              disabled={simStepIndex >= activeSim.steps.length - 1}
-                              onClick={() => {
-                                const nextIdx = Math.min(
-                                  activeSim.steps.length - 1,
-                                  simStepIndex + 1
-                                );
-                                setSimStepIndex(nextIdx);
-                                setSelectedSimTool(activeSim.steps[nextIdx].requiredTool);
-                                setSimFeedbackBanner(null);
-                                setSimShowMeHint(false);
-                              }}
-                              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-xs font-semibold"
-                            >
-                              Next
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Interactive Anatomical Canvas (Built-In Anterior Neck, Built-In Sagittal Stoma, or Custom Uploaded Image) */}
-                        <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 select-none touch-none">
-                          <svg
-                            viewBox="0 0 500 340"
-                            className="w-full h-auto max-h-[380px] cursor-crosshair block"
-                            onPointerDown={(e) => {
-                              const svgEl = e.currentTarget;
-                              if (currentSimStep.interactionType === 'tap') {
-                                handleCanvasAction(e.clientX, e.clientY, svgEl, true);
-                              } else {
-                                setSimDragActive(true);
-                                const rect = svgEl.getBoundingClientRect();
-                                setSimDragCurrent({
-                                  x: ((e.clientX - rect.left) / rect.width) * 500,
-                                  y: ((e.clientY - rect.top) / rect.height) * 340
-                                });
-                              }
-                            }}
-                            onPointerMove={(e) => {
-                              if (!simDragActive) return;
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              setSimDragCurrent({
-                                x: ((e.clientX - rect.left) / rect.width) * 500,
-                                y: ((e.clientY - rect.top) / rect.height) * 340
-                              });
-                            }}
-                            onPointerUp={(e) => {
-                              if (simDragActive) {
-                                handleCanvasAction(
-                                  e.clientX,
-                                  e.clientY,
-                                  e.currentTarget,
-                                  true
-                                );
-                                setSimDragActive(false);
-                                setSimDragCurrent(null);
-                              }
-                            }}
-                          >
-                            {activeSim.diagramType === 'custom-image' &&
-                            activeSim.customDiagramUrl ? (
-                              <image
-                                href={activeSim.customDiagramUrl}
-                                x="0"
-                                y="0"
-                                width="500"
-                                height="340"
-                                preserveAspectRatio="xMidYMid meet"
-                              />
-                            ) : activeSim.diagramType === 'builtin-sagittal' ? (
-                              <>
-                                {/* Suggestion 3: Sagittal Neck & Tracheostomy Stoma vs Pre-Tracheal False Passage */}
-                                <rect x="0" y="0" width="500" height="340" fill="#0f172a" />
-                                {/* Anterior Skin & Subcutaneous Neck Tissue */}
-                                <path
-                                  d="M 155 25 L 185 135 L 185 195 L 155 315 L 220 315 L 220 25 Z"
-                                  fill="#f6cdb8"
-                                  stroke="#d69e82"
-                                  strokeWidth="2"
-                                />
-                                {/* Pre-Tracheal False Passage Plane (Warning Zone) */}
-                                <path
-                                  d="M 205 182 L 216 285"
-                                  stroke="#f43f5e"
-                                  strokeWidth="6"
-                                  strokeDasharray="4 4"
-                                  opacity="0.75"
-                                />
-                                {/* True Tracheal Lumen */}
-                                <rect
-                                  x="232"
-                                  y="25"
-                                  width="66"
-                                  height="290"
-                                  rx="12"
-                                  fill="#1e293b"
-                                  stroke="#38bdf8"
-                                  strokeWidth="2.5"
-                                />
-                                {/* Stoma Opening Through Anterior Tracheal Wall */}
-                                <rect
-                                  x="180"
-                                  y="150"
-                                  width="60"
-                                  height="28"
-                                  fill="#1e293b"
-                                />
-                                {/* Posterior Tracheal Wall & Oesophagus */}
-                                <rect
-                                  x="306"
-                                  y="25"
-                                  width="34"
-                                  height="290"
-                                  rx="8"
-                                  fill="#475569"
-                                  opacity="0.7"
-                                />
-                                {/* Tracheal Cartilage Rings */}
-                                {[55, 85, 115, 200, 230, 260, 290].map((ry, i) => (
-                                  <rect
-                                    key={i}
-                                    x="225"
-                                    y={ry}
-                                    width="12"
-                                    height="16"
-                                    rx="4"
-                                    fill="#cbd5e1"
-                                  />
-                                ))}
-
-                                {/* Completed Tube Seated in True Tracheal Lumen */}
-                                {simCompletedSteps[`${activeSim.id}-tc-3`] && (
-                                  <path
-                                    d="M 165 164 L 225 164 Q 265 164 265 215 L 265 268"
-                                    fill="none"
-                                    stroke="#38bdf8"
-                                    strokeWidth="16"
-                                    strokeLinecap="round"
-                                  />
-                                )}
-                                {simCompletedSteps[`${activeSim.id}-tc-4`] && (
-                                  <rect
-                                    x="148"
-                                    y="152"
-                                    width="22"
-                                    height="24"
-                                    rx="4"
-                                    fill="#10b981"
-                                  />
-                                )}
-
-                                {showSimLabels && (
-                                  <g fontSize="11" fontWeight="700" fontFamily="sans-serif">
-                                    <text x="55" y="168" fill="#f8fafc">
-                                      Anterior Neck Stoma
-                                    </text>
-                                    <text x="42" y="255" fill="#fda4af">
-                                      Pre-Tracheal Plane (False Passage Risk)
-                                    </text>
-                                    <text x="355" y="110" fill="#7dd3fc">
-                                      True Tracheal Lumen
-                                    </text>
-                                    <text x="355" y="210" fill="#cbd5e1">
-                                      Posterior Wall / Oesophagus
-                                    </text>
-                                  </g>
-                                )}
-                              </>
-                            ) : (
-                              <>
-                                {/* Built-In Anterior Paediatric Neck Diagram */}
-                                <path
-                                  d="M 140 20 Q 250 75 360 20 L 385 320 L 115 320 Z"
-                                  fill="#f6cdb8"
-                                  stroke="#d69e82"
-                                  strokeWidth="2.5"
-                                />
-                                <path
-                                  d="M 155 28 Q 250 82 345 28 Q 250 62 155 28 Z"
-                                  fill="#e3ae93"
-                                  opacity="0.7"
-                                />
-                                <path
-                                  d="M 145 75 L 205 315"
-                                  stroke="#dba186"
-                                  strokeWidth="12"
-                                  strokeLinecap="round"
-                                  opacity="0.45"
-                                />
-                                <path
-                                  d="M 355 75 L 295 315"
-                                  stroke="#dba186"
-                                  strokeWidth="12"
-                                  strokeLinecap="round"
-                                  opacity="0.45"
-                                />
-                                <path
-                                  d="M 210 102 Q 250 116 290 102"
-                                  fill="none"
-                                  stroke="#94a3b8"
-                                  strokeWidth="7"
-                                  strokeLinecap="round"
-                                  opacity="0.85"
-                                />
-                                <path
-                                  d="M 212 126 L 250 134 L 288 126 L 280 168 L 250 173 L 220 168 Z"
-                                  fill="#e2e8f0"
-                                  stroke="#64748b"
-                                  strokeWidth="2.2"
-                                />
-                                <rect
-                                  x="227"
-                                  y="173"
-                                  width="46"
-                                  height="18"
-                                  rx="5"
-                                  fill="#fda4af"
-                                  stroke="#e11d48"
-                                  strokeWidth="2"
-                                />
-                                <rect
-                                  x="218"
-                                  y="192"
-                                  width="64"
-                                  height="16"
-                                  rx="7"
-                                  fill="#cbd5e1"
-                                  stroke="#475569"
-                                  strokeWidth="2"
-                                />
-                                {[214, 232, 250, 268].map((ry, i) => (
-                                  <rect
-                                    key={i}
-                                    x="224"
-                                    y={ry}
-                                    width="52"
-                                    height="12"
-                                    rx="5"
-                                    fill="#e2e8f0"
-                                    stroke="#64748b"
-                                    strokeWidth="1.6"
-                                    opacity="0.9"
-                                  />
-                                ))}
-                                <path
-                                  d="M 195 318 Q 250 292 305 318"
-                                  fill="none"
-                                  stroke="#b87a5e"
-                                  strokeWidth="4"
-                                  strokeLinecap="round"
-                                />
-
-                                {simCompletedSteps[`${activeSim.id}-cric-2`] && (
-                                  <line
-                                    x1="250"
-                                    y1="142"
-                                    x2="250"
-                                    y2="215"
-                                    stroke="#2563eb"
-                                    strokeWidth="3"
-                                    strokeDasharray="5 4"
-                                  />
-                                )}
-                                {simCompletedSteps[`${activeSim.id}-cric-5`] && (
-                                  <line
-                                    x1="230"
-                                    y1="182"
-                                    x2="270"
-                                    y2="182"
-                                    stroke="#9f1239"
-                                    strokeWidth="4.5"
-                                    strokeLinecap="round"
-                                  />
-                                )}
-                                {simCompletedSteps[`${activeSim.id}-cric-6`] && (
-                                  <path
-                                    d="M 250 182 L 250 272"
-                                    stroke="#0284c7"
-                                    strokeWidth="5"
-                                    strokeLinecap="round"
-                                  />
-                                )}
-                                {simCompletedSteps[`${activeSim.id}-cric-7`] && (
-                                  <g>
-                                    <rect
-                                      x="232"
-                                      y="168"
-                                      width="36"
-                                      height="16"
-                                      rx="4"
-                                      fill="#ffffff"
-                                      stroke="#059669"
-                                      strokeWidth="2.5"
-                                    />
-                                    <circle cx="250" cy="176" r="5" fill="#10b981" />
-                                  </g>
-                                )}
-
-                                {showSimLabels && (
-                                  <g fontSize="11" fontWeight="700" fontFamily="sans-serif">
-                                    <line x1="290" y1="102" x2="365" y2="95" stroke="#94a3b8" strokeWidth="1.2" />
-                                    <text x="370" y="99" fill="#e2e8f0">Hyoid Bone</text>
-
-                                    <line x1="288" y1="146" x2="365" y2="140" stroke="#94a3b8" strokeWidth="1.2" />
-                                    <text x="370" y="144" fill="#e2e8f0">Thyroid Cartilage</text>
-
-                                    <line x1="273" y1="182" x2="365" y2="182" stroke="#fb7185" strokeWidth="1.5" />
-                                    <text x="370" y="186" fill="#fda4af">Cricothyroid Membrane</text>
-
-                                    <line x1="282" y1="200" x2="365" y2="220" stroke="#94a3b8" strokeWidth="1.2" />
-                                    <text x="370" y="224" fill="#e2e8f0">Cricoid Cartilage</text>
-
-                                    <line x1="276" y1="250" x2="365" y2="262" stroke="#94a3b8" strokeWidth="1.2" />
-                                    <text x="370" y="266" fill="#cbd5e1">Tracheal Rings</text>
-
-                                    <text x="250" y="330" textAnchor="middle" fill="#94a3b8" fontSize="10">
-                                      Suprasternal Notch
-                                    </text>
-                                  </g>
-                                )}
-                              </>
-                            )}
-
-                            {currentSimStep.interactionType === 'drag' &&
-                              currentSimStep.dragStart &&
-                              currentSimStep.dragEnd && (
-                                <g>
-                                  <line
-                                    x1={currentSimStep.dragStart.x}
-                                    y1={currentSimStep.dragStart.y}
-                                    x2={currentSimStep.dragEnd.x}
-                                    y2={currentSimStep.dragEnd.y}
-                                    stroke="#fbbf24"
-                                    strokeWidth="4"
-                                    strokeDasharray="6 5"
-                                    strokeLinecap="round"
-                                  />
-                                  <circle
-                                    cx={currentSimStep.dragStart.x}
-                                    cy={currentSimStep.dragStart.y}
-                                    r="8"
-                                    fill="#f59e0b"
-                                  />
-                                  <circle
-                                    cx={currentSimStep.dragEnd.x}
-                                    cy={currentSimStep.dragEnd.y}
-                                    r="8"
-                                    fill="#10b981"
-                                  />
-                                </g>
-                              )}
-
-                            {simDragActive &&
-                              simDragCurrent &&
-                              currentSimStep.dragStart && (
-                                <line
-                                  x1={currentSimStep.dragStart.x}
-                                  y1={currentSimStep.dragStart.y}
-                                  x2={simDragCurrent.x}
-                                  y2={simDragCurrent.y}
-                                  stroke="#34d399"
-                                  strokeWidth="4"
-                                  strokeLinecap="round"
-                                />
-                              )}
-
-                            <circle
-                              cx={currentSimStep.targetZone.x}
-                              cy={currentSimStep.targetZone.y}
-                              r={currentSimStep.targetZone.r}
-                              fill={
-                                isStepDone
-                                  ? 'rgba(16, 185, 129, 0.25)'
-                                  : 'rgba(251, 191, 36, 0.25)'
-                              }
-                              stroke={isStepDone ? '#10b981' : '#fbbf24'}
-                              strokeWidth="2.5"
-                              strokeDasharray={simShowMeHint ? 'none' : '5 4'}
-                            />
-                          </svg>
-                        </div>
-
-                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2">
-                          <p className="text-xs sm:text-sm font-semibold text-slate-900">
-                            {currentSimStep.instruction}
-                          </p>
-                          <p className="text-xs text-slate-600 leading-relaxed">
-                            <strong className="text-indigo-700">
-                              {simPersona === 'trainee' ? 'ENT / Surgical Pearl:' : 'Anatomical Note:'}
-                            </strong>{' '}
-                            {simPersona === 'trainee'
-                              ? currentSimStep.traineeTip
-                              : currentSimStep.basicNote}
-                          </p>
-                        </div>
-
-                        {simFeedbackBanner && (
+                  {simViewMode === 'overview' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {visibleSimSteps.map((st, idx) => {
+                        const reqTool = activeSim.tools.find((t) => t.id === st.requiredTool);
+                        return (
                           <div
-                            className={`p-3 rounded-xl border text-xs font-semibold flex items-center justify-between gap-2 ${
-                              simFeedbackBanner.type === 'success'
-                                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                                : simFeedbackBanner.type === 'warn'
-                                ? 'bg-amber-50 border-amber-200 text-amber-950'
-                                : 'bg-sky-50 border-sky-200 text-sky-950'
-                            }`}
+                            key={st.id}
+                            className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-4"
                           >
-                            <span>{simFeedbackBanner.text}</span>
-                            <button
-                              type="button"
-                              onClick={() => setSimFeedbackBanner(null)}
-                              className="text-slate-400 hover:text-slate-700"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        )}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-700">
+                                  Step {idx + 1} • {st.phase}
+                                </span>
+                                {reqTool && (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-semibold">
+                                    {renderSimToolGlyph(reqTool.id, 'w-3 h-3 text-indigo-600')}
+                                    <span>{reqTool.short}</span>
+                                  </span>
+                                )}
+                              </div>
+                              <h3 className="text-base font-bold text-slate-900">
+                                {st.title}
+                              </h3>
+                              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                {st.instruction}
+                              </p>
+                              {st.traineeTip && (
+                                <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200/80 text-xs text-amber-950">
+                                  <strong>ENT / Surgical Pearl:</strong> {st.traineeTip}
+                                </div>
+                              )}
+                            </div>
 
-                        <div className="space-y-2.5 pt-2 border-t border-slate-100">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                              <Compass className="w-3.5 h-3.5 text-indigo-600" />
-                              <span>Instrument &amp; Airway Tray</span>
-                            </span>
-                            <span className="text-[11px] font-semibold text-indigo-700">
-                              Active: {activeToolObj.name}
-                            </span>
+                            <div className="pt-3 border-t border-slate-100 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSimStepIndex(idx);
+                                  setSelectedSimTool(st.requiredTool);
+                                  setSimViewMode('interactive');
+                                  setSimStrokePoints([]);
+                                  setSimPaintedCells({});
+                                  setSimActionProgress(0);
+                                }}
+                                className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-900"
+                              >
+                                <span>Practise This Step</span>
+                                <ChevronRight className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    /* INTERACTIVE PRACTICE MODE */
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                      <div className="lg:col-span-4 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                            Procedure Steps
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleRestartSim}
+                            className="text-xs font-semibold text-slate-500 hover:text-rose-600 inline-flex items-center gap-1"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>Restart</span>
+                          </button>
+                        </div>
 
-                          <div className="flex flex-wrap gap-1.5">
-                            {activeSim.tools.map((tool) => {
-                              const isSelected = selectedSimTool === tool.id;
-                              return (
-                                <button
-                                  key={tool.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedSimTool(tool.id);
-                                    setSimFeedbackBanner(null);
-                                  }}
-                                  className={`px-3 py-2 rounded-xl text-xs font-semibold border transition ${
-                                    isSelected
-                                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        <div className="space-y-4">
+                          {phases.map((phase) => (
+                            <div key={phase.name} className="space-y-1.5">
+                              <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 px-1">
+                                {phase.name}
+                              </div>
+                              <div className="space-y-1">
+                                {phase.items.map((st) => {
+                                  const active = st.globalIdx === safeStepIndex;
+                                  const done = !!simCompletedSteps[`${activeSim.id}-${st.id}`];
+                                  return (
+                                    <button
+                                      key={st.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setSimStepIndex(st.globalIdx);
+                                        setSelectedSimTool(st.requiredTool);
+                                        setSimFeedbackBanner(null);
+                                        setSimShowMeHint(false);
+                                        setSimStrokePoints([]);
+                                        setSimPaintedCells({});
+                                        setSimActionProgress(0);
+                                      }}
+                                      className={`w-full text-left px-3 py-2 rounded-xl text-xs transition flex items-center justify-between gap-2 ${
+                                        active
+                                          ? 'bg-slate-900 text-white font-semibold shadow-2xs'
+                                          : done
+                                          ? 'bg-emerald-50/80 text-emerald-900 font-medium'
+                                          : 'text-slate-600 hover:bg-slate-100'
+                                      }`}
+                                    >
+                                      <span className="truncate">
+                                        {st.globalIdx + 1}. {st.title}
+                                      </span>
+                                      {done && (
+                                        <CheckCircle2
+                                          className={`w-3.5 h-3.5 shrink-0 ${
+                                            active ? 'text-emerald-400' : 'text-emerald-600'
+                                          }`}
+                                        />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="lg:col-span-8 space-y-4">
+                        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
+                          {/* Live Physiological Telemetry Monitor Strip */}
+                          <div className="rounded-2xl bg-slate-950 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 border border-slate-800">
+                            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                              <HeartPulse
+                                className={`w-4 h-4 ${
+                                  isAirwaySecured
+                                    ? 'text-emerald-400'
+                                    : 'text-rose-500 animate-pulse'
+                                }`}
+                              />
+                              <span>Live Patient Telemetry</span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
+                              <div>
+                                <span className="text-slate-400 mr-1">SpO2:</span>
+                                <span
+                                  className={`font-bold ${
+                                    monitorSpo2 >= 94
+                                      ? 'text-emerald-400'
+                                      : 'text-rose-400'
                                   }`}
                                 >
-                                  {tool.short}
-                                </button>
-                              );
-                            })}
+                                  {monitorSpo2}%
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 mr-1">HR:</span>
+                                <span
+                                  className={`font-bold ${
+                                    monitorHr >= 80
+                                      ? 'text-emerald-400'
+                                      : 'text-amber-400'
+                                  }`}
+                                >
+                                  {monitorHr} bpm
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 mr-1">EtCO2:</span>
+                                <span
+                                  className={`font-bold ${
+                                    isAirwaySecured
+                                      ? 'text-sky-400'
+                                      : 'text-amber-400'
+                                  }`}
+                                >
+                                  {monitorEtco2}
+                                </span>
+                              </div>
+                            </div>
                           </div>
 
-                          <div className="p-3 rounded-xl bg-indigo-50/60 border border-indigo-200/70 text-xs text-indigo-950">
-                            <strong>{activeToolObj.name}:</strong> {activeToolObj.desc}
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <span className="text-xs font-bold text-indigo-700">
+                                Step {safeStepIndex + 1} of {visibleSimSteps.length} •{' '}
+                                {currentSimStep.phase}
+                              </span>
+                              <h3 className="text-lg sm:text-xl font-bold text-slate-900">
+                                {currentSimStep.title}
+                              </h3>
+                            </div>
+                          </div>
+
+                          {/* Step Instruction & ENT Pearl Box (Above Interactive Picture) */}
+                          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2">
+                            <p className="text-xs sm:text-sm font-semibold text-slate-900">
+                              {currentSimStep.instruction}
+                            </p>
+                            {currentSimStep.traineeTip && (
+                              <p className="text-xs text-slate-600 leading-relaxed">
+                                <strong className="text-indigo-700">
+                                  ENT / Surgical Pearl:
+                                </strong>{' '}
+                                {currentSimStep.traineeTip}
+                              </p>
+                            )}
+                          </div>
+
+                          {simFeedbackBanner && (
+                            <div
+                              className={`p-3 rounded-xl border text-xs font-semibold flex items-center justify-between gap-2 ${
+                                simFeedbackBanner.type === 'success'
+                                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                  : simFeedbackBanner.type === 'warn'
+                                  ? 'bg-amber-50 border-amber-200 text-amber-950'
+                                  : 'bg-sky-50 border-sky-200 text-sky-950'
+                              }`}
+                            >
+                              <span>{simFeedbackBanner.text}</span>
+                              <button
+                                type="button"
+                                onClick={() => setSimFeedbackBanner(null)}
+                                className="text-slate-400 hover:text-slate-700"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Side-by-Side Workspace: Interactive Anatomical Diagram (Left) + Instrument Tray (Side) */}
+                          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                            {/* Interactive Anatomical Canvas + Action Buttons Underneath */}
+                            <div className="md:col-span-7 space-y-3">
+                              <div className="relative rounded-2xl overflow-hidden border-2 border-slate-800 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 shadow-lg select-none touch-none">
+                                <svg
+                                  ref={simSvgRef}
+                                  viewBox="0 0 500 340"
+                                  preserveAspectRatio="none"
+                                  className="w-full h-auto max-h-[390px] cursor-none block"
+                                  onPointerMove={handleInteractivePointerMove}
+                                  onPointerLeave={() => {
+                                    moveCursorOverlay(0, 0, false);
+                                    if (simDragActiveRef.current) {
+                                      simDragActiveRef.current = false;
+                                      setSimDragActive(false);
+                                      setSimActionProgress(simProgressRef.current);
+                                    }
+                                  }}
+                                  onPointerDown={handleInteractivePointerDown}
+                                  onPointerUp={handleInteractivePointerUp}
+                                  onPointerCancel={handleInteractivePointerUp}
+                                >
+                                  <defs>
+                                    <radialGradient id="simBgGlow" cx="50%" cy="45%" r="60%">
+                                      <stop offset="0%" stopColor="#1e293b" />
+                                      <stop offset="100%" stopColor="#090d16" />
+                                    </radialGradient>
+                                    <linearGradient id="neckSkinGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                      <stop offset="0%" stopColor="#e5af93" />
+                                      <stop offset="50%" stopColor="#fad7c3" />
+                                      <stop offset="100%" stopColor="#e0a689" />
+                                    </linearGradient>
+                                    <linearGradient id="cartilageGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                      <stop offset="0%" stopColor="#f1f5f9" />
+                                      <stop offset="100%" stopColor="#cbd5e1" />
+                                    </linearGradient>
+                                    <linearGradient id="ctmMembraneGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                      <stop offset="0%" stopColor="#fb7185" />
+                                      <stop offset="50%" stopColor="#fda4af" />
+                                      <stop offset="100%" stopColor="#fb7185" />
+                                    </linearGradient>
+                                    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+                                      <feGaussianBlur stdDeviation="3" result="blur" />
+                                      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                    </filter>
+                                  </defs>
+
+                                  <rect x="0" y="0" width="500" height="340" fill="url(#simBgGlow)" />
+
+                                  {activeSim.diagramType === 'custom-image' &&
+                                  activeSim.customDiagramUrl ? (
+                                    <image
+                                      href={activeSim.customDiagramUrl}
+                                      x="0"
+                                      y="0"
+                                      width="500"
+                                      height="340"
+                                      preserveAspectRatio="xMidYMid meet"
+                                    />
+                                  ) : activeSim.diagramType === 'builtin-sagittal' ? (
+                                    <>
+                                      <path
+                                        d="M 155 25 L 185 135 L 185 195 L 155 315 L 220 315 L 220 25 Z"
+                                        fill="url(#neckSkinGrad)"
+                                        stroke="#c98e71"
+                                        strokeWidth="2"
+                                      />
+                                      <path
+                                        d="M 205 182 L 216 285"
+                                        stroke="#f43f5e"
+                                        strokeWidth="6"
+                                        strokeDasharray="4 4"
+                                        opacity="0.8"
+                                      />
+                                      <rect
+                                        x="232"
+                                        y="25"
+                                        width="66"
+                                        height="290"
+                                        rx="14"
+                                        fill="#172033"
+                                        stroke="#38bdf8"
+                                        strokeWidth="2.5"
+                                      />
+                                      <rect
+                                        x="180"
+                                        y="150"
+                                        width="60"
+                                        height="28"
+                                        fill="#172033"
+                                      />
+                                      <rect
+                                        x="306"
+                                        y="25"
+                                        width="34"
+                                        height="290"
+                                        rx="8"
+                                        fill="#334155"
+                                        opacity="0.75"
+                                      />
+                                      {[55, 85, 115, 200, 230, 260, 290].map((ry, i) => (
+                                        <rect
+                                          key={i}
+                                          x="225"
+                                          y={ry}
+                                          width="12"
+                                          height="16"
+                                          rx="4"
+                                          fill="url(#cartilageGrad)"
+                                        />
+                                      ))}
+
+                                      {simCompletedSteps[`${activeSim.id}-tc-3`] && (
+                                        <path
+                                          d="M 165 164 L 225 164 Q 265 164 265 215 L 265 268"
+                                          fill="none"
+                                          stroke="#38bdf8"
+                                          strokeWidth="16"
+                                          strokeLinecap="round"
+                                        />
+                                      )}
+                                      {simCompletedSteps[`${activeSim.id}-tc-4`] && (
+                                        <rect
+                                          x="148"
+                                          y="152"
+                                          width="22"
+                                          height="24"
+                                          rx="4"
+                                          fill="#10b981"
+                                        />
+                                      )}
+
+                                      {showSimLabels && (
+                                        <g fontSize="11" fontWeight="700" fontFamily="sans-serif">
+                                          <text x="50" y="168" fill="#f8fafc">
+                                            Anterior Neck Stoma
+                                          </text>
+                                          <text x="36" y="255" fill="#fda4af">
+                                            Pre-Tracheal Plane (False Passage)
+                                          </text>
+                                          <text x="352" y="110" fill="#7dd3fc">
+                                            True Tracheal Lumen
+                                          </text>
+                                          <text x="352" y="210" fill="#cbd5e1">
+                                            Posterior Wall / Oesophagus
+                                          </text>
+                                        </g>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <path
+                                        d="M 140 20 Q 250 75 360 20 L 385 320 L 115 320 Z"
+                                        fill="url(#neckSkinGrad)"
+                                        stroke="#c98e71"
+                                        strokeWidth="2.5"
+                                      />
+                                      <path
+                                        d="M 155 28 Q 250 82 345 28 Q 250 62 155 28 Z"
+                                        fill="#d49b7e"
+                                        opacity="0.7"
+                                      />
+                                      <path
+                                        d="M 145 75 L 205 315"
+                                        stroke="#c88d70"
+                                        strokeWidth="13"
+                                        strokeLinecap="round"
+                                        opacity="0.4"
+                                      />
+                                      <path
+                                        d="M 355 75 L 295 315"
+                                        stroke="#c88d70"
+                                        strokeWidth="13"
+                                        strokeLinecap="round"
+                                        opacity="0.4"
+                                      />
+                                      <path
+                                        d="M 210 102 Q 250 116 290 102"
+                                        fill="none"
+                                        stroke="#94a3b8"
+                                        strokeWidth="7"
+                                        strokeLinecap="round"
+                                        opacity="0.9"
+                                      />
+                                      <path
+                                        d="M 212 126 L 250 134 L 288 126 L 280 168 L 250 173 L 220 168 Z"
+                                        fill="url(#cartilageGrad)"
+                                        stroke="#64748b"
+                                        strokeWidth="2"
+                                      />
+                                      <rect
+                                        x="227"
+                                        y="173"
+                                        width="46"
+                                        height="18"
+                                        rx="6"
+                                        fill="url(#ctmMembraneGrad)"
+                                        stroke="#e11d48"
+                                        strokeWidth="2"
+                                      />
+                                      <rect
+                                        x="218"
+                                        y="192"
+                                        width="64"
+                                        height="16"
+                                        rx="7"
+                                        fill="url(#cartilageGrad)"
+                                        stroke="#475569"
+                                        strokeWidth="2"
+                                      />
+                                      {[214, 232, 250, 268].map((ry, i) => (
+                                        <rect
+                                          key={i}
+                                          x="224"
+                                          y={ry}
+                                          width="52"
+                                          height="12"
+                                          rx="5"
+                                          fill="url(#cartilageGrad)"
+                                          stroke="#64748b"
+                                          strokeWidth="1.5"
+                                          opacity="0.92"
+                                        />
+                                      ))}
+                                      <path
+                                        d="M 195 318 Q 250 292 305 318"
+                                        fill="none"
+                                        stroke="#b87a5e"
+                                        strokeWidth="4"
+                                        strokeLinecap="round"
+                                      />
+
+                                      {simCompletedSteps[`${activeSim.id}-cric-2`] && (
+                                        <line
+                                          x1="250"
+                                          y1="142"
+                                          x2="250"
+                                          y2="215"
+                                          stroke="#2563eb"
+                                          strokeWidth="3.5"
+                                          strokeDasharray="5 4"
+                                        />
+                                      )}
+                                      {simCompletedSteps[`${activeSim.id}-cric-4`] && (
+                                        <g>
+                                          <line
+                                            x1="250"
+                                            y1="182"
+                                            x2="250"
+                                            y2="232"
+                                            stroke="#0284c7"
+                                            strokeWidth="4.5"
+                                            strokeLinecap="round"
+                                          />
+                                          <rect
+                                            x="240"
+                                            y="168"
+                                            width="20"
+                                            height="14"
+                                            rx="3"
+                                            fill="#38bdf8"
+                                          />
+                                        </g>
+                                      )}
+                                      {simCompletedSteps[`${activeSim.id}-cric-5`] && (
+                                        <line
+                                          x1="230"
+                                          y1="182"
+                                          x2="270"
+                                          y2="182"
+                                          stroke="#9f1239"
+                                          strokeWidth="4.5"
+                                          strokeLinecap="round"
+                                        />
+                                      )}
+                                      {simCompletedSteps[`${activeSim.id}-cric-6`] && (
+                                        <path
+                                          d="M 250 182 L 250 272"
+                                          stroke="#0284c7"
+                                          strokeWidth="5"
+                                          strokeLinecap="round"
+                                        />
+                                      )}
+                                      {simCompletedSteps[`${activeSim.id}-cric-7`] && (
+                                        <g>
+                                          <rect
+                                            x="232"
+                                            y="168"
+                                            width="36"
+                                            height="16"
+                                            rx="4"
+                                            fill="#ffffff"
+                                            stroke="#059669"
+                                            strokeWidth="2.5"
+                                          />
+                                          <circle cx="250" cy="176" r="5" fill="#10b981" />
+                                        </g>
+                                      )}
+
+                                      {showSimLabels && (
+                                        <g fontSize="11" fontWeight="700" fontFamily="sans-serif">
+                                          <line x1="290" y1="102" x2="365" y2="95" stroke="#94a3b8" strokeWidth="1.2" />
+                                          <text x="370" y="99" fill="#f1f5f9">Hyoid Bone</text>
+
+                                          <line x1="288" y1="146" x2="365" y2="140" stroke="#94a3b8" strokeWidth="1.2" />
+                                          <text x="370" y="144" fill="#f1f5f9">Thyroid Cartilage</text>
+
+                                          <line x1="273" y1="182" x2="365" y2="182" stroke="#fb7185" strokeWidth="1.5" />
+                                          <text x="370" y="186" fill="#fda4af">Cricothyroid Membrane</text>
+
+                                          <line x1="282" y1="200" x2="365" y2="220" stroke="#94a3b8" strokeWidth="1.2" />
+                                          <text x="370" y="224" fill="#f1f5f9">Cricoid Cartilage</text>
+
+                                          <line x1="276" y1="250" x2="365" y2="262" stroke="#94a3b8" strokeWidth="1.2" />
+                                          <text x="370" y="266" fill="#cbd5e1">Tracheal Rings</text>
+
+                                          <text x="250" y="330" textAnchor="middle" fill="#94a3b8" fontSize="10">
+                                            Suprasternal Notch
+                                          </text>
+                                        </g>
+                                      )}
+                                    </>
+                                  )}
+
+                                  {/* Zero-Lag Direct DOM Polyline for Paint & Draw Strokes */}
+                                  <polyline
+                                    ref={simLivePolylineRef}
+                                    points={simStrokePoints
+                                      .map((p) => `${p.x},${p.y}`)
+                                      .join(' ')}
+                                    fill="none"
+                                    stroke={
+                                      currentSimStep.interactionType === 'paint'
+                                        ? 'rgba(244, 63, 94, 0.45)'
+                                        : selectedSimTool.includes('scalpel')
+                                        ? '#e11d48'
+                                        : '#2563eb'
+                                    }
+                                    strokeWidth={
+                                      currentSimStep.interactionType === 'paint' ? '26' : '4.5'
+                                    }
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    pointerEvents="none"
+                                  />
+
+                                  {/* Live Advancing Tube / Bougie / Cannula Graphic */}
+                                  {currentSimStep.interactionType === 'advance' &&
+                                    currentSimStep.dragStart &&
+                                    currentSimStep.dragEnd && (
+                                      <g pointerEvents="none">
+                                        <line
+                                          x1={currentSimStep.dragStart.x}
+                                          y1={currentSimStep.dragStart.y}
+                                          x2={currentSimStep.dragEnd.x}
+                                          y2={currentSimStep.dragEnd.y}
+                                          stroke="rgba(56, 189, 248, 0.3)"
+                                          strokeWidth="12"
+                                          strokeLinecap="round"
+                                        />
+                                        <line
+                                          ref={simLiveAdvanceLineRef}
+                                          x1={currentSimStep.dragStart.x}
+                                          y1={currentSimStep.dragStart.y}
+                                          x2={
+                                            currentSimStep.dragStart.x +
+                                            ((currentSimStep.dragEnd.x -
+                                              currentSimStep.dragStart.x) *
+                                              simActionProgress) /
+                                              100
+                                          }
+                                          y2={
+                                            currentSimStep.dragStart.y +
+                                            ((currentSimStep.dragEnd.y -
+                                              currentSimStep.dragStart.y) *
+                                              simActionProgress) /
+                                              100
+                                          }
+                                          stroke="#0ea5e9"
+                                          strokeWidth="10"
+                                          strokeLinecap="round"
+                                          opacity={simActionProgress > 0 ? '1' : '0'}
+                                        />
+                                      </g>
+                                    )}
+
+                                  {/* Guide Arrow for Draw & Advance Steps */}
+                                  {(currentSimStep.interactionType === 'draw' ||
+                                    currentSimStep.interactionType === 'drag' ||
+                                    currentSimStep.interactionType === 'advance') &&
+                                    currentSimStep.dragStart &&
+                                    currentSimStep.dragEnd && (
+                                      <g pointerEvents="none">
+                                        <line
+                                          x1={currentSimStep.dragStart.x}
+                                          y1={currentSimStep.dragStart.y}
+                                          x2={currentSimStep.dragEnd.x}
+                                          y2={currentSimStep.dragEnd.y}
+                                          stroke="#fbbf24"
+                                          strokeWidth="3"
+                                          strokeDasharray="5 5"
+                                          strokeLinecap="round"
+                                        />
+                                        <circle
+                                          cx={currentSimStep.dragStart.x}
+                                          cy={currentSimStep.dragStart.y}
+                                          r="6.5"
+                                          fill="#f59e0b"
+                                          stroke="#ffffff"
+                                          strokeWidth="1.5"
+                                        />
+                                        <circle
+                                          cx={currentSimStep.dragEnd.x}
+                                          cy={currentSimStep.dragEnd.y}
+                                          r="6.5"
+                                          fill="#10b981"
+                                          stroke="#ffffff"
+                                          strokeWidth="1.5"
+                                        />
+                                      </g>
+                                    )}
+
+                                  {/* Target Zone Ring */}
+                                  <circle
+                                    cx={currentSimStep.targetZone.x}
+                                    cy={currentSimStep.targetZone.y}
+                                    r={currentSimStep.targetZone.r}
+                                    fill={
+                                      isStepDone
+                                        ? 'rgba(16, 185, 129, 0.2)'
+                                        : simShowMeHint
+                                        ? 'rgba(251, 191, 36, 0.28)'
+                                        : 'rgba(251, 191, 36, 0.1)'
+                                    }
+                                    stroke={isStepDone ? '#10b981' : '#fbbf24'}
+                                    strokeWidth={simShowMeHint ? '2.5' : '1.8'}
+                                    strokeDasharray={simShowMeHint ? 'none' : '4 4'}
+                                    pointerEvents="none"
+                                  />
+                                </svg>
+
+                                {/* GPU-Accelerated Floating Tool Cursor (Zero React Re-renders on Move) */}
+                                <div
+                                  ref={simCursorOverlayRef}
+                                  style={{
+                                    position: 'absolute',
+                                    left: 0,
+                                    top: 0,
+                                    width: '1px',
+                                    height: '1px',
+                                    opacity: 0,
+                                    pointerEvents: 'none',
+                                    willChange: 'transform',
+                                    zIndex: 20
+                                  }}
+                                >
+                                  <svg
+                                    width="40"
+                                    height="40"
+                                    viewBox="-8 -28 40 40"
+                                    className="overflow-visible drop-shadow"
+                                    style={{ position: 'relative', left: '-8px', top: '-28px' }}
+                                  >
+                                    {renderSvgCanvasToolCursor(
+                                      selectedSimTool,
+                                      activeToolObj?.short
+                                    )}
+                                  </svg>
+                                </div>
+                              </div>
+
+                              {/* Full Unclipped Guidance Pill + Percentage & Action Buttons */}
+                              <div className="space-y-2 pt-0.5">
+                                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                                  <span className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-bold text-indigo-800 whitespace-nowrap">
+                                    {getActionModeLabel(currentSimStep.interactionType)}
+                                  </span>
+                                  <span
+                                    ref={simLiveProgressTextRef}
+                                    className={`px-2.5 py-1 rounded-full border text-xs font-extrabold tabular-nums transition-colors ${
+                                      isStepDone
+                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                        : 'bg-slate-100 border-slate-200 text-slate-700'
+                                    }`}
+                                  >
+                                    {isStepDone ? '100%' : `${simActionProgress}%`}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center justify-between gap-1.5">
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={handleAutoDemonstrate}
+                                      className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-semibold inline-flex items-center gap-1"
+                                    >
+                                      <Eye className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                      <span>Show Me</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={handleResetCurrentStepOnly}
+                                      className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold inline-flex items-center gap-1"
+                                      title="Reset Current Step"
+                                    >
+                                      <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                                      <span>Reset</span>
+                                    </button>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      disabled={safeStepIndex === 0}
+                                      onClick={() => {
+                                        const prevIdx = Math.max(0, safeStepIndex - 1);
+                                        setSimStepIndex(prevIdx);
+                                        setSelectedSimTool(
+                                          visibleSimSteps[prevIdx]?.requiredTool || 'tool-hands'
+                                        );
+                                        setSimFeedbackBanner(null);
+                                        setSimShowMeHint(false);
+                                        resetStepGestureBuffers();
+                                      }}
+                                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-semibold text-slate-700"
+                                    >
+                                      Back
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={safeStepIndex >= visibleSimSteps.length - 1}
+                                      onClick={() => {
+                                        const nextIdx = Math.min(
+                                          visibleSimSteps.length - 1,
+                                          safeStepIndex + 1
+                                        );
+                                        setSimStepIndex(nextIdx);
+                                        setSelectedSimTool(
+                                          visibleSimSteps[nextIdx]?.requiredTool || 'tool-hands'
+                                        );
+                                        setSimFeedbackBanner(null);
+                                        setSimShowMeHint(false);
+                                        resetStepGestureBuffers();
+                                      }}
+                                      className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white text-xs font-semibold inline-flex items-center gap-1"
+                                    >
+                                      <span>Next</span>
+                                      <ChevronRight className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Draggable Instrument & Airway Tray (On the Side) */}
+                            <div className="md:col-span-5 bg-slate-50/90 rounded-2xl p-3.5 border border-slate-200/90 space-y-2.5">
+                              <div className="space-y-0.5">
+                                <span className="font-bold uppercase tracking-wider text-slate-500 text-[11px] flex items-center gap-1.5">
+                                  <Compass className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                                  <span>Instrument Tray</span>
+                                </span>
+                                <p className="text-[11px] text-slate-500">
+                                  Select tool, then scrub, draw, or advance on diagram
+                                </p>
+                              </div>
+
+                              <div className="grid grid-cols-2 md:grid-cols-1 gap-1.5 max-h-[250px] overflow-y-auto pr-0.5">
+                                {activeSim.tools.map((tool) => {
+                                  const isSelected = selectedSimTool === tool.id;
+                                  return (
+                                    <button
+                                      key={tool.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedSimTool(tool.id);
+                                        setSimFeedbackBanner(null);
+                                      }}
+                                      className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-2 text-left ${
+                                        isSelected
+                                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                                      }`}
+                                    >
+                                      {renderSimToolGlyph(tool.id, 'w-3.5 h-3.5 shrink-0')}
+                                      <span className="truncate">{tool.short}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="p-2.5 rounded-xl bg-indigo-50/80 border border-indigo-200/80 text-[11px] text-indigo-950 leading-relaxed">
+                                <strong>{activeToolObj.name}:</strong> {activeToolObj.desc}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <p className="text-[11px] text-slate-500 px-1">
-                        {activeSim.disclaimer}
-                      </p>
+                        <p className="text-[11px] text-slate-500 px-1">
+                          {activeSim.disclaimer}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })()}
@@ -7725,8 +8649,11 @@ export default function App() {
                               }
                               className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold"
                             >
+                              <option value="paint">Scrub / Coat Area</option>
+                              <option value="draw">Trace / Incise Line</option>
+                              <option value="advance">Push / Advance Tube</option>
+                              <option value="hold">Press &amp; Hold</option>
                               <option value="tap">Tap Target</option>
-                              <option value="drag">Drag / Guide Line</option>
                             </select>
                           </div>
                         </div>
@@ -8822,18 +9749,20 @@ export default function App() {
                     />
 
                     {hardwareForm.imageUrl && (
-                      <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-white">
-                        <img
-                          src={hardwareForm.imageUrl}
-                          alt="Preview"
-                          className="w-full max-h-48 object-contain bg-slate-100"
-                        />
+                      <div className="flex items-start gap-3 pt-1">
+                        <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-white max-w-[220px] shrink-0">
+                          <img
+                            src={hardwareForm.imageUrl}
+                            alt="Preview"
+                            className="w-full h-auto block"
+                          />
+                        </div>
                         <button
                           type="button"
                           onClick={() =>
                             setHardwareForm({ ...hardwareForm, imageUrl: '' })
                           }
-                          className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-slate-900/80 text-white text-[11px] font-semibold"
+                          className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold"
                         >
                           Remove Photo
                         </button>
@@ -10885,31 +11814,50 @@ export default function App() {
                           {hw.tag}
                         </span>
                       </div>
-                      {hw.imageUrl && (
-                        <div className="rounded-xl overflow-hidden border border-slate-200 bg-white">
-                          <img
-                            src={hw.imageUrl}
-                            alt={hw.name}
-                            className="w-full max-h-48 object-contain bg-slate-100"
-                          />
+                      {hw.imageUrl ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                          <div className="sm:col-span-5 rounded-xl overflow-hidden border border-slate-200 bg-white">
+                            <img
+                              src={hw.imageUrl}
+                              alt={hw.name}
+                              className="w-full h-auto block"
+                            />
+                          </div>
+                          <div className="sm:col-span-7 space-y-2">
+                            <div className="p-2.5 rounded-xl bg-white border border-slate-200/70 text-xs">
+                              <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                                Cuff / Valve Type
+                              </span>
+                              <span className="font-semibold text-slate-800">{hw.cuffType}</span>
+                            </div>
+                            <div className="p-2.5 rounded-xl bg-white border border-slate-200/70 text-xs">
+                              <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                                Inner Cannula
+                              </span>
+                              <span className="font-semibold text-slate-800">
+                                {hw.innerCannula}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                          <div className="p-2 rounded-xl bg-white border border-slate-200/70">
+                            <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                              Cuff / Valve Type
+                            </span>
+                            <span className="font-semibold text-slate-800">{hw.cuffType}</span>
+                          </div>
+                          <div className="p-2 rounded-xl bg-white border border-slate-200/70">
+                            <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                              Inner Cannula
+                            </span>
+                            <span className="font-semibold text-slate-800">
+                              {hw.innerCannula}
+                            </span>
+                          </div>
                         </div>
                       )}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
-                        <div className="p-2 rounded-xl bg-white border border-slate-200/70">
-                          <span className="text-[10px] font-bold uppercase text-slate-400 block">
-                            Cuff / Valve Type
-                          </span>
-                          <span className="font-semibold text-slate-800">{hw.cuffType}</span>
-                        </div>
-                        <div className="p-2 rounded-xl bg-white border border-slate-200/70">
-                          <span className="text-[10px] font-bold uppercase text-slate-400 block">
-                            Inner Cannula
-                          </span>
-                          <span className="font-semibold text-slate-800">
-                            {hw.innerCannula}
-                          </span>
-                        </div>
-                      </div>
                       {hw.keyVisualCue && (
                         <p className="text-xs text-slate-600 leading-relaxed">
                           <strong>Visual Cue:</strong> {hw.keyVisualCue}
